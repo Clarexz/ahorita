@@ -14,6 +14,12 @@ const BY_CODE: Record<string, string> = {
   over_request_rate_limit: 'Van muchos intentos seguidos. Espera un minuto y prueba otra vez.',
   over_email_send_rate_limit: 'Van muchos intentos seguidos. Espera un minuto y prueba otra vez.',
   signup_disabled: 'Por ahora no se pueden crear cuentas nuevas.',
+  // El hook del servidor (before user created) rechaza el registro con correo: su mensaje es esta clave.
+  signup_requires_google: 'Por ahora las cuentas nuevas se crean con Google.',
+  // "Continuar con Google" (src/lib/googleAuth.ts)
+  google_unavailable:
+    'No pudimos abrir Google en este celular. Revisa que tengas una cuenta de Google y los servicios de Google Play al día.',
+  google_failed: 'No pudimos entrar con Google. Intenta otra vez en un momento.',
   // RPC de pareja
   not_authenticated: 'Tu sesión se cerró. Inicia sesión de nuevo.',
   already_in_couple: 'Ya están en una pareja. Para cambiar, primero hay que salir de esa.',
@@ -114,6 +120,7 @@ export function errorMessage(error: unknown): string {
   if (isNetworkError(name, message, e.status)) return NETWORK_MESSAGE;
   if (code && BY_CODE[code]) return BY_CODE[code];
   if (message && BY_CODE[message]) return BY_CODE[message];
+  if (/signup_requires_google/.test(message)) return BY_CODE.signup_requires_google;
   if (code === '23514') return 'Alguno de los datos no cabe. Revísalos e intenta otra vez.';
   if (code === '42501') return 'No tienes permiso para hacer eso.';
   return GENERIC_MESSAGE;

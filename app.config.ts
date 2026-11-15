@@ -179,6 +179,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-sharing',
     // Bloqueo con huella o rostro (opcional, Otros ajustes).
     'expo-local-authentication',
+    // "Continuar con Google" (react-native-nitro-google-signin) no lleva config plugin: el de la
+    // librería solo sirve para iOS o para aplicar Google Services, y aquí es solo Android con el
+    // Client ID web explícito (EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID); el módulo se autoenlaza.
     './plugins/with-android-signing',
     ...(googleMapsApiKey
       ? [['react-native-maps', { androidGoogleMapsApiKey: googleMapsApiKey }] as [string, object]]

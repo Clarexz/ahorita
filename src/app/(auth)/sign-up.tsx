@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { Button, Input, Notice, Screen, Text } from '@/components';
 import { useSignUp } from '@/features/auth';
 import { AuthBrand } from '@/features/auth/components/AuthBrand';
+import { GoogleSignInSection } from '@/features/auth/components/GoogleSignInSection';
 import { errorMessage } from '@/lib/errors';
 import { validateEmail, validatePassword, validatePasswordConfirm } from '@/lib/validation';
 import { useTheme } from '@/theme';
@@ -79,6 +80,7 @@ export default function SignUpScreen() {
           {signUp.isError ? <Notice tone="danger">{errorMessage(signUp.error)}</Notice> : null}
           <Button title="Crear cuenta" onPress={submit} loading={signUp.isPending} fullWidth />
         </View>
+        <GoogleSignInSection busy={signUp.isPending} />
         <View style={{ alignItems: 'center' }}>
           <Button
             title="Ya tengo cuenta"
