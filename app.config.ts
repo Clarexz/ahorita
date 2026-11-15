@@ -78,12 +78,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     'expo-secure-store',
-    // Galería y cámara (stories y memorias); sin micrófono (no grabamos video).
+    // Galería y cámara (stories y memorias). Ojo: no poner `microphonePermission: false`; el plugin
+    // lo convierte en un bloqueo de RECORD_AUDIO en el manifiesto y anula el permiso que agrega
+    // expo-audio para las respuestas en audio (el micrófono no salía en los permisos de la app).
     [
       'expo-image-picker',
       {
         cameraPermission: 'Para tomar fotos de tus stories y memorias.',
-        microphonePermission: false,
       },
     ],
     // Guardar fotos en la galería; solo imágenes. `isAccessMediaLocationEnabled` permite leer el GPS
