@@ -73,7 +73,12 @@ begin
   assert not has_function_privilege('authenticated', 'public.couple_spicy_active(uuid)', 'execute'),
     'couple_spicy_active no debe estar expuesta a la app';
 
-  -- 8) Las únicas políticas de escritura en storage son de avatars (update/delete de tu
+  -- 8) El hook de registro (GoTrue) solo lo ejecuta supabase_auth_admin, nunca la app.
+  assert not has_function_privilege('anon', 'private.hook_before_user_created(jsonb)', 'execute')
+    and not has_function_privilege('authenticated', 'private.hook_before_user_created(jsonb)', 'execute'),
+    'el hook before_user_created no debe estar expuesto a la app';
+
+  -- 9) Las únicas políticas de escritura en storage son de avatars (update/delete de tu
   --    propia foto); stories, memorias y audios solo se insertan y los borra la limpieza.
   select string_agg(policyname, ', ') into v_bad
   from pg_policies
