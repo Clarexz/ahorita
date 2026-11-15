@@ -11,24 +11,33 @@ import { useTheme } from '@/theme';
  * Cancelar no muestra nada. Tras entrar, el guardia de rutas decide si falta nombre o pareja
  * (onboarding), igual que con correo.
  */
-export function GoogleSignInSection({ busy = false }: { busy?: boolean }) {
+export function GoogleSignInSection({
+  busy = false,
+  divider = true,
+}: {
+  busy?: boolean;
+  /** Sin formulario arriba (Crear cuenta) no hace falta el separador "o". */
+  divider?: boolean;
+}) {
   if (!isGoogleSignInEnabled) return null;
-  return <GoogleSignInBlock busy={busy} />;
+  return <GoogleSignInBlock busy={busy} divider={divider} />;
 }
 
-function GoogleSignInBlock({ busy }: { busy: boolean }) {
+function GoogleSignInBlock({ busy, divider }: { busy: boolean; divider: boolean }) {
   const { spacing } = useTheme();
   const google = useSignInWithGoogle();
 
   return (
     <View style={{ gap: spacing.lg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-        <Divider style={{ flex: 1 }} />
-        <Text variant="note" tone="muted">
-          o
-        </Text>
-        <Divider style={{ flex: 1 }} />
-      </View>
+      {divider ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+          <Divider style={{ flex: 1 }} />
+          <Text variant="note" tone="muted">
+            o
+          </Text>
+          <Divider style={{ flex: 1 }} />
+        </View>
+      ) : null}
       {google.isError ? <Notice tone="danger">{errorMessage(google.error)}</Notice> : null}
       <GoogleButton onPress={() => google.mutate()} loading={google.isPending} disabled={busy} />
     </View>

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { Button, Input, Notice, Screen, Text } from '@/components';
-import { useSignUp } from '@/features/auth';
+import { isGoogleSignInEnabled, useSignUp } from '@/features/auth';
 import { AuthBrand } from '@/features/auth/components/AuthBrand';
 import { GoogleSignInSection } from '@/features/auth/components/GoogleSignInSection';
 import { errorMessage } from '@/lib/errors';
@@ -42,45 +42,54 @@ export default function SignUpScreen() {
               Crear cuenta
             </Text>
             <Text variant="body" tone="muted">
-              Solo un correo y una contraseña. Tu nombre lo pedimos después.
+              {isGoogleSignInEnabled
+                ? 'Con tu cuenta de Google y listo. Tu nombre lo pedimos después.'
+                : 'Solo un correo y una contraseña. Tu nombre lo pedimos después.'}
             </Text>
           </View>
-          <Input
-            label="Correo"
-            value={email}
-            onChangeText={setEmail}
-            error={errors.email}
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="email"
-            keyboardType="email-address"
-            returnKeyType="next"
-          />
-          <Input
-            label="Contraseña (mínimo 8 caracteres)"
-            value={password}
-            onChangeText={setPassword}
-            error={errors.password}
-            secureTextEntry
-            autoCapitalize="none"
-            autoComplete="new-password"
-            returnKeyType="next"
-          />
-          <Input
-            label="Repite la contraseña"
-            value={confirm}
-            onChangeText={setConfirm}
-            error={errors.confirm}
-            secureTextEntry
-            autoCapitalize="none"
-            autoComplete="new-password"
-            returnKeyType="go"
-            onSubmitEditing={submit}
-          />
-          {signUp.isError ? <Notice tone="danger">{errorMessage(signUp.error)}</Notice> : null}
-          <Button title="Crear cuenta" onPress={submit} loading={signUp.isPending} fullWidth />
+          {/* El servidor solo acepta cuentas nuevas de Google (hook before_user_created); el
+              formulario de correo queda solo si la app se compiló sin Client ID de Google. */}
+          {isGoogleSignInEnabled ? (
+            <GoogleSignInSection divider={false} />
+          ) : (
+            <>
+              <Input
+                label="Correo"
+                value={email}
+                onChangeText={setEmail}
+                error={errors.email}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                keyboardType="email-address"
+                returnKeyType="next"
+              />
+              <Input
+                label="Contraseña (mínimo 8 caracteres)"
+                value={password}
+                onChangeText={setPassword}
+                error={errors.password}
+                secureTextEntry
+                autoCapitalize="none"
+                autoComplete="new-password"
+                returnKeyType="next"
+              />
+              <Input
+                label="Repite la contraseña"
+                value={confirm}
+                onChangeText={setConfirm}
+                error={errors.confirm}
+                secureTextEntry
+                autoCapitalize="none"
+                autoComplete="new-password"
+                returnKeyType="go"
+                onSubmitEditing={submit}
+              />
+              {signUp.isError ? <Notice tone="danger">{errorMessage(signUp.error)}</Notice> : null}
+              <Button title="Crear cuenta" onPress={submit} loading={signUp.isPending} fullWidth />
+            </>
+          )}
         </View>
-        <GoogleSignInSection busy={signUp.isPending} />
         <View style={{ alignItems: 'center' }}>
           <Button
             title="Ya tengo cuenta"
