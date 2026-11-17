@@ -78,6 +78,16 @@ services:
 
   auth:
     container_name: app-parejas-auth
+    # "Continuar con Google" (v0.13.2): idToken de Credential Manager -> signInWithIdToken.
+    # El hook before_user_created (migración 20261113000000) solo deja crear cuentas de Google.
+    # Activar el hook SOLO cuando esa migración ya esté aplicada (si no, falla todo registro).
+    environment:
+      GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOOGLE_AUTH_ENABLED:-false}
+      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOOGLE_AUTH_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOOGLE_AUTH_SECRET:-}
+      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: ${API_EXTERNAL_URL}/callback
+      GOTRUE_HOOK_BEFORE_USER_CREATED_ENABLED: ${SIGNUP_GOOGLE_ONLY_HOOK:-false}
+      GOTRUE_HOOK_BEFORE_USER_CREATED_URI: pg-functions://postgres/private/hook_before_user_created
     mem_limit: ${MEM_AUTH:-192m}
     memswap_limit: ${MEM_AUTH:-192m}
     logging: *logging

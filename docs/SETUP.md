@@ -16,6 +16,7 @@ servidor en S1).
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Fase 0 | `ANON_KEY` del `.env` del stack |
 | `GOOGLE_SERVICES_JSON_BASE64` | Fase 4 | `base64 -w0 google-services.json` (Firebase, ver §1.1) |
 | `GOOGLE_MAPS_API_KEY` | Fase 7 | Google Cloud Console (Maps SDK for Android) |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | v0.13.2 (opcional) | Client ID tipo Web de Google Cloud (§1.4) |
 
 > La `ANON_KEY` es pública por diseño (va dentro del APK); la seguridad la dan las políticas RLS.
 > La `SERVICE_ROLE_KEY` **nunca** sale del servidor.
@@ -130,6 +131,31 @@ la ubicación se actualiza al abrir la app). Si notas gasto, vuelve a *Al abrir 
 
 **Privacidad.** El servidor guarda solo la última ubicación de cada quien (redondeada, sin
 historial) y la borra al apagar la distancia o al salir de la pareja. Solo la ve tu pareja (RLS).
+
+## 1.4 Iniciar sesión con Google (v0.13.2, opcional)
+
+El botón "Continuar con Google" sirve para entrar y para crear cuenta. Sin el secreto
+`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` la app no muestra el botón. Todo se hace en el proyecto
+`app-par-946be` de Google Cloud (el mismo de Firebase).
+
+1. **Pantalla de consentimiento OAuth** (Google Auth Platform → Branding / Audience): tipo
+   **Externa**, nombre de la app y correos de contacto, y **publícala** ("En producción"). Si se queda
+   en "Prueba", solo entran los correos de prueba y el permiso caduca. Scopes: solo los básicos
+   `openid`, `email` y `profile` (no hace falta verificación de Google con esos).
+2. **Cliente OAuth tipo "Aplicación web"** (APIs y servicios → Credenciales → Crear credenciales →
+   ID de cliente de OAuth). Copia el **Client ID** y el **Client secret**.
+3. **Cliente OAuth tipo "Android"**: paquete `com.appparejas.app` y la **huella SHA-1** del
+   certificado de firma. La SHA-1 sale en el resumen de la corrida de *Release APK* ("Huellas del
+   certificado de firma"); si instalas APKs de debug, agrega también la SHA-1 de ese keystore. Sin
+   este cliente (o con otra SHA-1) Google responde `DEVELOPER_ERROR` y la app dice que no pudo
+   entrar con Google.
+4. En GitHub (Settings → Secrets and variables → Actions) crea el secreto
+   **`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`** con el Client ID **web** (termina en
+   `.apps.googleusercontent.com`); `release-apk.yml` lo pasa al build.
+5. En el servidor (GoTrue) hay que activar Google y el hook de registro; ver el "Prompt para el
+   servidor" de la fase. Sin eso el botón falla.
+
+---
 
 ## 2. Publicar un APK
 

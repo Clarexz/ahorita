@@ -1062,159 +1062,82 @@ Fase 12 (pulido y v1.0.0).
 | 10 Banco de contenido | ✅ Cerrada y desplegada (v0.13.0) | #23 | 3,530 ítems (2,270 diarias en 14 categorías, 1,000+ de juegos, 8 temas con 221) + 212 palabras; temas como quiz, 👍/👎, "Agregar pregunta" (no van a la pregunta del día), `check-content` e `import-questions`, rondas de 10/15/20 y pestaña Preguntas compacta (D119–D125). Servidor desplegado y PR mergeado a `main` a pedido del usuario (2026-11-12); falta probar el APK en los celulares. |
 | 11A Extras (pienso en ti, cápsula, cupones, ruleta) | ⏸️ Pospuesta (D86) | | Siguiente fase (después de la 10). |
 | 11B Extras (lenguajes del amor, visitas, estadísticas) | ✅ Cerrada y desplegada | #17 | Test de lenguajes del amor, calendario de visitas y estadísticas; push `love_language` y `visit` (D92–D96). Desplegada y probada antes de la Fase 12A. |
-| 12 Pulido y entrega | 🟡 Parte 2 (v0.12.5) | #18, #22 | Parte 1: nombre, icono y textos (v0.12.0); aviso de versión nueva (D107, v0.12.3). **Parte 2** (D112–D118): respuestas en audio, tarjeta compartible, bloqueo con huella, caché offline, reintentos, error boundary, FlashList y auditoría de RLS/RPC con prueba permanente y día de la pareja según la zona de cada quien. Servidor desplegado, restauración probada y registro cerrado (2026-11-11); v0.12.5 probada en los celulares y mergeada a `main` (2026-11-12). La **v1.0.0** se pospone: antes faltan más fases (10, 11A) y detalles por corregir.
+| 12 Pulido y entrega | 🟡 Parte 2 (v0.12.5) | #18, #22 | Parte 1: nombre, icono y textos (v0.12.0); aviso de versión nueva (D107, v0.12.3). **Parte 2** (D112–D118): respuestas en audio, tarjeta compartible, bloqueo con huella, caché offline, reintentos, error boundary, FlashList y auditoría de RLS/RPC con prueba permanente y día de la pareja según la zona de cada quien. Servidor desplegado, restauración probada y registro cerrado (2026-11-11); v0.12.5 probada en los celulares y mergeada a `main` (2026-11-12). La **v1.0.0** espera a la Fase 11A y a las correcciones listadas en §10.1 ("Camino a la v1.0.0"). |
 | 12A Rediseño "ahorita" | ✅ Cerrada (2026-11-03) | #19 | Nombre "ahorita", frutas por persona (`set_fruit`), DISENO v2, tema y componentes nuevos (sin Bitácora), todas las pantallas rediseñadas en claro y oscuro, 6 widgets 1×1 con vidrio + Racha (snapshot v4), ícono/splash/avisos con la fruta, fondos de story con las 7 frutas y copy con la voz del manual (D97–D106). Spike de widgets v0.12.1; APK v0.12.2. Servidor desplegado (`2e800d5`), PR mergeado a `main` a pedido del usuario. Falta probar el APK v0.12.2 en los dos celulares (§10.1). |
 | Ajustes post-12A (cambios menores) | ✅ Cerrada (2026-11-04) | #21 | Racha estilo TikTok (5 recuperaciones/mes, solo ayer), opción "Otra", teclado, Inicio con distancia/listas/lenguaje del amor/tiempo juntos, Preguntas + Juegos, memorias con visitas, Más → "Otros ajustes", "mesario", sin rebotes (D108–D111). Migración `20261110000000_streak_repairs_other_choice_memory_visits.sql`: **requiere deploy antes de instalar el APK** (notas en `docs/releases/v0.12.4.md`). Mergeada a `main` y APK **v0.12.4** lanzado a pedido del usuario; servidor desplegado (migración aplicada, confirmado el 2026-11-11). |
-| Widgets tonales y mascota | 🟡 APK v0.13.1 | PR de `ccr-82758e13-k18itj` | Fuera el vidrio simulado: estilo tonal en los 6 widgets; el de mood usa la **mascota** (símbolo con cara) con pose por cada uno de los 16 moods; estado vacío con la mascota (D126). Sin cambios de servidor. Falta probar en los celulares con `docs/releases/v0.13.1.md`. |
+| Ajustes v0.13.x (micrófono, Google) | ✅ Desplegada y mergeada (v0.13.2) | #25 | Micrófono de las respuestas en audio (la solicitud sale la primera vez que se toca "Grabar audio") y **"Continuar con Google"**: un solo botón para entrar y crear cuenta. Con `DISABLE_SIGNUP=false`, el hook `private.hook_before_user_created` deja crear cuentas solo con Google; el correo responde 403 `signup_requires_google`. Servidor desplegado el 2026-11-17 (`31dfccc`, migración `20261113000000_google_signup_hook`). APK **v0.13.2** publicado y PR #25 mergeado a `main` a pedido del usuario (2026-11-17); falta probarlo en los celulares (§10.1). D126–D127. |
+| Widgets tonales y mascota | 🟡 APK v0.13.3 | #24 | Fuera el vidrio simulado: estilo tonal en los 6 widgets; el de mood usa la **mascota** (símbolo con cara) con pose por cada uno de los 16 moods; estado vacío con la mascota (D128). Sin cambios de servidor. Falta probar en los celulares con `docs/releases/v0.13.3.md`. |
 
-### 10.1 Verificaciones pendientes en el celular
+### 10.1 Camino a la v1.0.0
 
-- **Fase 10 (D119–D125, v0.13.0):** servidor desplegado el 2026-11-12 (`deploy.sh
-  claude/great-albattani-iafnq4` en `c0ac4b9`, respaldo previo
-  `pre-deploy-app-parejas-20261112-014101.dump`): se aplicaron `…000_content_bank` y
-  `…001_game_round_size` (18 migraciones registradas) y el seed (3,530 preguntas activas, 212
-  palabras, 8 temas, 0 del seed desactivadas). `security_audit.sql` OK, `get_packs()` con 8 filas
-  (Deseo sin siguiente por picantes apagadas) y smoke test OK sin avisos. Sin secretos nuevos.
-  APK **v0.13.0** publicado y PR #23 mergeado a `main` el 2026-11-12 a pedido del usuario. El clon
-  del VPS quedó en la rama de la fase: el siguiente deploy es de `main`. **Falta:** probar el APK en
-  los dos celulares con `docs/releases/v0.13.0.md` (sobre todo el selector 10/15/20 y el resultado de
-  una ronda de 15, que solo tienen pruebas automáticas).
-- **Fuera de fase:** el usuario quiere corregir detalles de la tarjeta compartible (racha / tiempo
-  juntos); queda pendiente hasta que diga qué.
+Estamos cerca de la v1.0.0, pero antes faltan:
 
-- **Fase 12 parte 2 (D112–D118, v0.12.5):** servidor desplegado el 2026-11-11
-  (`deploy.sh claude/sharp-pasteur-xo4lz6` en `10a0e7d`, respaldo previo
-  `pre-deploy-app-parejas-20261111-231847.dump`): se aplicaron `…000_audio_answers`,
-  `…001_security_hardening` y `…002_member_timezones` (16 migraciones registradas; la de v0.12.4 ya
-  estaba aplicada), bucket `answer-audio` creado, `stories-cleanup` sincronizada, `security_audit.sql`
-  OK y smoke test OK sin avisos. **Prueba de restauración ✅** (29 tablas, 3 usuarios, 13 migraciones;
-  solo errores esperados de pg_cron en la BD temporal). Studio no expuesto (404 en la raíz, 13000 solo
-  en 127.0.0.1); GoTrue con rate limits por defecto. **Registro cerrado** el 2026-11-11 (`DISABLE_SIGNUP=true`; el signup responde 422 `signup_disabled`; anotado en `CREDENCIALES.md`). El tercer usuario (2026-10-31, solo en otra pareja) se conserva.
-  `meta` usa 87 % de sus 128 MiB (subir `MEM_META` si crece). El clon del VPS quedó en la rama de la
-  fase: el siguiente deploy es de `main` cuando se mergee. APK **v0.12.5** probado en los dos celulares
-  sin errores y PR #22 mergeado a `main` el 2026-11-12. La v1.0.0 espera a las fases y detalles que
-  faltan.
-- **Ajustes post-12A (D108–D111, v0.12.4):** mergeados a `main` el 2026-11-04 a pedido del
-  usuario y APK **v0.12.4** lanzado con `<!-- sin-aviso -->` (la app no lo anuncia). **Falta el
-  deploy:** `./scripts/server/deploy.sh main` debe aplicar solo
-  `20261110000000_streak_repairs_other_choice_memory_visits.sql` (13 migraciones registradas);
-  luego `select public.get_streak();` como usuario con pareja (trae `repair_day`, `repairs_left`,
-  `today_is_repair`), `\df public.set_memory_visit` y smoke test. Sin secretos nuevos. Después,
-  quitar `<!-- sin-aviso -->` del release en GitHub y probar con `docs/releases/v0.12.4.md` (sobre
-  todo el teclado en la pregunta y la recuperación de racha).
-- **Aviso de versión nueva (D107):** mergeado a `main` el 2026-11-03 a pedido del usuario y APK
-  **v0.12.3** lanzado desde `main` (incluye todo lo de la v0.12.2). No toca el servidor. Es la
-  **última instalación a mano**: desde aquí la app revisa GitHub Releases al abrir, muestra una
-  tarjeta en Inicio con "Descargar" (abre el APK en el navegador) y "Luego" (la esconde un día), y
-  hay un renglón en **Más → Buscar versión nueva**. **Ojo en cada release nuevo:** si el APK
-  necesita un deploy del servidor que aún no se hace (o es un spike), poner `<!-- sin-aviso -->`
-  en sus notas y quitarlo del release en GitHub cuando ya se pueda instalar
-  (`docs/releases/README.md`). **Falta:** probar con `docs/releases/v0.12.3.md` y confirmar con el
-  siguiente release que la tarjeta aparece y el APK se instala encima.
-- **Fase 12A:** servidor desplegado el 2026-11-03 (`deploy.sh claude/elegant-lovelace-tz2aqw` en
-  `2e800d5`, respaldo previo `pre-deploy-app-parejas-20261103-202923.dump`): solo se aplicaron
-  `20261108000000_fruits` y `20261109000000_stories_fruit_bg` (12 migraciones registradas), `notify`
-  sincronizada, `notify_actor_fruit` devuelve mango/sandía, `test-push` con `sent=1` y smoke test OK
-  sin avisos. PR #19 mergeado a `main` el 2026-11-03 a pedido del usuario. El clon del VPS quedó en
-  la rama de la fase: el siguiente deploy es `./scripts/server/deploy.sh main`. **Falta:** confirmar que el aviso de prueba (primero con el copy
-  nuevo) llegó al celular y probar el APK **v0.12.2** con `docs/releases/v0.12.2.md` (el spike
-  **v0.12.1** solo valida widgets).
-- **Deploy de las Fases 6–9 y 11B: ✅ hecho.** El usuario desplegó el servidor en la sesión de la
-  Fase 12 (parte 1), antes de la 12A, y probó la app con su novia en los dos celulares: todo
-  funciona, incluidas las notificaciones (confirmado el 2026-11-03). Las notas de abajo sobre esas
-  fases quedan como historial.
-- **Fases 0 y 0.5:** ✅ verificadas: la v0.0.3 instala y dice "conectados" (2026-10-30).
-- **Fase 1:** se cerró el 2026-10-30 con el servidor ya desplegado (migración `20261030010000`,
-  bucket `avatars`, smoke test OK) mientras se compilaba el APK **v0.1.0**. Falta probarlo en los
-  dos celulares con la lista de `docs/releases/v0.1.0.md`. Si sale un error, se corrige como
-  parche `v0.1.P` siguiente; la Fase 2 no lo espera (D31).
-- **Fase 2:** servidor desplegado el 2026-10-30 (`deploy.sh` de la rama de la fase en `fb87659`;
-  migración `20261031000000_moods.sql`, `moods` en Realtime, smoke test OK). Falta probar el APK
-  **v0.2.0** en los dos celulares con la lista de `docs/releases/v0.2.0.md`.
-- **Fase 3:** servidor desplegado el 2026-10-30 (`deploy.sh claude/elegant-hypatia-tyibam` en
-  `5b3a14c`; migración `20261101000000_questions.sql`, seed de 300 preguntas en 11 categorías,
-  Realtime en `answers`, `answer_comments`, `daily_questions` y `nudges`, smoke test OK). La primera
-  corrida saltó el seed porque bash siguió con el `deploy.sh` viejo tras el checkout; se corrió dos
-  veces y desde esta fase el script se re-ejecuta solo si el pull lo cambia. APK **v0.3.0** probado
-  en el celular (2026-10-30).
-  - **Pendiente: correcciones de diseño menores** detectadas al probar la v0.3.0. Se dejaron para
-    más adelante, cuando la app esté más avanzada (posiblemente junto con la Fase 12); pedirle al
-    usuario el detalle antes de corregirlas.
-- **Fase 4:** servidor desplegado el 2026-10-30 (`deploy.sh claude/quirky-pasteur-9x38o6` en
-  `df41d37`; migración `20261102000000_notifications.sql`, función `notify`, `set-notify-config.sh`
-  con la cuenta de servicio de Firebase `app-par-946be`, smoke test OK sin avisos). El secreto
-  `GOOGLE_SERVICES_JSON_BASE64` se cargó en GitHub (el primer intento no era base64 válido;
-  `release-apk.yml` ahora acepta base64 o JSON y valida el paquete). Falta probar el APK
-  **v0.4.0** en los dos celulares con `docs/releases/v0.4.0.md` (prueba rápida: Más → Avisos →
-  "Mandarme una de prueba", o `scripts/server/test-push.sh <correo>` en el VPS).
-- **Fase 5:** servidor desplegado el 2026-10-30 (`deploy.sh ccr-b514a1fd-6t6enh` en `31b33bd`;
-  solo cambió la función `notify`, 0 migraciones nuevas, `test-push` con `sent=1`, smoke test OK);
-  la notificación de prueba llegó al celular. Fase cerrada y mergeada a `main` (PR #9) el
-  2026-10-30 a pedido del usuario. Falta probar el APK **v0.5.0** en los dos celulares con
-  `docs/releases/v0.5.0.md` (sobre todo que el widget de mood cambie con la app cerrada y que el
-  dibujo nativo se vea bien); si algo falla, se corrige como parche `v0.5.P`.
-- **Fase 6 (deploy pendiente):** mergeada a `main` el 2026-10-31 **sin desplegar** (el usuario no
-  tenía acceso al VPS). **No publicar ni instalar el APK v0.6.0 antes del deploy**: sin las tablas
-  de stories la pestaña falla y los widgets dejan de refrescarse. Las fases siguientes parten de
-  `main` y siguen sin esperar; cuando haya acceso, **un solo deploy de `main` (o de la rama de la
-  fase más reciente)** aplica en orden todas las migraciones acumuladas. Al desplegar, además de
-  `deploy.sh` y el smoke test: (a) verificar el job de pg_cron con
-  `select jobname, schedule, active from cron.job;` (debe existir `app-parejas-stories-cleanup`,
-  `23 * * * *`; si no, reportarlo, no crearlo a mano); (b) probar la limpieza con
-  `select private.run_stories_cleanup();` y revisar `net._http_response` (200) y
-  `compose logs --tail=30 functions`; (c) `scripts/server/test-push.sh <correo>`. No requiere
-  secretos nuevos. Después, lanzar `release-apk.yml` con las notas de `docs/releases/v0.6.0.md`
-  (o el APK de la fase más reciente, si ya se acumularon) y probar con esa lista.
-- **Fase 7 (deploy pendiente):** mergeada a `main` el 2026-10-31 a pedido del usuario, **sin
-  desplegar** y con la Fase 6 tampoco desplegada; el usuario prueba después. **Un solo deploy de
-  `main`** (`./scripts/server/deploy.sh main`; el prompt completo está en el PR #11) aplica las migraciones
-  `20261103000000_stories.sql` y `20261104000000_memories.sql`, crea los buckets `stories` y
-  `memories` (`server/buckets.json`) y sincroniza `notify` y `stories-cleanup` (que ahora también
-  borra fotos huérfanas de memorias). Además de lo listado para la Fase 6, probar
-  `select public.memories_cleanup_batch(10);` como service_role (o revisar la respuesta de la
-  limpieza: incluye `memoriesRemoved`). Secreto nuevo **opcional** en GitHub: `GOOGLE_MAPS_API_KEY`
-  (`docs/SETUP.md` §1.2); sin él el mapa es de papel. Después, lanzar `release-apk.yml` con
-  `docs/releases/v0.7.0.md` (incluye la Fase 6) y **no** publicar v0.6.0 por separado.
-- **Fase 8 (deploy pendiente):** cerrada y mergeada a `main` el 2026-10-31 a pedido del usuario,
-  **sin desplegar** (igual que las Fases 6 y 7); el código no tiene trabajo pendiente. **Un solo `./scripts/server/deploy.sh main`** (el prompt
-  completo está en el PR #12; cambia la rama por `main`) aplica en orden las tres migraciones pendientes (`…103_stories`, `…104_memories`,
-  `…105_events_lists_distance`), crea los buckets y sincroniza `notify` (ahora acepta
-  `kind: 'widget'`) y `stories-cleanup`. Además de lo listado para las Fases 6 y 7, el smoke test
-  revisa las tablas `events`, `lists`, `list_items` y `locations`. Sin secretos nuevos (opcional
-  `GOOGLE_MAPS_API_KEY`). Después, lanzar `release-apk.yml` con `docs/releases/v0.8.0.md` (incluye
-  las Fases 6 y 7); **no** publicar v0.6.0 ni v0.7.0 por separado.
-- **Fase 9 (deploy pendiente):** cerrada y mergeada a `main` el 2026-10-31 a pedido del usuario,
-  **sin desplegar** (sin acceso al VPS, igual que las Fases 6–8); el código no tiene trabajo
-  pendiente. El prompt completo del servidor está en el PR #15 (cambia la rama por `main`).
-  **Un solo `./scripts/server/deploy.sh main`**
-  aplica en orden las cuatro migraciones pendientes (`…103_stories`, `…104_memories`,
-  `…105_events_lists_distance`, `…106_games`), el seed (500 preguntas activas, 80 palabras de
-  dibujo), los buckets y las funciones `notify` y `stories-cleanup`. Además de lo listado para las
-  Fases 6–8, el smoke test revisa `game_rounds`, `game_answers` y `drawing_challenges`. Sin secretos
-  nuevos (opcional `GOOGLE_MAPS_API_KEY`). El APK **v0.9.0** (incluye las Fases 6–8) ya se
-  publicó el 2026-10-31 a pedido del usuario, **antes** del deploy: el usuario hará el deploy antes
-  de instalarlo. **No** publicar v0.6.0–v0.8.0 por separado.
-- **Fase 11B (deploy pendiente):** cerrada y mergeada a `main` el 2026-10-31 a pedido del usuario, sin
-  acceso al VPS; el APK **v0.11.0** se publicó igual (pre-release) con el aviso de no instalarlo antes del
-  deploy. El prompt completo del servidor está en el PR #17 (usa `main` como rama). Un solo
-  `./scripts/server/deploy.sh main` aplica en orden las cinco
-  migraciones pendientes (`…103_stories`, `…104_memories`, `…105_events_lists_distance`,
-  `…106_games`, `…107_love_languages_visits_stats`), el seed, los buckets y las funciones `notify`
-  (ahora con `love_language` y `visit`) y `stories-cleanup`. Además de lo listado para las Fases
-  6–9, el smoke test revisa `love_language_results` y `visits`. Sin secretos nuevos (opcional
-  `GOOGLE_MAPS_API_KEY`). Después, instalar el APK v0.11.0 (ya publicado) y probar con
-  `docs/releases/v0.11.0.md` (y las listas de v0.6.0–v0.9.0).
-- **Nota para el servidor (vigente desde la Fase 2):** el clon del VPS (`/opt/app-parejas/repo`)
-  quedó en la rama de la Fase 5 (`ccr-b514a1fd-6t6enh`, commit `31b33bd`), con 5
-  migraciones aplicadas. Al preparar el siguiente "Prompt para el servidor":
-  - Si la Fase 5 (PR #9) ya está mergeada, despliega **`./scripts/server/deploy.sh main`** o la
-    rama de la fase nueva. `deploy.sh` hace `git fetch`/`checkout`/`pull` de la rama que reciba, así
-    que cambiar de rama no requiere pasos extra.
-  - **Nunca** vuelvas a desplegar una rama de una fase anterior: las migraciones son
-    acumulativas y el smoke test compara las registradas con los archivos del repo.
-  - Al empezar una fase, revisa con `git log origin/main` que la fase anterior ya esté en `main`.
-    Si no lo está, la rama nueva debe partir de la de la fase anterior para no "perder" migraciones
-    que ya están en el servidor.
+1. **Fase 11A** (pienso en ti, cápsula, cupones, ruleta; D86).
+2. **Correcciones pendientes**, por definir con el usuario. En las dos, **pedirle el detalle al
+   usuario antes de corregir**:
+   - Detalles de la tarjeta compartible (racha / tiempo juntos; D113).
+   - Correcciones de diseño menores detectadas al probar la v0.3.0.
+   - El usuario dice que hay más cosas por corregir: preguntarle la lista al empezar.
+
+**Pruebas en el celular pendientes** (una línea por release, con su lista en `docs/releases/`):
+
+- **v0.13.2** (`v0.13.2.md`): micrófono (que aparezca la solicitud la primera vez que se toca
+  "Grabar audio" y que el permiso se vea en ajustes) y "Continuar con Google" (entrar con las dos
+  cuentas existentes, que se vinculen por correo y conserven todo; crear una cuenta nueva con un
+  Gmail de prueba y borrarla después si se quiere).
+- **v0.13.0** (`v0.13.0.md`): sobre todo el selector 10/15/20 y el resultado de una ronda de 15,
+  que solo tienen pruebas automáticas.
+- **v0.12.4** (`v0.12.4.md`): teclado en la pregunta y recuperación de racha. Confirmar también si
+  ya se quitó `<!-- sin-aviso -->` de su release en GitHub.
+- **v0.12.3** (`v0.12.3.md`): que la tarjeta de versión nueva aparezca y que el APK se instale
+  encima (se confirma con el siguiente release).
+- **v0.12.2** (`v0.12.2.md`): y que el aviso de prueba con el copy nuevo llegó.
+
+**Pendiente v0.13.2** (cliente OAuth Android, secreto `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` y APK
+ya hechos el 2026-11-17):
+
+1. Probar en los dos celulares (la lista de arriba).
+2. Si el login falla con `invalid_client`: el secreto de Google se pegó dos veces con distinto último
+   carácter; revisar ese carácter en `secrets/.env` del VPS.
+3. Opcional: rotar el secreto del cliente de Google (pasó por el chat).
+4. Borrar `secrets/.env.bak-pre-google` del VPS cuando ya no haga falta.
+
+Las listas de v0.1.0, v0.2.0, v0.4.0 y v0.5.0 quedan cubiertas: el usuario probó todo en los dos
+celulares antes de la 12A (confirmado el 2026-11-03).
+
+**Estado del servidor**
+
+- El clon del VPS (`/opt/app-parejas/repo`) está en la rama `ccr-123c9893-9q9zk2` (`31dfccc`), con
+  19 migraciones registradas (desde el 2026-11-17, incluye `20261113000000_google_signup_hook`). El
+  siguiente deploy es `./scripts/server/deploy.sh main` (la rama ya está mergeada, PR #25).
+- **Registro:** `DISABLE_SIGNUP=false`, pero el hook `private.hook_before_user_created` deja crear
+  cuentas **solo con Google** (D127); el registro con correo responde 403 `signup_requires_google`.
+  Ya no es un registro cerrado como el de la 12 parte 2.
+- **Nunca** desplegar la rama de una fase anterior: las migraciones son acumulativas y el smoke test
+  compara las registradas con los archivos del repo.
+- Al empezar una fase, revisar con `git log origin/main` que la anterior ya esté en `main`. Si no lo
+  está, la rama nueva debe partir de la de la fase anterior para no perder migraciones que ya están
+  en el servidor.
+- **Ojo en cada release nuevo:** si el APK necesita un deploy que aún no se hace (o es un spike),
+  poner `<!-- sin-aviso -->` en sus notas y quitarlo del release en GitHub cuando ya se pueda
+  instalar (D107, `docs/releases/README.md`).
+- `meta` usa 87 % de sus 128 MiB; subir `MEM_META` si crece.
+
+### 10.2 Historial de deploys
+
+| Fecha | Fase / versión | Rama @ commit | Respaldo previo | Resultado |
+|---|---|---|---|---|
+| 2026-10-30 | 1 Auth | No anotado | No anotado | Migración `20261030010000`, bucket `avatars`, smoke test OK. APK v0.1.0. |
+| 2026-10-30 | 2 Inicio y mood | `fb87659` | No anotado | Migración `20261031000000_moods.sql`, `moods` en Realtime, smoke test OK. APK v0.2.0. |
+| 2026-10-30 | 3 Preguntas y racha | `claude/elegant-hypatia-tyibam` @ `5b3a14c` | No anotado | Migración `20261101000000_questions.sql`, seed de 300 preguntas en 11 categorías, Realtime en `answers`, `answer_comments`, `daily_questions` y `nudges`, smoke test OK. La primera corrida saltó el seed porque bash siguió con el `deploy.sh` viejo tras el checkout; se corrió dos veces. Desde aquí el script se re-ejecuta solo si el pull lo cambia. APK v0.3.0. |
+| 2026-10-30 | 4 Push | `claude/quirky-pasteur-9x38o6` @ `df41d37` | No anotado | Migración `20261102000000_notifications.sql`, `notify`, `set-notify-config.sh` con la cuenta de servicio de Firebase `app-par-946be`, smoke test OK sin avisos. Secreto `GOOGLE_SERVICES_JSON_BASE64` cargado en GitHub (`release-apk.yml` acepta base64 o JSON). APK v0.4.0. |
+| 2026-10-30 | 5 Widgets Android | `ccr-b514a1fd-6t6enh` @ `31b33bd` | No anotado | Solo cambió `notify`, 0 migraciones nuevas, `test-push` con `sent=1`, smoke test OK. Notificación de prueba recibida. APK v0.5.0. |
+| 2026-10-31 (merge) | 6, 7, 8, 9 y 11B | `main` | No anotado | Mergeadas a `main` sin desplegar. Se desplegó `main` en la sesión de la Fase 12 (parte 1), antes de la 12A; aplicó `…103_stories` a `…107_love_languages_visits_stats`, buckets, `notify` y `stories-cleanup`. Probado en los dos celulares, notificaciones incluidas (confirmado el 2026-11-03). |
+| 2026-11-03 | 12A Rediseño "ahorita" | `claude/elegant-lovelace-tz2aqw` @ `2e800d5` | `pre-deploy-app-parejas-20261103-202923.dump` | Migraciones `20261108000000_fruits` y `20261109000000_stories_fruit_bg` (12 registradas), `notify` sincronizada, `notify_actor_fruit` devuelve mango/sandía, `test-push` con `sent=1`, smoke test OK sin avisos. APK v0.12.2. |
+| 2026-11-04 | Ajustes post-12A (v0.12.4) | `main` | No aplica | Mergeada a `main`; APK lanzado con `<!-- sin-aviso -->`. Migración `20261110000000_streak_repairs_other_choice_memory_visits.sql` aplicada (confirmado el 2026-11-11; 13 registradas). |
+| 2026-11-11 | 12 parte 2 (v0.12.5) | `claude/sharp-pasteur-xo4lz6` @ `10a0e7d` | `pre-deploy-app-parejas-20261111-231847.dump` | Migraciones `…000_audio_answers`, `…001_security_hardening` y `…002_member_timezones` (16 registradas), bucket `answer-audio`, `stories-cleanup` sincronizada, `security_audit.sql` OK, smoke test OK sin avisos. **Restauración probada** (29 tablas, 3 usuarios, 13 migraciones; solo errores esperados de pg_cron en la BD temporal). **Registro cerrado** con `DISABLE_SIGNUP=true` (signup responde 422 `signup_disabled`; anotado en `CREDENCIALES.md`). El tercer usuario (2026-10-31, solo en otra pareja) se conserva. Probada en los celulares sin errores (2026-11-12). |
+| 2026-11-12 | 10 Banco de contenido (v0.13.0) | `claude/great-albattani-iafnq4` @ `c0ac4b9` | `pre-deploy-app-parejas-20261112-014101.dump` | Migraciones `…000_content_bank` y `…001_game_round_size` (18 registradas) y seed: 3,530 preguntas activas, 212 palabras, 8 temas, 0 del seed desactivadas. `security_audit.sql` OK, `get_packs()` con 8 filas, smoke test OK sin avisos. Sin secretos nuevos. APK v0.13.0. |
+| 2026-11-17 | Ajustes v0.13.x (micrófono, Google; APK v0.13.2) | `ccr-123c9893-9q9zk2` @ `31dfccc` | No aplica (respaldo del `.env`: `secrets/.env.bak-pre-google`, por borrar) | `deploy.sh ccr-123c9893-9q9zk2`; se aplicó solo `20261113000000_google_signup_hook` (19 registradas). GoTrue `supabase/gotrue:v2.197.0` (soporta el hook) y override copiado al stack; `/auth/v1/settings` con `external.google=true` y `disable_signup=false`. Registro con correo rechazado (403, sin crear usuario; `auth.users` sigue en 3). Smoke test OK sin avisos, 10 contenedores healthy. Variables anotadas en `CREDENCIALES.md`. |
 
 ---
 
@@ -1240,7 +1163,7 @@ Fase 12 (pulido y v1.0.0).
 | D85 | Los **juegos no cuentan para la racha**; solo la pregunta del día. | 2026-10-31 |
 | D86 | Por tiempo, orden **9 → 11B → 12**; las fases **10** y **11A** se posponen para después de la 12. | 2026-10-31 |
 
-Pendiente: nombre definitivo, icono/paleta y **subdominio** para la API (p. ej. `parejas-api.<tu-dominio>`); recursos del VPS (los mide S0).
+Resuelto: el nombre es "ahorita" con ícono y paleta de la Fase 12A (D97, `docs/DISENO.md` v2) y la API vive en `parejas-api.srv1574981.hstgr.cloud` (§10).
 
 ## 12. Riesgos
 

@@ -213,6 +213,7 @@ en el Catálogo de diseño (`/catalogo`).
 | `ScreenHeader` | Título `h1` + `label` opcional arriba + acción a la derecha; con `back` muestra flecha y texto de regreso | `title`, `label`, `right`, `back` | — |
 | `Text` | Escala §2.4 | `variant`; `tone` = `ink`·`muted`·`danger`·`success`·`onFruit` | — |
 | `Button` | Píldora de 50 dp | `primary` (`action`), `secondary` (`surface2` + `ink`), `ghost` (solo texto `ink` 600), `danger` (texto Chile); `fullWidth`, `icon`, `size: 'md'|'sm'`; sin `fullWidth` mide su contenido y respeta la alineación del padre (en un padre que estira, envuélvelo en `alignItems: 'flex-start'`) | normal, presionado (`tap`), deshabilitado (40 % opacidad), cargando (`LoadingSymbol` chico) |
+| `GoogleButton` | "Continuar con Google": píldora de 50 dp con el logo "G" a color y borde de 1 dp, siguiendo las guías de marca de Google (claro: fondo `#FFFFFF`, borde `#747775`, texto `#1F1F1F`; oscuro: `#131314`, `#8E918F`, `#E3E3E3`). Son colores de Google, la misma excepción que las frutas (dominio, no tokens). Solo se muestra con `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`; va bajo un separador "o" después del formulario de correo | `onPress`, `loading`, `disabled`, `title` | normal, presionado, deshabilitado, cargando |
 | `IconButton` | Ícono tocable 48×48 | `plain`, `filled` (círculo `action`), `soft` (círculo `surface2`) | normal, presionado, deshabilitado |
 | `Card` | Superficie `surface`, radio 24, padding 18, sin sombra | `tone`: `surface` · `me` · `partner` (tinte de fruta); `onPress` | normal, presionado |
 | `Symbol` | §3 | `size`, `left`/`right` (`Fruit` o llave), `animate`: `none`·`arrive`·`breathe` | — |
@@ -289,13 +290,13 @@ solo dato va debajo.
 | Story de tu pareja | Foto en círculo con aro de las dos frutas y punto si hay nueva | "nueva" |
 | Racha (nuevo) | Chispa grande (tu fruta) y chica (su fruta) | "47 días" |
 
-- **Estilo tonal** (D126; reemplaza el vidrio simulado de D103): cada pieza en su fruta al 100 % y,
+- **Estilo tonal** (D128; reemplaza el vidrio simulado de D103): cada pieza en su fruta al 100 % y,
   debajo, una copia de la misma fruta oscurecida 30 % y desplazada 4 hacia abajo (lienzo de 100).
   Sin brillos, transparencias ni contornos; se ve igual en claro y en oscuro. Detalles en blanco.
 - Texto blanco 600 con sombra oscura. Estado vacío: la mascota tranquila.
 - Una fruta es tú; la otra, tu pareja.
 
-### 9.1 Mascota (D126)
+### 9.1 Mascota (D128)
 
 El símbolo con cara: las dos medias lunas (izquierda tú, derecha tu pareja) en estilo tonal y
 **una sola cara en tinta** (`#1B1B1F`) que cruza la rendija; se lee sobre las 7 frutas. Es un

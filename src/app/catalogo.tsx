@@ -8,6 +8,7 @@ import {
   AnswerCard,
   ArrivalOverlay,
   Button,
+  GoogleButton,
   Card,
   Checkbox,
   Chip,
@@ -293,6 +294,8 @@ function Catalog({ pair, onPair }: { pair: PairKey; onPair: (p: PairKey) => void
             <Button title="Cargando" loading />
           </Row>
           <Button title="Continuar" fullWidth onPress={() => undefined} />
+          <GoogleButton onPress={() => undefined} />
+          <GoogleButton loading />
           <Row>
             <IconButton name="plus" accessibilityLabel="Agregar" />
             <IconButton name="plus" variant="filled" accessibilityLabel="Agregar" />

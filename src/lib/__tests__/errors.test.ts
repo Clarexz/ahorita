@@ -13,6 +13,31 @@ describe('errorMessage', () => {
     expect(errorMessage({ code: 'signup_disabled' })).toMatch(/cuentas nuevas/);
   });
 
+  it('registro con correo rechazado por el hook del servidor', () => {
+    const msg = 'Por ahora las cuentas nuevas se crean con Google.';
+    // Respuesta real de GoTrue v2.197.0 (2026-11-17):
+    // {"code":403,"error_code":"unknown","msg":"signup_requires_google"} -> supabase-js la
+    // convierte en AuthApiError con code 'unknown' y message 'signup_requires_google'.
+    expect(
+      errorMessage({
+        name: 'AuthApiError',
+        status: 403,
+        code: 'unknown',
+        message: 'signup_requires_google',
+      }),
+    ).toBe(msg);
+    expect(
+      errorMessage({ name: 'AuthApiError', status: 403, message: 'signup_requires_google' }),
+    ).toBe(msg);
+    expect(errorMessage({ code: 'signup_requires_google' })).toBe(msg);
+    expect(errorMessage({ message: 'hook: signup_requires_google (403)' })).toBe(msg);
+  });
+
+  it('Google no disponible o con fallo', () => {
+    expect(errorMessage({ code: 'google_unavailable' })).toMatch(/servicios de Google Play/);
+    expect(errorMessage({ code: 'google_failed' })).toMatch(/No pudimos entrar con Google/);
+  });
+
   it('detecta errores de red', () => {
     expect(errorMessage({ name: 'AuthRetryableFetchError', message: 'x', status: 0 })).toBe(NET);
     expect(errorMessage(new TypeError('Network request failed'))).toBe(NET);

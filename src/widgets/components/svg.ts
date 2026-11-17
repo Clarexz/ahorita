@@ -1,4 +1,4 @@
-// Formas de los widgets 1×1 en estilo tonal (docs/DISENO.md §9, D124): color de fruta al 100 % y
+// Formas de los widgets 1×1 en estilo tonal (docs/DISENO.md §9, D128): color de fruta al 100 % y
 // una copia más oscura de la misma fruta desplazada hacia abajo, sin brillos ni transparencias.
 // El widget de mood es la **mascota**: el símbolo de la app con cara, que reacciona al mood.
 // Cadenas SVG puras, sin React. Las dibuja `SvgWidget` (AndroidSVG), así que se evita
