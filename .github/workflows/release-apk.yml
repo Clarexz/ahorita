@@ -181,12 +181,35 @@ jobs:
             echo "GOOGLE_MAPS_API_KEY no definido (opcional); se omite."
           fi
 
+      # Huellas del certificado de firma: se registran en el cliente OAuth de Android de Google
+      # Cloud ("Continuar con Google"). Solo se imprimen las huellas, nunca contraseñas.
+      - name: Huellas del certificado de firma
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          huellas="$(keytool -list -v -keystore "$ANDROID_KEYSTORE_PATH" -alias "$ANDROID_KEY_ALIAS" \
+            -storepass:env ANDROID_KEYSTORE_PASSWORD | grep -E '^[[:space:]]*SHA(1|256):' | sed 's/^[[:space:]]*//')"
+          echo "$huellas"
+          {
+            echo "### Huellas del certificado de firma"
+            echo
+            echo '```'
+            echo "$huellas"
+            echo '```'
+            echo
+            echo "SHA-1 va en el cliente OAuth de Android (docs/SETUP.md, Iniciar sesión con Google)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Expo prebuild (Android)
         env:
           APP_VERSION: ${{ steps.meta.outputs.version_name }}
           APP_VERSION_CODE: ${{ github.run_number }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          # Opcional: sin él la app no muestra "Continuar con Google" (docs/SETUP.md).
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
         run: npx expo prebuild -p android --clean --no-install
 
       - name: Gradle (caché)
@@ -199,6 +222,7 @@ jobs:
           APP_VERSION_CODE: ${{ github.run_number }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}

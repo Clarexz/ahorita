@@ -3,6 +3,7 @@ export { Screen } from './Screen';
 export { ScreenHeader } from './ScreenHeader';
 export { Text, type TextTone } from './Text';
 export { Button, type ButtonVariant } from './Button';
+export { GoogleButton, GoogleLogo } from './GoogleButton';
 export { IconButton } from './IconButton';
 export { Card } from './Card';
 export { Icon, ICON_NAMES, type IconName } from './Icon';
