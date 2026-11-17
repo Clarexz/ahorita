@@ -15,7 +15,17 @@ describe('errorMessage', () => {
 
   it('registro con correo rechazado por el hook del servidor', () => {
     const msg = 'Por ahora las cuentas nuevas se crean con Google.';
-    // GoTrue devuelve el message del hook (403) sin error_code.
+    // Respuesta real de GoTrue v2.197.0 (2026-11-17):
+    // {"code":403,"error_code":"unknown","msg":"signup_requires_google"} -> supabase-js la
+    // convierte en AuthApiError con code 'unknown' y message 'signup_requires_google'.
+    expect(
+      errorMessage({
+        name: 'AuthApiError',
+        status: 403,
+        code: 'unknown',
+        message: 'signup_requires_google',
+      }),
+    ).toBe(msg);
     expect(
       errorMessage({ name: 'AuthApiError', status: 403, message: 'signup_requires_google' }),
     ).toBe(msg);
