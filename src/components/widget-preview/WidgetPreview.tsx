@@ -2,17 +2,15 @@
 // y el dato debajo. En Android se usa `WidgetPreview.android.tsx`, que dibuja el widget de verdad.
 import { Image, Text, View } from 'react-native';
 
-import { useTheme } from '@/theme';
 import { shapeSide, labelFontSize } from '@/widgets/components/WidgetFrame';
 import { widgetShapeSvg, widgetView } from '@/widgets/view';
 
 import { WALLPAPER, type WidgetPreviewProps } from './types';
 
 export function WidgetPreview({ name, model, width, height }: WidgetPreviewProps) {
-  const { isDark } = useTheme();
   const view = widgetView(name, model);
   const side = shapeSide(width, height);
-  const svg = widgetShapeSvg(view, { dark: isDark, size: side, id: name });
+  const svg = widgetShapeSvg(view, { size: side, id: name });
   return (
     <View
       accessible

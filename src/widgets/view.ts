@@ -11,17 +11,17 @@ import {
   daysShapeSvg,
   distShapeSvg,
   emptyShapeSvg,
-  moodShapeSvg,
+  mascotSvg,
   nextShapeSvg,
   storyShapeSvg,
   streakShapeSvg,
-  type MoodFace,
+  type MascotMood,
   type WidgetShapeOptions,
 } from './components/svg';
 
 export type WidgetFace =
   | { shape: 'days' }
-  | { shape: 'mood'; face: MoodFace }
+  | { shape: 'mood'; mood: MascotMood }
   | { shape: 'next'; progress: number }
   | { shape: 'dist'; km: number | null }
   | { shape: 'story'; photo: string | null; dot: boolean }
@@ -39,14 +39,29 @@ export type WidgetView = {
   fruits: { me: FruitKey; partner: FruitKey };
 };
 
-const SAD = ['😤', '😫', '🥺', '😢'];
-const MEH = ['😅', '🤔', '😴'];
+/** Pose de la mascota para cada mood de `MOOD_OPTIONS` (src/lib/mood.ts). */
+const MASCOT_BY_EMOJI: Record<string, MascotMood> = {
+  '😄': 'happy',
+  '😌': 'calm',
+  '🥰': 'smitten',
+  '🤗': 'cuddly',
+  '😴': 'sleepy',
+  '🤤': 'hungry',
+  '🤩': 'excited',
+  '😎': 'cool',
+  '🥳': 'party',
+  '🤔': 'thinking',
+  '😅': 'meh',
+  '😤': 'angry',
+  '😫': 'stressed',
+  '🥺': 'tender',
+  '😢': 'teary',
+  '🫠': 'melting',
+};
 
-/** Carita de la burbuja según el emoji del mood (la sonrisa del prototipo por defecto). */
-export function moodFace(emoji: string): MoodFace {
-  if (SAD.includes(emoji)) return 'frown';
-  if (MEH.includes(emoji)) return 'flat';
-  return 'smile';
+/** Pose de la mascota según el emoji del mood (tranquila si no es uno de la lista). */
+export function mascotMood(emoji: string): MascotMood {
+  return MASCOT_BY_EMOJI[emoji] ?? 'neutral';
 }
 
 const plural = (n: number, one: string, many: string): string =>
@@ -95,7 +110,7 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
         return empty('sin mood', `${who} aún no comparte su mood. Toca para ver los moods.`);
       }
       return {
-        face: { shape: 'mood', face: moodFace(mood.emoji) },
+        face: { shape: 'mood', mood: mascotMood(mood.emoji) },
         text: mood.label ? mood.label.toLowerCase() : 'su mood',
         a11y: `${who} se siente ${mood.label ?? 'así'} ${mood.emoji}${
           mood.note ? `: ${mood.note}` : ''
@@ -171,17 +186,14 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
 }
 
 /** SVG de la forma de un widget; `size` es el lado en dp. */
-export function widgetShapeSvg(
-  view: WidgetView,
-  opts: { dark: boolean; size: number; id?: string },
-): string {
+export function widgetShapeSvg(view: WidgetView, opts: { size: number; id?: string }): string {
   const o: WidgetShapeOptions = { ...view.fruits, ...opts };
   const face = view.face;
   switch (face.shape) {
     case 'days':
       return daysShapeSvg(o);
     case 'mood':
-      return moodShapeSvg({ ...o, face: face.face });
+      return mascotSvg({ ...o, mood: face.mood });
     case 'next':
       return nextShapeSvg({ ...o, progress: face.progress });
     case 'dist':

@@ -1,73 +1,62 @@
-// Formas de los widgets 1×1 con vidrio simulado (docs/DISENO.md §9, manual de marca §09–10).
-// Cadenas SVG puras, sin React; geometría y estilo copiados de `docs/design/ahorita-prototipo.html`
-// (`wDays`, `wMood`, `wNext`, `wDist`, `wStory`, `wStreak`, `glass`, `glassDefs`).
-// Las dibuja `SvgWidget` (AndroidSVG), así que se evita `paint-order`, `rgba()` y `href` sin
-// espacio de nombres: el dato va aparte, en un `TextWidget` con sombra.
-import { FRUITS, type FruitKey } from '@/lib/fruits';
+// Formas de los widgets 1×1 en estilo tonal (docs/DISENO.md §9, D124): color de fruta al 100 % y
+// una copia más oscura de la misma fruta desplazada hacia abajo, sin brillos ni transparencias.
+// El widget de mood es la **mascota**: el símbolo de la app con cara, que reacciona al mood.
+// Cadenas SVG puras, sin React. Las dibuja `SvgWidget` (AndroidSVG), así que se evita
+// `paint-order`, `rgba()`, `<text>` y `href` sin espacio de nombres: el dato va aparte, en un
+// `TextWidget` con sombra.
+import { FRUITS, tint, type FruitKey } from '@/lib/fruits';
 
-/** Lienzo de las formas: 100×100 con 2 de margen para el contorno oscuro. */
+/** Lienzo de las formas: 100×100 con margen para la sombra tonal. */
 const VIEWBOX = '-2 -2 104 104';
+/** La mascota necesita aire alrededor para inclinarse y para sus detalles (zz, confeti, …). */
+const MASCOT_VIEWBOX = '-10 -14 120 120';
 
 export type WidgetShapeOptions = {
   /** Fruta de cada quien (tú / tu pareja). */
   me: FruitKey;
   partner: FruitKey;
-  /** Vidrio más opaco en modo oscuro. */
-  dark: boolean;
   /** Tamaño en dp del cuadrado de la forma. */
   size: number;
   /** Sufijo para los ids de degradados y recortes (únicos por SVG). */
   id?: string;
 };
 
-export type MoodFace = 'smile' | 'flat' | 'frown';
-
 const hex = (key: FruitKey): string => FRUITS[key].hex;
 
 const WHITE = '#FFFFFF';
+/** Tinta del tema claro: la cara de la mascota se lee sobre las 7 frutas. */
+const INK = '#1B1B1F';
+/** Gotas (lágrimas, sudor, baba). */
+const DROP = '#9FD3FF';
 
-/** Degradados del vidrio: brillo del cuerpo (`s`) y del borde (`r`). */
-export function glassDefs(id: string, dark: boolean): string {
-  const top = dark ? 0.4 : 0.62;
-  return (
-    `<linearGradient id="s${id}" x1="0" y1="0" x2="0.6" y2="1">` +
-    `<stop offset="0" stop-color="${WHITE}" stop-opacity="${top}"/>` +
-    `<stop offset="0.55" stop-color="${WHITE}" stop-opacity="0.14"/>` +
-    `<stop offset="1" stop-color="${WHITE}" stop-opacity="0.28"/></linearGradient>` +
-    `<linearGradient id="r${id}" x1="0" y1="0" x2="1" y2="1">` +
-    `<stop offset="0" stop-color="${WHITE}" stop-opacity="0.95"/>` +
-    `<stop offset="0.5" stop-color="${WHITE}" stop-opacity="0.25"/>` +
-    `<stop offset="1" stop-color="${WHITE}" stop-opacity="0.7"/></linearGradient>`
-  );
+/** Desplazamiento (en unidades del lienzo) y oscurecimiento de la sombra tonal. */
+export const TONAL_OFFSET = 4;
+export const TONAL_SHADE = 0.3;
+
+/** La misma fruta, más oscura: el color de su sombra tonal. */
+export const shade = (color: string): string => tint(color, '#000000', 1 - TONAL_SHADE);
+
+/** Una pieza tonal: sombra más oscura desplazada hacia abajo y la fruta encima. */
+export function tonal(d: string, fill: string, clip = ''): string {
+  const body =
+    `<path d="${d}" transform="translate(0,${TONAL_OFFSET})" fill="${shade(fill)}"/>` +
+    `<path d="${d}" fill="${fill}"/>`;
+  return clip ? `<g clip-path="url(#${clip})">${body}</g>` : body;
 }
 
-/**
- * Una pieza de vidrio: contorno negro 24 % de 4, relleno de fruta (80 %; 90 % en oscuro),
- * degradado blanco y borde con brillo de 1.8. `clip` es el id de un `clipPath` opcional.
- */
-export function glass(d: string, fill: string, id: string, dark: boolean, clip = ''): string {
-  const cp = clip ? ` clip-path="url(#${clip})"` : '';
-  const opacity = dark ? 0.9 : 0.8;
-  return (
-    `<path d="${d}" fill="none" stroke="#000000" stroke-opacity="0.24" stroke-width="4"${cp}/>` +
-    `<path d="${d}" fill="${fill}" fill-opacity="${opacity}"${cp}/>` +
-    `<path d="${d}" fill="url(#s${id})"${cp}/>` +
-    `<path d="${d}" fill="none" stroke="url(#r${id})" stroke-width="1.8"${cp}/>`
-  );
-}
-
-function wrap(o: WidgetShapeOptions, defs: string, inner: string): string {
+function wrap(o: WidgetShapeOptions, defs: string, inner: string, viewBox = VIEWBOX): string {
   const px = Math.max(1, Math.round(o.size));
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" ` +
-    `width="${px}" height="${px}" viewBox="${VIEWBOX}">` +
-    `<defs>${defs}</defs>${inner}</svg>`
+    `width="${px}" height="${px}" viewBox="${viewBox}">` +
+    (defs ? `<defs>${defs}</defs>` : '') +
+    `${inner}</svg>`
   );
 }
 
 const idOf = (o: WidgetShapeOptions, base: string): string => `${base}${o.id ?? ''}`;
 
-/** Círculo como trazo `path` (para poder darle vidrio). */
+/** Círculo como trazo `path`. */
 const circle = (cx: number, cy: number, r: number): string =>
   `M${cx - r} ${cy} a${r} ${r} 0 1 0 ${2 * r} 0 a${r} ${r} 0 1 0 ${-2 * r} 0Z`;
 
@@ -81,38 +70,241 @@ const HEART =
 export function daysShapeSvg(o: WidgetShapeOptions): string {
   const id = idOf(o, 'd');
   const defs =
-    glassDefs(id, o.dark) +
-    `<clipPath id="cl${id}"><rect x="0" y="0" width="47.5" height="100"/></clipPath>` +
-    `<clipPath id="cr${id}"><rect x="52.5" y="0" width="47.5" height="100"/></clipPath>`;
+    `<clipPath id="cl${id}"><rect x="-2" y="-2" width="49.5" height="104"/></clipPath>` +
+    `<clipPath id="cr${id}"><rect x="52.5" y="-2" width="49.5" height="104"/></clipPath>`;
   return wrap(
     o,
     defs,
-    glass(HEART, hex(o.partner), id, o.dark, `cl${id}`) +
-      glass(HEART, hex(o.me), id, o.dark, `cr${id}`),
+    tonal(HEART, hex(o.partner), `cl${id}`) + tonal(HEART, hex(o.me), `cr${id}`),
   );
 }
 
 // ---------------------------------------------------------------------------
-// Mood de tu pareja: burbuja de diálogo en su fruta con carita.
+// Mascota: el símbolo (dos medias lunas, izquierda tú, derecha tu pareja) con una sola cara en
+// tinta que cruza la rendija. En el widget de mood siente lo que siente tu pareja: cambian la
+// cara y la postura de las mitades, que se acercan o se alejan pero nunca se tocan.
 // ---------------------------------------------------------------------------
 
-const BUBBLE =
-  'M36 8 H64 A28 28 0 0 1 92 36 V44 A28 28 0 0 1 64 72 H44 L24 90 L26 71 A28 28 0 0 1 8 44 V36 A28 28 0 0 1 36 8 Z';
+export type MascotMood =
+  | 'neutral'
+  | 'happy'
+  | 'calm'
+  | 'smitten'
+  | 'cuddly'
+  | 'sleepy'
+  | 'hungry'
+  | 'excited'
+  | 'cool'
+  | 'party'
+  | 'thinking'
+  | 'meh'
+  | 'angry'
+  | 'stressed'
+  | 'tender'
+  | 'teary'
+  | 'melting';
 
-const MOUTH: Record<MoodFace, string> = {
-  smile: 'M36 48 Q50 61 64 48',
-  flat: 'M38 53 H62',
-  frown: 'M36 58 Q50 45 64 58',
+const HALF_LEFT = 'M46 4 A46 46 0 0 0 46 96 Z';
+const HALF_RIGHT = 'M54 4 A46 46 0 0 1 54 96 Z';
+/** Gotas de "me derrito" que se suman a cada mitad. */
+const DRIPS_LEFT = ' M14 74 h7 v20 a3.5 3.5 0 0 1 -7 0Z M30 84 h7 v14 a3.5 3.5 0 0 1 -7 0Z';
+const DRIPS_RIGHT = ' M66 84 h7 v12 a3.5 3.5 0 0 1 -7 0Z M80 74 h7 v18 a3.5 3.5 0 0 1 -7 0Z';
+
+const line = (d: string, color = INK, width = 5.5): string =>
+  `<path d="${d}" stroke="${color}" stroke-width="${width}" fill="none" ` +
+  `stroke-linecap="round" stroke-linejoin="round"/>`;
+const dot = (cx: number, cy: number, r: number, color = INK): string =>
+  `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"/>`;
+const heartAt = (x: number, y: number, s: number, color: string): string =>
+  `<path transform="translate(${x},${y}) scale(${s}) translate(-50,-50)" d="${HEART}" fill="${color}"/>`;
+const star = (cx: number, cy: number, r: number): string => {
+  let d = '';
+  for (let i = 0; i < 10; i++) {
+    const a = (i * Math.PI) / 5;
+    const rr = i % 2 ? r * 0.45 : r;
+    d += `${i ? 'L' : 'M'}${(cx + rr * Math.sin(a)).toFixed(1)} ${(cy - rr * Math.cos(a)).toFixed(1)}`;
+  }
+  return `<path d="${d}Z" fill="${INK}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>`;
+};
+const drop = (x: number, y: number): string =>
+  `<path d="M${x} ${y} C${x - 4} ${y + 8} ${x - 4} ${y + 12} ${x} ${y + 12} ` +
+  `C${x + 4} ${y + 12} ${x + 4} ${y + 8} ${x} ${y}Z" fill="${DROP}"/>`;
+/** Detalle blanco con contorno oscuro fino: se lee sobre fondos claros y oscuros. */
+const outlined = (d: string, width = 3.2): string =>
+  line(d, '#000000', width + 2.4).replace('<path', '<path stroke-opacity="0.35"') +
+  line(d, WHITE, width);
+const zz = (x: number, y: number, s: number): string => `M${x} ${y} h${s} l${-s} ${s} h${s}`;
+
+const HAPPY_EYES = 'M22 48 Q30 37 38 48 M62 48 Q70 37 78 48';
+const CLOSED_EYES = 'M22 44 Q30 52 38 44 M62 44 Q70 52 78 44';
+const OPEN_SMILE = 'M33 60 Q50 82 67 60 Z';
+
+type Pose = {
+  /** Cuánto se separa cada mitad de la rendija (negativo: se acercan). */
+  gap?: number;
+  /** Inclinación de cada mitad hacia la otra, en grados. */
+  lean?: number;
+  /** Inclinación de toda la mascota, en grados. */
+  tilt?: number;
+  /** Brinco (negativo) o caída (positivo). */
+  y?: number;
+  blush?: boolean;
+  melt?: boolean;
+  face: string;
+  /** Detalles alrededor (recibe las dos frutas: izquierda, derecha). */
+  extra?: (left: string, right: string) => string;
 };
 
-export function moodShapeSvg(o: WidgetShapeOptions & { face?: MoodFace }): string {
+export const MASCOT_POSES: Record<MascotMood, Pose> = {
+  neutral: {
+    face: dot(30, 46, 5.5) + dot(70, 46, 5.5) + line('M36 64 Q50 74 64 64'),
+  },
+  happy: {
+    y: -3,
+    blush: true,
+    face: line(HAPPY_EYES) + `<path d="${OPEN_SMILE}" fill="${INK}"/>`,
+  },
+  calm: {
+    gap: -2,
+    face: line(CLOSED_EYES) + line('M40 64 Q50 70 60 64'),
+  },
+  smitten: {
+    lean: 9,
+    blush: true,
+    face: heartAt(30, 46, 0.17, INK) + heartAt(70, 46, 0.17, INK) + line('M38 64 Q50 74 62 64'),
+    extra: (l, r) => heartAt(10, 8, 0.15, l) + heartAt(90, 2, 0.12, r),
+  },
+  cuddly: {
+    lean: 6,
+    gap: -2,
+    blush: true,
+    face: line(HAPPY_EYES) + line('M38 62 Q50 72 62 62'),
+    // Bracitos abiertos hacia afuera, pidiendo abrazo.
+    extra: (l, r) =>
+      line('M9 64 Q-2 60 -6 46', shade(l), 8) +
+      line('M9 62 Q-2 58 -6 44', l, 8) +
+      line('M91 64 Q102 60 106 46', shade(r), 8) +
+      line('M91 62 Q102 58 106 44', r, 8),
+  },
+  sleepy: {
+    tilt: 12,
+    y: 4,
+    face:
+      line('M22 48 Q30 53 38 48 M62 48 Q70 53 78 48') +
+      `<ellipse cx="50" cy="66" rx="5" ry="6" fill="${INK}"/>`,
+    extra: () => outlined(zz(78, 0, 10)) + outlined(zz(94, -12, 7), 2.6),
+  },
+  hungry: {
+    face:
+      line(HAPPY_EYES) +
+      `<path d="M34 58 Q50 80 66 58 Z" fill="${INK}"/>` +
+      `<ellipse cx="54" cy="68" rx="7" ry="4.5" fill="#FF7A8A"/>` +
+      drop(64, 66),
+  },
+  excited: {
+    y: -4,
+    face: star(30, 45, 9) + star(70, 45, 9) + `<path d="M34 60 Q50 84 66 60 Z" fill="${INK}"/>`,
+  },
+  cool: {
+    tilt: -4,
+    face:
+      `<path d="M18 38 H44 V46 A10 10 0 0 1 34 56 H28 A10 10 0 0 1 18 46 Z" fill="${INK}"/>` +
+      `<path d="M56 38 H82 V46 A10 10 0 0 1 72 56 H66 A10 10 0 0 1 56 46 Z" fill="${INK}"/>` +
+      line('M44 41 H56', INK, 4) +
+      line('M38 68 Q52 74 64 64'),
+  },
+  party: {
+    y: -4,
+    blush: true,
+    face: line(HAPPY_EYES) + `<path d="M34 58 Q50 84 66 58 Z" fill="${INK}"/>`,
+    extra: (l, r) =>
+      dot(4, 12, 3.5, l) +
+      `<rect x="88" y="4" width="7" height="7" rx="1.5" fill="${r}" transform="rotate(25 91 7)"/>` +
+      dot(98, 30, 3, l) +
+      `<rect x="-2" y="34" width="6" height="6" rx="1.5" fill="${r}" transform="rotate(-20 1 37)"/>`,
+  },
+  thinking: {
+    tilt: -6,
+    face: dot(34, 42, 5.5) + dot(74, 42, 5.5) + line('M40 66 H58'),
+    extra: () =>
+      outlined('M84 2 h0.1', 6) + outlined('M93 -4 h0.1', 6) + outlined('M102 -10 h0.1', 6),
+  },
+  meh: {
+    face: dot(30, 46, 5.5) + dot(70, 46, 5.5) + line('M38 66 Q48 70 62 62') + drop(84, 18),
+  },
+  angry: {
+    gap: 5,
+    face:
+      line('M20 36 L38 43 M80 36 L62 43') +
+      dot(30, 51, 5) +
+      dot(70, 51, 5) +
+      line('M38 72 Q50 62 62 72'),
+  },
+  stressed: {
+    gap: 3,
+    face:
+      line('M22 40 L36 47 L22 54 M78 40 L64 47 L78 54') +
+      line('M36 68 Q40 63 44 68 Q48 73 52 68 Q56 63 60 68 Q62 70 64 68', INK, 4.5),
+    extra: () => outlined('M-6 40 Q-10 50 -6 60', 3) + outlined('M106 40 Q110 50 106 60', 3),
+  },
+  tender: {
+    gap: -1,
+    blush: true,
+    face:
+      dot(30, 48, 9) +
+      dot(70, 48, 9) +
+      dot(27, 44, 3, WHITE) +
+      dot(67, 44, 3, WHITE) +
+      line('M42 70 Q46 66 50 70 Q54 74 58 70', INK, 4.5),
+  },
+  teary: {
+    y: 3,
+    face:
+      line('M22 46 Q30 40 38 46 M62 46 Q70 40 78 46') +
+      line('M38 70 Q50 62 62 70') +
+      drop(28, 52) +
+      drop(72, 52),
+  },
+  melting: {
+    y: 3,
+    melt: true,
+    face: dot(30, 50, 5) + dot(70, 53, 5) + line('M34 66 Q50 74 66 62'),
+  },
+};
+
+/** Mitad de la mascota con su pose; `side` -1 es la izquierda (tú), 1 la derecha (tu pareja). */
+function mascotHalf(pose: Pose, fill: string, side: -1 | 1, clipId: string): string {
+  const dx = side * (pose.gap ?? 0);
+  const rot = side * -(pose.lean ?? 0) + (pose.tilt ?? 0);
+  const pivot = side < 0 ? 46 : 54;
+  const d =
+    (side < 0 ? HALF_LEFT : HALF_RIGHT) + (pose.melt ? (side < 0 ? DRIPS_LEFT : DRIPS_RIGHT) : '');
+  const blush = pose.blush
+    ? `<clipPath id="${clipId}"><path d="${d}"/></clipPath>` +
+      `<ellipse cx="${side < 0 ? 20 : 80}" cy="62" rx="7" ry="4.5" ` +
+      `fill="${tint(fill, '#FF3D6E', 0.55)}" opacity="0.8" clip-path="url(#${clipId})"/>`
+    : '';
+  return (
+    `<g transform="translate(${dx},${pose.y ?? 0}) rotate(${rot} ${pivot} 96)">` +
+    tonal(d, fill) +
+    blush +
+    `</g>`
+  );
+}
+
+export function mascotSvg(o: WidgetShapeOptions & { mood?: MascotMood }): string {
   const id = idOf(o, 'm');
+  const pose = MASCOT_POSES[o.mood ?? 'neutral'];
+  const left = hex(o.me);
+  const right = hex(o.partner);
   return wrap(
     o,
-    glassDefs(id, o.dark),
-    glass(BUBBLE, hex(o.partner), id, o.dark) +
-      `<circle cx="38" cy="36" r="4.6" fill="${WHITE}"/><circle cx="62" cy="36" r="4.6" fill="${WHITE}"/>` +
-      `<path d="${MOUTH[o.face ?? 'smile']}" fill="none" stroke="${WHITE}" stroke-width="4.2" stroke-linecap="round"/>`,
+    '',
+    mascotHalf(pose, left, -1, `bl${id}`) +
+      mascotHalf(pose, right, 1, `br${id}`) +
+      `<g transform="translate(0,${pose.y ?? 0}) rotate(${pose.tilt ?? 0} 50 96)">${pose.face}</g>` +
+      (pose.extra ? pose.extra(left, right) : ''),
+    MASCOT_VIEWBOX,
   );
 }
 
@@ -135,20 +327,15 @@ export const fillTop = (progress: number): number =>
 export function nextShapeSvg(o: WidgetShapeOptions & { progress: number }): string {
   const id = idOf(o, 'n');
   const top = fillTop(o.progress);
-  const height = MOON_BASE - top + 2;
-  const defs = glassDefs(id, o.dark) + `<clipPath id="cd${id}"><path d="${MOON}"/></clipPath>`;
-  const rect = `x="0" y="${top}" width="100" height="${height}"`;
-  const fill =
-    `<g clip-path="url(#cd${id})">` +
-    `<rect ${rect} fill="${hex(o.partner)}" fill-opacity="0.85"/>` +
-    `<rect ${rect} fill="url(#s${id})"/></g>`;
+  const height = MOON_BASE - top;
+  const defs = `<clipPath id="cd${id}"><path d="${MOON}"/></clipPath>`;
   return wrap(
     o,
     defs,
-    glass(MOON, hex(o.me), id, o.dark) +
-      fill +
-      `<path d="${MOON}" fill="none" stroke="url(#r${id})" stroke-width="1.8"/>` +
-      `<path d="M2 80 H98" stroke="${WHITE}" stroke-width="3.5" stroke-linecap="round"/>`,
+    tonal(MOON, hex(o.me)) +
+      `<rect x="0" y="${top}" width="100" height="${height}" fill="${hex(o.partner)}" ` +
+      `clip-path="url(#cd${id})"/>` +
+      `<path d="M2 82 H98" stroke="${WHITE}" stroke-width="3.5" stroke-linecap="round"/>`,
   );
 }
 
@@ -169,16 +356,15 @@ export function distanceSeparation(km: number | null | undefined): number {
 }
 
 export function distShapeSvg(o: WidgetShapeOptions & { km: number | null }): string {
-  const id = idOf(o, 'k');
   const sep = distanceSeparation(o.km);
   const ax = 50 - sep / 2;
   const bx = 50 + sep / 2;
   const cy = 52;
   return wrap(
     o,
-    glassDefs(id, o.dark),
-    glass(circle(ax, cy, DIST_R), hex(o.me), id, o.dark) +
-      glass(circle(bx, cy, DIST_R), hex(o.partner), id, o.dark) +
+    '',
+    tonal(circle(ax, cy, DIST_R), hex(o.me)) +
+      tonal(circle(bx, cy, DIST_R), hex(o.partner)) +
       `<path d="M${ax} ${cy - 28} Q50 ${cy - 50} ${bx} ${cy - 28}" fill="none" stroke="${WHITE}" ` +
       `stroke-width="3.6" stroke-linecap="round" stroke-dasharray="0.1 7"/>`,
   );
@@ -192,28 +378,30 @@ export function storyShapeSvg(
   o: WidgetShapeOptions & { photo: string | null; dot: boolean },
 ): string {
   const id = idOf(o, 's');
+  const p = hex(o.partner);
+  const m = hex(o.me);
+  const gradient = (gid: string, a: string, b: string) =>
+    `<linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>`;
   const defs =
-    glassDefs(id, o.dark) +
-    `<linearGradient id="g${id}" x1="0" y1="0" x2="1" y2="1">` +
-    `<stop offset="0" stop-color="${hex(o.partner)}"/><stop offset="1" stop-color="${hex(o.me)}"/>` +
-    `</linearGradient><clipPath id="cs${id}"><circle cx="50" cy="50" r="33"/></clipPath>`;
-  // Sin foto el círculo queda como vidrio de la fruta de tu pareja.
+    gradient(`g${id}`, p, m) +
+    gradient(`h${id}`, shade(p), shade(m)) +
+    `<clipPath id="cs${id}"><circle cx="50" cy="50" r="34"/></clipPath>`;
+  // Sin foto el círculo queda en la fruta de tu pareja.
   const inner = o.photo
-    ? `<image xlink:href="${o.photo}" x="17" y="17" width="66" height="66" ` +
+    ? `<image xlink:href="${o.photo}" x="16" y="16" width="68" height="68" ` +
       `preserveAspectRatio="xMidYMid slice" clip-path="url(#cs${id})"/>`
-    : `<circle cx="50" cy="50" r="33" fill="${hex(o.partner)}" fill-opacity="${o.dark ? 0.9 : 0.8}"/>`;
-  const dot = o.dot
-    ? `<circle cx="84" cy="16" r="8" fill="${hex(o.partner)}" stroke="${WHITE}" stroke-width="2.5"/>`
+    : tonal(circle(50, 50, 30), p);
+  const newDot = o.dot
+    ? `<circle cx="84" cy="16" r="8" fill="${p}" stroke="${WHITE}" stroke-width="2.5"/>`
     : '';
   return wrap(
     o,
     defs,
-    `<circle cx="50" cy="50" r="45" fill="none" stroke="#000000" stroke-opacity="0.24" stroke-width="4"/>` +
-      `<circle cx="50" cy="50" r="42" fill="none" stroke="url(#g${id})" stroke-width="7"/>` +
+    `<circle cx="50" cy="${50 + TONAL_OFFSET}" r="42" fill="none" stroke="url(#h${id})" stroke-width="8"/>` +
+      `<circle cx="50" cy="50" r="42" fill="none" stroke="url(#g${id})" stroke-width="8"/>` +
       inner +
-      `<circle cx="50" cy="50" r="33" fill="url(#s${id})" opacity="0.6"/>` +
-      `<circle cx="50" cy="50" r="33" fill="none" stroke="url(#r${id})" stroke-width="1.8"/>` +
-      dot,
+      newDot,
   );
 }
 
@@ -230,28 +418,19 @@ const SPARK_SMALL =
 export const SPARK_OFF_OPACITY = 0.35;
 
 export function streakShapeSvg(o: WidgetShapeOptions & { active: boolean }): string {
-  const id = idOf(o, 'r');
   const group = o.active ? '<g>' : `<g opacity="${SPARK_OFF_OPACITY}">`;
   return wrap(
     o,
-    glassDefs(id, o.dark),
-    `${group}<g transform="translate(5,-4) scale(0.9)">${glass(SPARK_BIG, hex(o.me), id, o.dark)}</g>` +
-      `<g transform="translate(2,10)">${glass(SPARK_SMALL, hex(o.partner), id, o.dark)}</g></g>`,
+    '',
+    `${group}<g transform="translate(5,-4) scale(0.9)">${tonal(SPARK_BIG, hex(o.me))}</g>` +
+      `<g transform="translate(2,10)">${tonal(SPARK_SMALL, hex(o.partner))}</g></g>`,
   );
 }
 
 // ---------------------------------------------------------------------------
-// Estado vacío: el símbolo de dos medias lunas (tú a la izquierda, tu pareja a la derecha).
+// Estado vacío: la mascota tranquila.
 // ---------------------------------------------------------------------------
 
-const HALF_LEFT = 'M46 10 A40 40 0 0 0 46 90 Z';
-const HALF_RIGHT = 'M54 10 A40 40 0 0 1 54 90 Z';
-
 export function emptyShapeSvg(o: WidgetShapeOptions): string {
-  const id = idOf(o, 'e');
-  return wrap(
-    o,
-    glassDefs(id, o.dark),
-    glass(HALF_LEFT, hex(o.me), id, o.dark) + glass(HALF_RIGHT, hex(o.partner), id, o.dark),
-  );
+  return mascotSvg({ ...o, mood: 'neutral' });
 }
