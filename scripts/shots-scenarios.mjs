@@ -1387,6 +1387,42 @@ export const SCENARIOS = {
       return undefined;
     },
   },
+  // v0.13.3: lado a lado (ubicación precisa): "juntos" en Inicio.
+  distancia_juntos: {
+    prefix: 'distancia-juntos',
+    me: profiles.me,
+    partner: profiles.partner,
+    members: [member(ME_ID), member(PARTNER_ID)],
+    moods: sampleMoods,
+    routes: ['/'],
+    rest: (path, { route, json }) => {
+      if (path === '/rest/v1/locations') {
+        const at = new Date(Date.now() - 3 * 60_000).toISOString();
+        return json(route, [
+          {
+            user_id: ME_ID,
+            couple_id: COUPLE_ID,
+            lat: 19.4326,
+            lng: -99.1332,
+            accuracy_m: 18,
+            city: 'Ciudad de México',
+            updated_at: at,
+          },
+          {
+            user_id: PARTNER_ID,
+            couple_id: COUPLE_ID,
+            lat: 19.4328,
+            lng: -99.1333,
+            accuracy_m: 30,
+            city: 'Ciudad de México',
+            updated_at: at,
+          },
+        ]);
+      }
+      if (path === '/rest/v1/rpc/set_my_location') return json(route, {});
+      return undefined;
+    },
+  },
   // Solo yo comparto: espera a que mi pareja active la suya.
   distancia_solo_yo: {
     prefix: 'distancia-solo-yo',
@@ -2095,7 +2131,7 @@ export const SCENARIOS = {
       },
     };
   })(),
-  // Elegir fruta: ajustes (pareja = sandía, bloquea Sandía/Pitaya/Mandarina) y paso del onboarding.
+  // Elegir fruta: ajustes (pareja = sandía: bloquea las rojas, Pitaya y Mandarina) y onboarding.
   fruta: {
     prefix: 'fruta',
     me: profiles.me,

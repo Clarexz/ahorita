@@ -90,15 +90,49 @@ const KINDS: readonly string[] = [
   'visit',
 ];
 // Color de cada fruta (Fase 12A). Duplicado a propósito de `src/lib/fruits.ts` (FRUITS[..].hex):
-// esta función corre en Deno y no importa de `src/`. Si cambia un color allá, cámbialo aquí.
+// esta función corre en Deno y no importa de `src/`. La prueba `src/lib/__tests__/fruitsSql.test.ts`
+// revisa que coincidan.
 export const FRUIT_HEX: Record<string, string> = {
   sandia: '#F2495C',
-  mango: '#FFC24B',
+  fresa: '#E8344E',
+  manzana_roja: '#D42A3C',
+  frambuesa: '#E0335F',
+  cereza: '#B0173A',
+  granada: '#C0263F',
+  pitaya: '#E83E9C',
+  tuna: '#C81F6E',
+  toronja: '#FF7A8A',
+  lichi: '#F2789E',
+  guayaba_rosa: '#F7869B',
   mandarina: '#FF8A3D',
+  naranja: '#FF9A1F',
+  durazno: '#FFA273',
+  papaya: '#FF7F4A',
+  mamey: '#EE6A3A',
+  chabacano: '#FBA73F',
+  melon: '#FFB482',
+  mango: '#FFC24B',
+  platano: '#FFDF4D',
+  pina: '#F7C51E',
+  maracuya: '#F2B50F',
+  carambola: '#F4D83F',
+  guayaba: '#E9CB4A',
   limon: '#C5DC3A',
+  manzana_verde: '#9CD03C',
+  kiwi: '#8DB82F',
+  pera: '#C9D35B',
+  uva_verde: '#B4D25E',
+  aguacate: '#6A9A35',
   uva: '#8B5CF6',
   arandano: '#3F6BFF',
-  pitaya: '#E83E9C',
+  ciruela: '#7B3592',
+  higo: '#714283',
+  zarzamora: '#4E2C73',
+  capulin: '#5E2148',
+  coco: '#8E603F',
+  tamarindo: '#9C6235',
+  datil: '#7B4B2B',
+  chicozapote: '#A87550',
 };
 // Avisos sin fruta (sistema, o si no se pudo consultar): Sandía.
 export const DEFAULT_NOTIFICATION_COLOR = FRUIT_HEX.sandia;

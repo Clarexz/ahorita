@@ -573,6 +573,7 @@ export type Database = {
       };
       locations: {
         Row: {
+          accuracy_m: number | null;
           city: string | null;
           couple_id: string;
           lat: number;
@@ -582,6 +583,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          accuracy_m?: number | null;
           city?: string | null;
           couple_id: string;
           lat: number;
@@ -590,6 +592,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          accuracy_m?: number | null;
           city?: string | null;
           couple_id?: string;
           lat?: number;
@@ -1735,8 +1738,9 @@ export type Database = {
         };
       };
       set_my_location: {
-        Args: { p_city?: string; p_lat: number; p_lng: number };
+        Args: { p_accuracy?: number; p_city?: string; p_lat: number; p_lng: number };
         Returns: {
+          accuracy_m: number | null;
           city: string | null;
           couple_id: string;
           lat: number;

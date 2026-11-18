@@ -1,20 +1,71 @@
 import {
   BLOCKED_PAIRS,
+  CLASSIC_FRUIT_KEYS,
+  FRUIT_GROUPS,
   FRUIT_KEYS,
   FRUITS,
+  contrastRatio,
   fruitClash,
   fruitOptions,
+  fruitSections,
   isFruitKey,
+  onColor,
   resolveFruits,
   tint,
 } from '../fruits';
 
 describe('frutas', () => {
-  it('tiene las 7 del manual y cada sugerida es compatible', () => {
-    expect(FRUIT_KEYS).toHaveLength(7);
+  it('tiene 40 frutas y cada sugerida es de otro color y compatible', () => {
+    expect(FRUIT_KEYS).toHaveLength(40);
+    expect(new Set(FRUIT_KEYS).size).toBe(40);
     for (const key of FRUIT_KEYS) {
-      expect(fruitClash(key, FRUITS[key].suggested)).toBeNull();
+      const suggested = FRUITS[FRUITS[key].suggested];
+      expect(suggested.group).not.toBe(FRUITS[key].group);
+      expect(fruitClash(key, suggested.key)).toBeNull();
     }
+  });
+
+  it('las 7 del manual conservan su color, su texto encima y su sugerida', () => {
+    expect(
+      CLASSIC_FRUIT_KEYS.map((k) => [k, FRUITS[k].hex, FRUITS[k].on, FRUITS[k].suggested]),
+    ).toEqual([
+      ['sandia', '#F2495C', '#1B1B1F', 'mango'],
+      ['mango', '#FFC24B', '#1B1B1F', 'sandia'],
+      ['mandarina', '#FF8A3D', '#1B1B1F', 'uva'],
+      ['limon', '#C5DC3A', '#1B1B1F', 'pitaya'],
+      ['uva', '#8B5CF6', '#FFFDF8', 'limon'],
+      ['arandano', '#3F6BFF', '#FFFDF8', 'mandarina'],
+      ['pitaya', '#E83E9C', '#1B1B1F', 'limon'],
+    ]);
+  });
+
+  it('cada color tiene al menos 4 frutas y el texto encima se lee (contraste >= 4)', () => {
+    for (const group of FRUIT_GROUPS) {
+      expect(FRUIT_KEYS.filter((k) => FRUITS[k].group === group).length).toBeGreaterThanOrEqual(4);
+    }
+    for (const key of FRUIT_KEYS) {
+      expect(contrastRatio(FRUITS[key].hex, FRUITS[key].on)).toBeGreaterThanOrEqual(4);
+      expect(FRUITS[key].hex).toMatch(/^#[0-9A-F]{6}$/);
+    }
+    expect(onColor('#FFFFFF')).toBe('#1B1B1F');
+    expect(onColor('#000000')).toBe('#FFFDF8');
+  });
+
+  it('las del mismo color chocan; manzana roja y verde conviven', () => {
+    expect(fruitClash('fresa', 'sandia')).toBe('similar');
+    expect(fruitClash('kiwi', 'aguacate')).toBe('similar');
+    expect(fruitClash('arandano', 'zarzamora')).toBe('similar');
+    expect(fruitClash('manzana_roja', 'manzana_verde')).toBeNull();
+    expect(fruitClash('coco', 'platano')).toBeNull();
+  });
+
+  it('fruitSections agrupa todas en el orden de los grupos', () => {
+    const sections = fruitSections('mango');
+    expect(sections.map((s) => s.group)).toEqual([...FRUIT_GROUPS]);
+    expect(sections.flatMap((s) => s.options.map((o) => o.fruit.key))).toEqual([...FRUIT_KEYS]);
+    const yellow = sections.find((s) => s.group === 'amarillo')!;
+    expect(yellow.label).toBe('Amarillas');
+    expect(yellow.options.every((o) => o.blocked)).toBe(true);
   });
 
   it('bloquea la misma fruta y los pares que se parecen, en cualquier orden', () => {
@@ -29,7 +80,8 @@ describe('frutas', () => {
 
   it('valida llaves', () => {
     expect(isFruitKey('pitaya')).toBe(true);
-    expect(isFruitKey('fresa')).toBe(false);
+    expect(isFruitKey('fresa')).toBe(true);
+    expect(isFruitKey('kiwano')).toBe(false);
     expect(isFruitKey(null)).toBe(false);
   });
 });
@@ -61,7 +113,7 @@ describe('resolveFruits', () => {
   });
 
   it('ignora valores desconocidos', () => {
-    expect(resolveFruits({ id: 'aaa', fruit: 'fresa' }, B)).toEqual({
+    expect(resolveFruits({ id: 'aaa', fruit: 'kiwano' }, B)).toEqual({
       me: 'sandia',
       partner: 'mango',
     });

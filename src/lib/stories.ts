@@ -1,4 +1,4 @@
-import { FRUIT_KEYS, type FruitKey } from './fruits';
+import { CLASSIC_FRUIT_KEYS, type FruitKey } from './fruits';
 import { parseIsoDate, todayIn } from './dates';
 import { DEFAULT_TIME_ZONE } from './timezone';
 
@@ -25,8 +25,16 @@ export const LEGACY_STORY_BGS: readonly LegacyStoryBg[] = [
   'nopal',
   'ink',
 ];
-/** Fondos que usan las stories nuevas: Hueso y las 7 frutas. */
-export const STORY_BGS: readonly StoryBg[] = ['bone', ...FRUIT_KEYS];
+/** Fondos que ofrece el selector: Hueso y las 7 frutas del manual. */
+export const STORY_BGS: readonly StoryBg[] = ['bone', ...CLASSIC_FRUIT_KEYS];
+
+/**
+ * Fondos del selector para quien tiene la fruta `mine`: Hueso, su fruta (si no es de las 7, para
+ * que el fondo por defecto también se pueda elegir) y las 7 del manual. Cualquier fruta es válida.
+ */
+export function storyBgOptions(mine?: FruitKey | null): StoryBg[] {
+  return mine && !STORY_BGS.includes(mine) ? ['bone', mine, ...CLASSIC_FRUIT_KEYS] : [...STORY_BGS];
+}
 export const STORY_FONTS: readonly StoryFont[] = ['hand', 'body', 'stamp'];
 export const STORY_FONT_LABELS: Record<StoryFont, string> = {
   hand: 'A mano',

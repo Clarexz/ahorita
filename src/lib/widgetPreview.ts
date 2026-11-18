@@ -1,6 +1,6 @@
 /**
  * Modelo de ejemplo para la pantalla "Cómo agregar widgets": usa los datos reales de la pareja
- * (aniversario y nombre) cuando existen y completa lo demás con un mood y una story de muestra, para que las
+ * (aniversario y nombre) cuando existen y completa lo demás con un mood, una racha y una story de muestra, para que las
  * vistas previas se vean llenas aunque todavía no haya nada capturado.
  */
 import { buildWidgetSnapshot, widgetModel, type WidgetModel } from './widgets';
@@ -28,6 +28,7 @@ export function previewModel(input: PreviewInput = {}): WidgetModel {
       created_at: new Date(now.getTime() - 25 * 60_000).toISOString(),
     },
     partnerId: 'preview',
+    streak: { current: 12, answeredToday: true },
     // Ejemplo: Ciudad de México y Monterrey.
     distance: {
       me: { city: 'Ciudad de México', at: now.toISOString() },

@@ -1066,6 +1066,7 @@ Fase 12 (pulido y v1.0.0).
 | 12A Rediseño "ahorita" | ✅ Cerrada (2026-11-03) | #19 | Nombre "ahorita", frutas por persona (`set_fruit`), DISENO v2, tema y componentes nuevos (sin Bitácora), todas las pantallas rediseñadas en claro y oscuro, 6 widgets 1×1 con vidrio + Racha (snapshot v4), ícono/splash/avisos con la fruta, fondos de story con las 7 frutas y copy con la voz del manual (D97–D106). Spike de widgets v0.12.1; APK v0.12.2. Servidor desplegado (`2e800d5`), PR mergeado a `main` a pedido del usuario. Falta probar el APK v0.12.2 en los dos celulares (§10.1). |
 | Ajustes post-12A (cambios menores) | ✅ Cerrada (2026-11-04) | #21 | Racha estilo TikTok (5 recuperaciones/mes, solo ayer), opción "Otra", teclado, Inicio con distancia/listas/lenguaje del amor/tiempo juntos, Preguntas + Juegos, memorias con visitas, Más → "Otros ajustes", "mesario", sin rebotes (D108–D111). Migración `20261110000000_streak_repairs_other_choice_memory_visits.sql`: **requiere deploy antes de instalar el APK** (notas en `docs/releases/v0.12.4.md`). Mergeada a `main` y APK **v0.12.4** lanzado a pedido del usuario; servidor desplegado (migración aplicada, confirmado el 2026-11-11). |
 | Ajustes v0.13.x (micrófono, Google) | ✅ Desplegada y mergeada (v0.13.2) | #25 | Micrófono de las respuestas en audio (la solicitud sale la primera vez que se toca "Grabar audio") y **"Continuar con Google"**: un solo botón para entrar y crear cuenta. Con `DISABLE_SIGNUP=false`, el hook `private.hook_before_user_created` deja crear cuentas solo con Google; el correo responde 403 `signup_requires_google`. Servidor desplegado el 2026-11-17 (`31dfccc`, migración `20261113000000_google_signup_hook`). APK **v0.13.2** publicado y PR #25 mergeado a `main` a pedido del usuario (2026-11-17); falta probarlo en los celulares (§10.1). D126–D127. |
+| Ajustes v0.13.3 (distancia, frutas, widgets) | 🟡 Lista, falta deploy y APK | | Distancia precisa con "juntos" (D129), 40 frutas por color (D128) y vistas previas del selector de widgets (D130). Migraciones `20261118000000_more_fruits` y `20261118000001_precise_location` + `notify`: **deploy antes del APK**. Notas en `docs/releases/v0.13.3.md`. |
 
 ### 10.1 Camino a la v1.0.0
 
@@ -1079,6 +1080,10 @@ Estamos cerca de la v1.0.0, pero antes faltan:
    - El usuario dice que hay más cosas por corregir: preguntarle la lista al empezar.
 
 **Pruebas en el celular pendientes** (una línea por release, con su lista en `docs/releases/`):
+
+- **v0.13.3** (`v0.13.3.md`, cuando se publique): "juntos" en la tarjeta y el widget de Distancia
+  estando lado a lado (con "Usar ubicación precisa"), el selector de frutas por color y las vistas
+  previas en el selector de widgets del celular.
 
 - **v0.13.2** (`v0.13.2.md`): micrófono (que aparezca la solicitud la primera vez que se toca
   "Grabar audio" y que el permiso se vea en ajustes) y "Continuar con Google" (entrar con las dos

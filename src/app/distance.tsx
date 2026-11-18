@@ -33,9 +33,9 @@ const MODE_COPY: Record<Exclude<ShareMode, 'off'>, string> = {
 };
 
 const PRIVACY = [
-  'Solo se guarda tu última ubicación, redondeada a más o menos 1 km y con el nombre de tu ciudad. No hay historial ni rutas.',
+  'Solo se guarda tu última ubicación (con unos 10 metros de margen) y el nombre de tu ciudad. No hay historial ni rutas.',
   'Solo la ve tu pareja. Se borra cuando apagas la distancia o cuando salen de la pareja.',
-  'La app pide ubicación aproximada, nunca la exacta, y no te la pide hasta que tú la activas aquí.',
+  'Con la ubicación precisa la app sabe cuándo están juntos. Si eliges la aproximada, solo verán más o menos a cuántos kilómetros están. No te la pide hasta que tú la activas aquí.',
   'En segundo plano Android entrega pocas actualizaciones por hora, por eso el gasto de batería es mínimo. Si lo notas, vuelve a “Al abrir la app”.',
 ];
 
@@ -54,6 +54,11 @@ export default function DistanceScreen() {
     permission.foreground.granted &&
     !permission.background.granted;
   const showDenied = supported && (fgRevoked || deniedHere);
+  const approximateOnly =
+    sharing &&
+    permission !== null &&
+    permission.foreground.granted &&
+    !permission.foreground.precise;
 
   const apply = async (next: ShareMode) => {
     setAskBackground(false);
@@ -144,6 +149,19 @@ export default function DistanceScreen() {
             />
           ) : null}
 
+          {approximateOnly ? (
+            <Notice
+              action={{
+                label: 'Abrir ajustes del celular',
+                onPress: () => void Linking.openSettings(),
+              }}
+            >
+              Tienes la ubicación aproximada: Android la mueve unos kilómetros a propósito, así que
+              aunque estén juntos se verá que están lejos. En Permisos → Ubicación prende “Usar
+              ubicación precisa”.
+            </Notice>
+          ) : null}
+
           {bgRevoked ? (
             <Notice
               action={{
@@ -180,8 +198,7 @@ export default function DistanceScreen() {
         <View style={{ gap: spacing.lg }}>
           <Text variant="body" tone="muted">
             Para actualizarse con la app cerrada, Android te va a mandar a Ajustes. Ahí elige
-            “Permitir todo el tiempo”. Lo usamos solo para esto, de vez en cuando y con ubicación
-            aproximada.
+            “Permitir todo el tiempo”. Lo usamos solo para esto y de vez en cuando.
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
             <Button title="Continuar" onPress={() => void apply('background')} />

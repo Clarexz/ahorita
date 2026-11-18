@@ -146,6 +146,18 @@ select pg_temp.assert(
   not exists (select 1 from t_keys where private.fruit_clash(k, private.suggested_fruit(k)) is not null),
   'las sugeridas siempre conviven');
 
+-- Frutas nuevas (20261118000000_more_fruits): el mismo grupo de color choca.
+select pg_temp.assert(private.fruit_group('fresa') = 'rojo', 'fresa es roja');
+select pg_temp.assert(private.fruit_group('kiwano') is null, 'llave inválida sin grupo');
+select pg_temp.assert(private.fruit_clash('fresa', 'sandia') = 'similar', 'fresa-sandia: mismo color');
+select pg_temp.assert(private.fruit_clash('manzana_verde', 'limon') = 'similar', 'manzana verde-limon');
+select pg_temp.assert(private.fruit_clash('manzana_roja', 'manzana_verde') is null, 'manzana roja y verde conviven');
+select pg_temp.assert(private.fruit_clash('coco', 'zarzamora') is null, 'coco-zarzamora conviven');
+select pg_temp.assert(private.suggested_fruit('tamarindo') = 'mango', 'sugerida de tamarindo');
+select pg_temp.assert(
+  not exists (select 1 from t_keys where private.fruit_group(k) is null),
+  'las 7 originales tienen grupo');
+
 -- =============================================================================
 -- 2) Permisos y sesión
 -- =============================================================================
@@ -170,7 +182,7 @@ select pg_temp.assert(pg_temp.eff('E') = 'sandia', 'sin elegir y sin pareja: San
 select pg_temp.assert((select fruit from public.profiles where id = pg_temp.u('E')) is null, 'la columna empieza en null');
 
 select pg_temp.as_user('E');
-select pg_temp.expect_error($q$select public.set_fruit('kiwi')$q$, 'invalid_fruit');
+select pg_temp.expect_error($q$select public.set_fruit('kiwano')$q$, 'invalid_fruit');
 select pg_temp.expect_error($q$select public.set_fruit('')$q$, 'invalid_fruit');
 select pg_temp.expect_error($q$select public.set_fruit('Mango')$q$, 'invalid_fruit');
 select pg_temp.expect_error($q$select public.set_fruit(null)$q$, 'invalid_fruit');
@@ -197,7 +209,7 @@ select pg_temp.assert((select fruit from public.profiles where id = pg_temp.u('E
 -- El CHECK rechaza llaves que no existen (aun para el superusuario).
 create function pg_temp.check_rejects() returns boolean language plpgsql as $$
 begin
-  update public.profiles set fruit = 'kiwi' where id = pg_temp.u('E');
+  update public.profiles set fruit = 'kiwano' where id = pg_temp.u('E');
   return false;
 exception when check_violation then
   return true;
@@ -295,7 +307,7 @@ select pg_temp.raw('A', null); select pg_temp.raw('B', 'mango');
 select pg_temp.assert(pg_temp.try_set('A', 'mango') = 'ERR:fruit_taken', 'misma que la de la pareja');
 select pg_temp.assert(pg_temp.try_set('A', 'limon') = 'ERR:fruit_too_similar', 'limón se parece a mango');
 select pg_temp.assert(pg_temp.try_set('A', 'mandarina') = 'ERR:fruit_too_similar', 'mandarina se parece a mango');
-select pg_temp.assert(pg_temp.try_set('A', 'kiwi') = 'ERR:invalid_fruit', 'llave inválida con pareja');
+select pg_temp.assert(pg_temp.try_set('A', 'kiwano') = 'ERR:invalid_fruit', 'llave inválida con pareja');
 select pg_temp.assert((select fruit from public.profiles where id = pg_temp.u('A')) is null, 'los rechazos no guardan nada');
 select pg_temp.assert(pg_temp.try_set('A', 'uva') = 'uva', 'uva sí convive con mango');
 select pg_temp.assert((select fruit from public.profiles where id = pg_temp.u('A')) = 'uva', 'se guardó uva');
