@@ -1067,7 +1067,7 @@ Fase 12 (pulido y v1.0.0).
 | Ajustes post-12A (cambios menores) | ✅ Cerrada (2026-11-04) | #21 | Racha estilo TikTok (5 recuperaciones/mes, solo ayer), opción "Otra", teclado, Inicio con distancia/listas/lenguaje del amor/tiempo juntos, Preguntas + Juegos, memorias con visitas, Más → "Otros ajustes", "mesario", sin rebotes (D108–D111). Migración `20261110000000_streak_repairs_other_choice_memory_visits.sql`: **requiere deploy antes de instalar el APK** (notas en `docs/releases/v0.12.4.md`). Mergeada a `main` y APK **v0.12.4** lanzado a pedido del usuario; servidor desplegado (migración aplicada, confirmado el 2026-11-11). |
 | Ajustes v0.13.x (micrófono, Google) | ✅ Desplegada y mergeada (v0.13.2) | #25 | Micrófono de las respuestas en audio (la solicitud sale la primera vez que se toca "Grabar audio") y **"Continuar con Google"**: un solo botón para entrar y crear cuenta. Con `DISABLE_SIGNUP=false`, el hook `private.hook_before_user_created` deja crear cuentas solo con Google; el correo responde 403 `signup_requires_google`. Servidor desplegado el 2026-11-17 (`31dfccc`, migración `20261113000000_google_signup_hook`). APK **v0.13.2** publicado y PR #25 mergeado a `main` a pedido del usuario (2026-11-17); falta probarlo en los celulares (§10.1). D126–D127. |
 | Widgets tonales y mascota | ✅ Mergeada (v0.13.3) | #24 | Fuera el vidrio simulado: estilo tonal en los 6 widgets; el de mood usa la **mascota** (símbolo con cara) con pose por cada uno de los 16 moods; estado vacío con la mascota (D128). Sin cambios de servidor. APK v0.13.3 publicado y PR mergeado a `main` a pedido del usuario (2026-11-18); falta probar en los celulares con `docs/releases/v0.13.3.md`. |
-| Ajustes v0.13.4 (distancia, frutas, widgets) | 🟡 Desplegada, APK v0.13.4 | | Distancia precisa con "juntos" (D130), 40 frutas por color (D129) y vistas previas del selector de widgets (D131). Migraciones `20261118000000_more_fruits` y `20261118000001_precise_location` + `notify`, desplegadas el 2026-11-18 (`ccbf21f`). Vistas previas regeneradas con el estilo tonal de la v0.13.3. Notas en `docs/releases/v0.13.4.md`. |
+| Ajustes v0.13.4 (distancia, frutas, widgets) | ✅ Desplegada y mergeada (v0.13.4) | #26 | Distancia precisa con "juntos" (D130), 40 frutas por color (D129) y vistas previas del selector de widgets (D131). Migraciones `20261118000000_more_fruits` y `20261118000001_precise_location` + `notify`, desplegadas el 2026-11-18 (`ccbf21f`). Vistas previas regeneradas con el estilo tonal de la v0.13.3. Notas en `docs/releases/v0.13.4.md`. |
 
 ### 10.1 Camino a la v1.0.0
 
@@ -1114,7 +1114,7 @@ celulares antes de la 12A (confirmado el 2026-11-03).
 
 - El clon del VPS (`/opt/app-parejas/repo`) está en la rama `ccr-fec3a528-3qrn1l` (`ccbf21f`), con
   21 migraciones registradas (desde el 2026-11-18, incluye `20261118000000_more_fruits` y
-  `20261118000001_precise_location`). Cuando esa rama se mergee, el siguiente deploy es
+  `20261118000001_precise_location`). La rama ya está mergeada (PR #26): el siguiente deploy es
   `./scripts/server/deploy.sh main`.
 - **Registro:** `DISABLE_SIGNUP=false`, pero el hook `private.hook_before_user_created` deja crear
   cuentas **solo con Google** (D127); el registro con correo responde 403 `signup_requires_google`.
