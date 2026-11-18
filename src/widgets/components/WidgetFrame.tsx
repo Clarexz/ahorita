@@ -1,5 +1,5 @@
 'use no memo';
-// Marco común de los seis widgets 1×1: sin fondo, la forma con vidrio (SVG) y debajo el dato en
+// Marco común de los seis widgets 1×1: sin fondo, la forma tonal (SVG) y debajo el dato en
 // blanco con sombra oscura para que se lea sobre fondos claros, oscuros y fotos.
 import { FlexWidget, SvgWidget, TextWidget } from 'react-native-android-widget';
 
@@ -26,9 +26,9 @@ export function labelFontSize(text: string): number {
   return 10;
 }
 
-export function WidgetFrame({ name, size, palette, view }: Props) {
+export function WidgetFrame({ name, size, view }: Props) {
   const side = shapeSide(size.width, size.height);
-  const svg = widgetShapeSvg(view, { dark: palette.isDark, size: side });
+  const svg = widgetShapeSvg(view, { size: side });
   return (
     <FlexWidget
       style={{
