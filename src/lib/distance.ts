@@ -1,4 +1,4 @@
-// Lógica pura de "Distancia" (Fase 8, RF-20; precisa desde la v0.13.3, D129): une las ubicaciones
+// Lógica pura de "Distancia" (Fase 8, RF-20; precisa desde la v0.13.4, D130): une las ubicaciones
 // de la pareja, decide si están juntos, da formato a la distancia y decide cuándo vale la pena
 // mandar la ubicación al servidor. Sin I/O.
 import { formatNumber } from './dates';

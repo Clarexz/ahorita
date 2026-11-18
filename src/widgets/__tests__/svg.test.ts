@@ -7,50 +7,42 @@ import {
   distShapeSvg,
   emptyShapeSvg,
   fillTop,
-  glass,
-  glassDefs,
-  moodShapeSvg,
+  MASCOT_POSES,
+  mascotSvg,
   nextShapeSvg,
   SPARK_OFF_OPACITY,
   storyShapeSvg,
+  shade,
   streakShapeSvg,
+  TONAL_OFFSET,
+  tonal,
+  type MascotMood,
   type WidgetShapeOptions,
 } from '../components/svg';
 
-const base: WidgetShapeOptions = { me: 'uva', partner: 'limon', dark: false, size: 60 };
+const base: WidgetShapeOptions = { me: 'uva', partner: 'limon', size: 60 };
 
 const ids = (svg: string): string[] => [...svg.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
 
-describe('vidrio', () => {
-  it('glassDefs: degradado blanco 62 → 14 → 28 % (40 % arriba en oscuro)', () => {
-    const light = glassDefs('x', false);
-    expect(light).toContain('stop-opacity="0.62"');
-    expect(light).toContain('stop-opacity="0.14"');
-    expect(light).toContain('stop-opacity="0.28"');
-    expect(glassDefs('x', true)).toContain('stop-opacity="0.4"');
-    expect(glassDefs('x', true)).not.toContain('stop-opacity="0.62"');
+describe('tonal', () => {
+  it('sombra de la misma fruta más oscura, desplazada hacia abajo, y la fruta al 100 %', () => {
+    const svg = tonal('M0 0 L10 10 Z', '#F2495C');
+    expect(svg).toContain(`transform="translate(0,${TONAL_OFFSET})" fill="${shade('#F2495C')}"`);
+    expect(svg).toContain('fill="#F2495C"/>');
+    expect(svg).not.toContain('opacity');
+    expect(shade('#FFFFFF')).toBe('#B3B3B3');
   });
 
-  it('glass: contorno negro 24 % de 4, relleno 80 % (90 % en oscuro), brillo de 1.8', () => {
-    const d = 'M0 0 L10 10 Z';
-    const light = glass(d, '#112233', 'x', false);
-    expect(light).toContain('stroke="#000000" stroke-opacity="0.24" stroke-width="4"');
-    expect(light).toContain('fill="#112233" fill-opacity="0.8"');
-    expect(light).toContain('fill="url(#sx)"');
-    expect(light).toContain('stroke="url(#rx)" stroke-width="1.8"');
-    expect(glass(d, '#112233', 'x', true)).toContain('fill-opacity="0.9"');
-  });
-
-  it('glass: recorte opcional', () => {
-    expect(glass('M0 0Z', '#fff', 'x', false, 'c1')).toContain('clip-path="url(#c1)"');
-    expect(glass('M0 0Z', '#fff', 'x', false)).not.toContain('clip-path');
+  it('recorte opcional', () => {
+    expect(tonal('M0 0Z', '#FFFFFF', 'c1')).toContain('<g clip-path="url(#c1)">');
+    expect(tonal('M0 0Z', '#FFFFFF')).not.toContain('clip-path');
   });
 });
 
 describe('compatibilidad con AndroidSVG', () => {
   const all = (o: WidgetShapeOptions) => [
     daysShapeSvg(o),
-    moodShapeSvg(o),
+    ...(Object.keys(MASCOT_POSES) as MascotMood[]).map((mood) => mascotSvg({ ...o, mood })),
     nextShapeSvg({ ...o, progress: 0.4 }),
     distShapeSvg({ ...o, km: 800 }),
     storyShapeSvg({ ...o, photo: 'data:image/jpeg;base64,AAAA', dot: true }),
@@ -60,10 +52,11 @@ describe('compatibilidad con AndroidSVG', () => {
   ];
 
   it('no usa paint-order, rgba() ni href sin espacio de nombres', () => {
-    for (const dark of [false, true]) {
-      for (const svg of all({ ...base, dark })) {
+    {
+      for (const svg of all(base)) {
         expect(svg).not.toContain('paint-order');
         expect(svg).not.toContain('rgba(');
+        expect(svg).not.toContain('<text');
         expect(svg).not.toMatch(/\shref=/);
         expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true);
         expect(svg).toContain('width="60" height="60"');
@@ -87,18 +80,35 @@ describe('Días juntos', () => {
     const uva = svg.indexOf(FRUITS.uva.hex);
     expect(limon).toBeGreaterThan(-1);
     expect(uva).toBeGreaterThan(limon);
-    expect(svg).toContain('<clipPath id="cld"><rect x="0" y="0" width="47.5"');
-    expect(svg).toContain('<rect x="52.5" y="0" width="47.5"');
+    expect(svg).toContain('<clipPath id="cld"><rect x="-2" y="-2" width="49.5"');
+    expect(svg).toContain('<rect x="52.5" y="-2" width="49.5"');
   });
 });
 
-describe('Mood', () => {
-  it('burbuja en la fruta de tu pareja con carita', () => {
-    const svg = moodShapeSvg(base);
-    expect(svg).toContain(FRUITS.limon.hex);
-    expect(svg).not.toContain(FRUITS.uva.hex);
-    expect(svg).toContain('M36 48 Q50 61 64 48');
-    expect(moodShapeSvg({ ...base, face: 'frown' })).toContain('M36 58 Q50 45 64 58');
+describe('Mascota (mood)', () => {
+  it('mitad izquierda tuya, derecha de tu pareja, con cara en tinta', () => {
+    const svg = mascotSvg(base);
+    expect(svg.indexOf(FRUITS.uva.hex)).toBeLessThan(svg.indexOf(FRUITS.limon.hex));
+    expect(svg).toContain('A46 46 0 0 0 46 96');
+    expect(svg).toContain('A46 46 0 0 1 54 96');
+    expect(svg).toContain('#1B1B1F');
+  });
+
+  it('cada mood tiene su propia cara', () => {
+    const faces = Object.values(MASCOT_POSES).map((p) => p.face);
+    expect(new Set(faces).size).toBe(faces.length);
+  });
+
+  it('la rendija nunca se cierra: las mitades se acercan como mucho 2', () => {
+    for (const pose of Object.values(MASCOT_POSES))
+      expect(pose.gap ?? 0).toBeGreaterThanOrEqual(-2);
+  });
+
+  it('las mitades se mueven con el mood', () => {
+    expect(mascotSvg({ ...base, mood: 'angry' })).toContain('translate(-5,0)');
+    expect(mascotSvg({ ...base, mood: 'smitten' })).toContain('rotate(9 46 96)');
+    expect(mascotSvg({ ...base, mood: 'melting' })).toContain('a3.5 3.5');
+    expect(mascotSvg(base)).not.toContain('a3.5 3.5');
   });
 });
 
@@ -106,8 +116,8 @@ describe('La próxima vez', () => {
   it('media luna de tu fruta y llenado de la de tu pareja', () => {
     const svg = nextShapeSvg({ ...base, progress: 0.62 });
     expect(svg).toContain(`fill="${FRUITS.uva.hex}"`);
-    expect(svg).toContain(`fill="${FRUITS.limon.hex}" fill-opacity="0.85"`);
-    expect(svg).toContain('M2 80 H98');
+    expect(svg).toContain(`fill="${FRUITS.limon.hex}" clip-path`);
+    expect(svg).toContain('M2 82 H98');
   });
 
   it('el nivel de llenado sube con el progreso y se acota de 0 a 1', () => {
@@ -176,11 +186,8 @@ describe('Racha', () => {
 });
 
 describe('Estado vacío', () => {
-  it('dos medias lunas, la tuya a la izquierda', () => {
-    const svg = emptyShapeSvg(base);
-    expect(svg.indexOf(FRUITS.uva.hex)).toBeLessThan(svg.indexOf(FRUITS.limon.hex));
-    expect(svg).toContain('A40 40 0 0 0 46 90');
-    expect(svg).toContain('A40 40 0 0 1 54 90');
+  it('la mascota tranquila', () => {
+    expect(emptyShapeSvg(base)).toBe(mascotSvg({ ...base, mood: 'neutral' }));
   });
 });
 

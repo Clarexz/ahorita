@@ -1387,7 +1387,7 @@ export const SCENARIOS = {
       return undefined;
     },
   },
-  // v0.13.3: lado a lado (ubicación precisa): "juntos" en Inicio.
+  // v0.13.4: lado a lado (ubicación precisa): "juntos" en Inicio.
   distancia_juntos: {
     prefix: 'distancia-juntos',
     me: profiles.me,

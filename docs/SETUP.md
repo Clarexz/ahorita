@@ -105,7 +105,7 @@ tarjeta de Inicio).
 
 **Qué pide** (`expo-location` en `app.config.ts`):
 
-- `ACCESS_COARSE_LOCATION` y `ACCESS_FINE_LOCATION`: desde la v0.13.3 (D129) Android deja elegir
+- `ACCESS_COARSE_LOCATION` y `ACCESS_FINE_LOCATION`: desde la v0.13.4 (D130) Android deja elegir
   **precisa** o aproximada. Con la precisa la app sabe cuándo están juntos; con la aproximada
   Android mueve la ubicación unos kilómetros y la pantalla Distancia pide prender "Usar ubicación
   precisa".

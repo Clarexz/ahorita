@@ -48,7 +48,7 @@ try {
   const page = await browser.newPage({ viewport: { width: SIDE, height: SIDE } });
   for (const name of WIDGET_NAMES) {
     const view = widgetView(name, model);
-    const svg = widgetShapeSvg(view, { dark: false, size: SHAPE, id: name });
+    const svg = widgetShapeSvg(view, { size: SHAPE, id: name });
     await page.setContent(
       `<html><head>${head}</head><body><div class="w">${svg}` +
         `<div class="t">${escape(view.text)}</div></div></body></html>`,

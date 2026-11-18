@@ -1,5 +1,5 @@
 // Utilidades compartidas de los widgets. Los widgets se dibujan fuera de React / ThemeProvider;
-// con el vidrio simulado ya no necesitan la paleta del tema: solo saber si el sistema está en oscuro.
+// las formas tonales se ven igual en claro y en oscuro; la paleta solo distingue el modo del sistema.
 import type { ColorProp } from 'react-native-android-widget';
 
 import { APP_SCHEME } from '@/constants/app';

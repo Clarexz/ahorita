@@ -79,7 +79,7 @@ export type SnapshotDistance = {
   me: SnapshotPlace;
   partner: SnapshotPlace;
   km: number | null;
-  /** v0.13.3: están en el mismo lugar (`isTogether`); ausente en snapshots viejos. */
+  /** v0.13.4: están en el mismo lugar (`isTogether`); ausente en snapshots viejos. */
   together?: boolean;
 };
 

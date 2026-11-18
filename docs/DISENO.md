@@ -221,7 +221,7 @@ en el Catálogo de diseño (`/catalogo`).
 | `Avatar` | Foto o inicial sobre `surface2`; aro de fruta 3 dp con separación `bg` | `size`, `fruit`, `ring`, `newDot` (punto de story nueva); `initialOf(nombre)` se exporta aparte | cargando, sin foto |
 | `MoodBubble` | Burbuja con pico arriba en el tinte de la fruta: emoji + mood + nota | `fruit`, `empty` (contorno `line`, "¿Y tú?"), `note` (varias líneas), `pulse` (sube al llegar un mood nuevo: resorte; fundido con reducir movimiento) | vacío, cargando |
 | `FruitDot` | Punto de 12 dp de la fruta: "esto es de…" | `fruit`, `size` | — |
-| `FruitPicker` | Las 40 frutas por grupo de color (encabezado por grupo y rejilla de 4 columnas, D128); bloqueadas con candado y motivo ("es de X", "mismo color", "se parece a la suya"), sugerida marcada; vista previa con `Symbol` | `value`, `partnerFruit`, `partnerName`, `onChange` | seleccionada (aro `ink`), bloqueada (30 %) |
+| `FruitPicker` | Las 40 frutas por grupo de color (encabezado por grupo y rejilla de 4 columnas, D129); bloqueadas con candado y motivo ("es de X", "mismo color", "se parece a la suya"), sugerida marcada; vista previa con `Symbol` | `value`, `partnerFruit`, `partnerName`, `onChange` | seleccionada (aro `ink`), bloqueada (30 %) |
 | `AnswerCard` | Respuesta de una persona: `FruitDot` + nombre + texto, fondo tinte de su fruta; `locked` muestra renglones borrosos y "Se abre cuando contestes." | `fruit`, `name`, `text`, `locked` | revelándose (§5) |
 | `StatTile` | Número `num` + nota, sobre `surface`; tocable se achica al presionar | `value`, `label`, `icon`, `iconColor` (p. ej. tu fruta en la racha), `onPress`, `accessibilityHint` | presionado (si es tocable) |
 | `Chip` | Píldora `surface2` | `selected` (fondo `ink`, texto `bg`), `icon`, `iconColor` | seleccionado, deshabilitado |
@@ -284,17 +284,28 @@ solo dato va debajo.
 | Widget | Forma | Dato |
 |---|---|---|
 | Días juntos | Corazón partido en las dos frutas con rendija | "412 días" |
-| Mood de tu pareja | Burbuja de diálogo en su fruta con carita | "feliz" (el mood) |
+| Mood de tu pareja | La **mascota** con la cara y la postura del mood de tu pareja (§9.1) | "feliz" (el mood) |
 | La próxima vez | Media luna de tu fruta que se llena con la de tu pareja conforme se acerca la visita | "faltan 12" |
 | Distancia | Dos círculos (tú, tu pareja) con ruta punteada; más cerca, menos espacio | "1,240 km" |
 | Story de tu pareja | Foto en círculo con aro de las dos frutas y punto si hay nueva | "nueva" |
 | Racha (nuevo) | Chispa grande (tu fruta) y chica (su fruta) | "47 días" |
 
-- **Vidrio simulado** (Android no difumina detrás de un widget): relleno de fruta al 80 % (90 % en
-  oscuro), degradado blanco encima (62 % → 14 % → 28 %; 40 % arriba en oscuro), borde de 1.8 con
-  brillo y **contorno oscuro fino** (negro 24 %, 4) para que se lea sobre claro, oscuro y foto.
-- Texto blanco 600 con contorno oscuro (negro 50 %). Geometría exacta: prototipo y manual.
+- **Estilo tonal** (D128; reemplaza el vidrio simulado de D103): cada pieza en su fruta al 100 % y,
+  debajo, una copia de la misma fruta oscurecida 30 % y desplazada 4 hacia abajo (lienzo de 100).
+  Sin brillos, transparencias ni contornos; se ve igual en claro y en oscuro. Detalles en blanco.
+- Texto blanco 600 con sombra oscura. Estado vacío: la mascota tranquila.
 - Una fruta es tú; la otra, tu pareja.
+
+### 9.1 Mascota (D128)
+
+El símbolo con cara: las dos medias lunas (izquierda tú, derecha tu pareja) en estilo tonal y
+**una sola cara en tinta** (`#1B1B1F`) que cruza la rendija; se lee sobre las 7 frutas. Es un
+personaje aparte del logo: puede inclinarse, separarse, brincar o derretirse (el logo no), pero
+**la rendija nunca se cierra** (las mitades se acercan como mucho 2). En el widget de mood siente
+lo que siente tu pareja; cada mood de `MOOD_OPTIONS` tiene su pose (`MASCOT_POSES` en
+`src/widgets/components/svg.ts`, mapa en `src/widgets/view.ts`); un emoji desconocido usa la
+tranquila. Chapitas, corazones, zz, confeti y gotas son los únicos adornos. Pendiente: llevarla a
+la app (estados vacíos, carga, celebraciones) en una actualización grande.
 
 ---
 

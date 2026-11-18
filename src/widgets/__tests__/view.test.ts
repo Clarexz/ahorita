@@ -7,8 +7,9 @@ import {
   type WidgetModel,
   type WidgetName,
 } from '@/lib/widgets';
+import { MOOD_OPTIONS } from '@/lib/mood';
 
-import { moodFace, widgetShapeSvg, widgetView } from '../view';
+import { mascotMood, widgetShapeSvg, widgetView } from '../view';
 
 const NOW = new Date('2026-10-30T18:00:00Z');
 
@@ -73,16 +74,18 @@ describe('widgetView', () => {
     expect(widgetView('DaysTogether', model({ anniversary: null })).face.shape).toBe('empty');
   });
 
-  it('mood: etiqueta en minúsculas y carita; sin mood, vacío', () => {
+  it('mood: etiqueta en minúsculas y pose de la mascota; sin mood, vacío', () => {
     expect(
       text(
         'PartnerMood',
         model({ partnerMood: { emoji: '🥺', note: null, created_at: NOW.toISOString() } }),
       ),
     ).toBe('sensible');
-    expect(moodFace('😄')).toBe('smile');
-    expect(moodFace('🥺')).toBe('frown');
-    expect(moodFace('🤔')).toBe('flat');
+    expect(mascotMood('😄')).toBe('happy');
+    expect(mascotMood('🥺')).toBe('tender');
+    expect(mascotMood('🫠')).toBe('melting');
+    expect(mascotMood('🦄')).toBe('neutral');
+    for (const { emoji } of MOOD_OPTIONS) expect(mascotMood(emoji)).not.toBe('neutral');
     expect(widgetView('PartnerMood', model({ partnerMood: null })).face.shape).toBe('empty');
   });
 
@@ -172,7 +175,7 @@ describe('widgetView', () => {
   it('widgetShapeSvg dibuja una forma por widget', () => {
     const m = model();
     for (const name of WIDGET_NAMES) {
-      const svg = widgetShapeSvg(widgetView(name, m), { dark: true, size: 58 });
+      const svg = widgetShapeSvg(widgetView(name, m), { size: 58 });
       expect(svg).toContain('<svg');
       expect(svg).toContain('width="58"');
     }
