@@ -79,6 +79,8 @@ export type SnapshotDistance = {
   me: SnapshotPlace;
   partner: SnapshotPlace;
   km: number | null;
+  /** v0.13.4: están en el mismo lugar (`isTogether`); ausente en snapshots viejos. */
+  together?: boolean;
 };
 
 /** Evento guardado en el snapshot: `createdAt` sirve para el avance de La próxima vez. */
@@ -129,6 +131,8 @@ export type WidgetCountdown = {
 
 export type WidgetDistance = {
   km: number | null;
+  /** Están en el mismo lugar (solo si los dos comparten). */
+  together: boolean;
   myCity: string | null;
   partnerCity: string | null;
   /** ¿Compartes tú / tu pareja? */
@@ -407,6 +411,7 @@ export function formatAgo(fromIso: string, now: Date): string {
 export function distanceModel(d: SnapshotDistance, now: Date): WidgetDistance {
   return {
     km: d.me && d.partner ? d.km : null,
+    together: !!(d.me && d.partner && d.km !== null && d.together),
     myCity: d.me?.city ?? null,
     partnerCity: d.partner?.city ?? null,
     meSharing: d.me !== null,

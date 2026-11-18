@@ -32,6 +32,7 @@ import {
   STORY_CAPTION_MAX,
   STORY_FONTS,
   STORY_TEXT_MAX,
+  storyBgOptions,
   validateStoryText,
   type StoryBg,
   type StoryFont,
@@ -43,7 +44,7 @@ import { useCreateStory, type CreateStoryVars } from '../hooks';
 import { DrawingPad } from './DrawingPad';
 import { StickerLayer } from './StickerLayer';
 import { StoryFrame, storyTextStyle } from './StoryFrame';
-import { BG_OPTIONS, FONT_LABELS, bgForFruit, storyBgColor, storyBgName } from './palette';
+import { FONT_LABELS, bgForFruit, storyBgColor, storyBgName } from './palette';
 
 export type ComposerKind = 'camera' | 'library' | 'text' | 'drawing';
 
@@ -56,7 +57,7 @@ type PhotoState = 'asking' | 'ready' | 'denied' | 'canceled';
 
 /** Círculos de fruta para elegir el fondo. */
 function BgPicker({ value, onChange }: { value: StoryBg; onChange: (bg: StoryBg) => void }) {
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing, radius, fruit } = useTheme();
   return (
     <View style={{ gap: spacing.sm }}>
       <Text variant="label" tone="muted">
@@ -66,7 +67,7 @@ function BgPicker({ value, onChange }: { value: StoryBg; onChange: (bg: StoryBg)
         accessibilityRole="radiogroup"
         style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}
       >
-        {BG_OPTIONS.map((bg) => {
+        {storyBgOptions(fruit.me.key).map((bg) => {
           const selected = bg === value;
           return (
             <Pressable

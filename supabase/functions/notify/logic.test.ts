@@ -272,8 +272,8 @@ describe('buildNotification', () => {
 });
 
 describe('color de la fruta', () => {
-  it('mapa llave -> hex de las 7 frutas', () => {
-    expect(FRUIT_HEX).toEqual({
+  it('mapa llave -> hex: las 7 originales conservan su color (todas: fruitsSql.test.ts)', () => {
+    expect(FRUIT_HEX).toMatchObject({
       sandia: '#F2495C',
       mango: '#FFC24B',
       mandarina: '#FF8A3D',
@@ -282,10 +282,11 @@ describe('color de la fruta', () => {
       arandano: '#3F6BFF',
       pitaya: '#E83E9C',
     });
+    expect(Object.keys(FRUIT_HEX)).toHaveLength(40);
   });
   it('fruitColor cae en Sandía si la llave no existe', () => {
     expect(fruitColor('uva')).toBe('#8B5CF6');
-    expect(fruitColor('kiwi')).toBe(DEFAULT_NOTIFICATION_COLOR);
+    expect(fruitColor('kiwano')).toBe(DEFAULT_NOTIFICATION_COLOR);
     expect(fruitColor('toString')).toBe(DEFAULT_NOTIFICATION_COLOR);
     expect(fruitColor(null)).toBe('#F2495C');
     expect(fruitColor({})).toBe('#F2495C');

@@ -221,7 +221,7 @@ en el Catálogo de diseño (`/catalogo`).
 | `Avatar` | Foto o inicial sobre `surface2`; aro de fruta 3 dp con separación `bg` | `size`, `fruit`, `ring`, `newDot` (punto de story nueva); `initialOf(nombre)` se exporta aparte | cargando, sin foto |
 | `MoodBubble` | Burbuja con pico arriba en el tinte de la fruta: emoji + mood + nota | `fruit`, `empty` (contorno `line`, "¿Y tú?"), `note` (varias líneas), `pulse` (sube al llegar un mood nuevo: resorte; fundido con reducir movimiento) | vacío, cargando |
 | `FruitDot` | Punto de 12 dp de la fruta: "esto es de…" | `fruit`, `size` | — |
-| `FruitPicker` | Rejilla 4 columnas de las 7 frutas con nombre; bloqueadas con candado y motivo ("es de X", "se parece a la suya"), sugerida marcada; vista previa con `Symbol` | `value`, `partnerFruit`, `partnerName`, `onChange` | seleccionada (aro `ink`), bloqueada (30 %) |
+| `FruitPicker` | Las 40 frutas por grupo de color (encabezado por grupo y rejilla de 4 columnas, D129); bloqueadas con candado y motivo ("es de X", "mismo color", "se parece a la suya"), sugerida marcada; vista previa con `Symbol` | `value`, `partnerFruit`, `partnerName`, `onChange` | seleccionada (aro `ink`), bloqueada (30 %) |
 | `AnswerCard` | Respuesta de una persona: `FruitDot` + nombre + texto, fondo tinte de su fruta; `locked` muestra renglones borrosos y "Se abre cuando contestes." | `fruit`, `name`, `text`, `locked` | revelándose (§5) |
 | `StatTile` | Número `num` + nota, sobre `surface`; tocable se achica al presionar | `value`, `label`, `icon`, `iconColor` (p. ej. tu fruta en la racha), `onPress`, `accessibilityHint` | presionado (si es tocable) |
 | `Chip` | Píldora `surface2` | `selected` (fondo `ink`, texto `bg`), `icon`, `iconColor` | seleccionado, deshabilitado |

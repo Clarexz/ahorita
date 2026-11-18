@@ -3,7 +3,7 @@
 // `WidgetModel` (src/lib/widgets.ts); la usan el widget real y la vista previa de la app.
 import { APP_NAME } from '@/constants/app';
 import { formatNumber } from '@/lib/dates';
-import { formatKm, spokenKm } from '@/lib/distance';
+import { distanceLabel, spokenKm } from '@/lib/distance';
 import { FRUITS, type FruitKey } from '@/lib/fruits';
 import type { WidgetModel, WidgetName } from '@/lib/widgets';
 
@@ -145,9 +145,9 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
         return empty('sin distancia', a11y);
       }
       return {
-        face: { shape: 'dist', km: d.km },
-        text: formatKm(d.km),
-        a11y: `Están a ${spokenKm(d.km)}.`,
+        face: { shape: 'dist', km: d.together ? 0 : d.km },
+        text: distanceLabel(d.km, d.together),
+        a11y: d.together ? `Están juntos.` : `Están a ${spokenKm(d.km)}.`,
         fruits,
       };
     }

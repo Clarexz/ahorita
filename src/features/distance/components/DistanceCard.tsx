@@ -47,7 +47,11 @@ export function DistanceCardView({ view, partnerName, loading = false, onPress }
     return (
       <Card
         onPress={onPress}
-        accessibilityLabel={`Distancia: ${spokenKm(view.km)}. ${view.route ? `${view.route}. ` : ''}Toca para ver el detalle.`}
+        accessibilityLabel={
+          view.together
+            ? `Distancia: están juntos. Toca para ver el detalle.`
+            : `Distancia: ${spokenKm(view.km)}. ${view.route ? `${view.route}. ` : ''}Toca para ver el detalle.`
+        }
       >
         <View style={{ gap: spacing.sm }}>
           <Text variant="label" tone="muted">
@@ -56,7 +60,7 @@ export function DistanceCardView({ view, partnerName, loading = false, onPress }
           <Text variant="display">{view.kmText}</Text>
           {route}
           <Text variant="note" tone="muted" numberOfLines={2}>
-            {view.route || 'Toca para ver dónde están'}
+            {view.together ? view.phrase : view.route || 'Toca para ver dónde están'}
           </Text>
           {view.partnerAgo ? (
             <Text variant="note" tone="muted">

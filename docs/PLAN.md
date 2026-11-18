@@ -1067,6 +1067,7 @@ Fase 12 (pulido y v1.0.0).
 | Ajustes post-12A (cambios menores) | ✅ Cerrada (2026-11-04) | #21 | Racha estilo TikTok (5 recuperaciones/mes, solo ayer), opción "Otra", teclado, Inicio con distancia/listas/lenguaje del amor/tiempo juntos, Preguntas + Juegos, memorias con visitas, Más → "Otros ajustes", "mesario", sin rebotes (D108–D111). Migración `20261110000000_streak_repairs_other_choice_memory_visits.sql`: **requiere deploy antes de instalar el APK** (notas en `docs/releases/v0.12.4.md`). Mergeada a `main` y APK **v0.12.4** lanzado a pedido del usuario; servidor desplegado (migración aplicada, confirmado el 2026-11-11). |
 | Ajustes v0.13.x (micrófono, Google) | ✅ Desplegada y mergeada (v0.13.2) | #25 | Micrófono de las respuestas en audio (la solicitud sale la primera vez que se toca "Grabar audio") y **"Continuar con Google"**: un solo botón para entrar y crear cuenta. Con `DISABLE_SIGNUP=false`, el hook `private.hook_before_user_created` deja crear cuentas solo con Google; el correo responde 403 `signup_requires_google`. Servidor desplegado el 2026-11-17 (`31dfccc`, migración `20261113000000_google_signup_hook`). APK **v0.13.2** publicado y PR #25 mergeado a `main` a pedido del usuario (2026-11-17); falta probarlo en los celulares (§10.1). D126–D127. |
 | Widgets tonales y mascota | ✅ Mergeada (v0.13.3) | #24 | Fuera el vidrio simulado: estilo tonal en los 6 widgets; el de mood usa la **mascota** (símbolo con cara) con pose por cada uno de los 16 moods; estado vacío con la mascota (D128). Sin cambios de servidor. APK v0.13.3 publicado y PR mergeado a `main` a pedido del usuario (2026-11-18); falta probar en los celulares con `docs/releases/v0.13.3.md`. |
+| Ajustes v0.13.4 (distancia, frutas, widgets) | ✅ Desplegada y mergeada (v0.13.4) | #26 | Distancia precisa con "juntos" (D130), 40 frutas por color (D129) y vistas previas del selector de widgets (D131). Migraciones `20261118000000_more_fruits` y `20261118000001_precise_location` + `notify`, desplegadas el 2026-11-18 (`ccbf21f`). Vistas previas regeneradas con el estilo tonal de la v0.13.3. Notas en `docs/releases/v0.13.4.md`. |
 
 ### 10.1 Camino a la v1.0.0
 
@@ -1080,6 +1081,10 @@ Estamos cerca de la v1.0.0, pero antes faltan:
    - El usuario dice que hay más cosas por corregir: preguntarle la lista al empezar.
 
 **Pruebas en el celular pendientes** (una línea por release, con su lista en `docs/releases/`):
+
+- **v0.13.4** (`v0.13.4.md`, cuando se publique): "juntos" en la tarjeta y el widget de Distancia
+  estando lado a lado (con "Usar ubicación precisa"), el selector de frutas por color y las vistas
+  previas en el selector de widgets del celular.
 
 - **v0.13.2** (`v0.13.2.md`): micrófono (que aparezca la solicitud la primera vez que se toca
   "Grabar audio" y que el permiso se vea en ajustes) y "Continuar con Google" (entrar con las dos
@@ -1107,9 +1112,10 @@ celulares antes de la 12A (confirmado el 2026-11-03).
 
 **Estado del servidor**
 
-- El clon del VPS (`/opt/app-parejas/repo`) está en la rama `ccr-123c9893-9q9zk2` (`31dfccc`), con
-  19 migraciones registradas (desde el 2026-11-17, incluye `20261113000000_google_signup_hook`). El
-  siguiente deploy es `./scripts/server/deploy.sh main` (la rama ya está mergeada, PR #25).
+- El clon del VPS (`/opt/app-parejas/repo`) está en la rama `ccr-fec3a528-3qrn1l` (`ccbf21f`), con
+  21 migraciones registradas (desde el 2026-11-18, incluye `20261118000000_more_fruits` y
+  `20261118000001_precise_location`). La rama ya está mergeada (PR #26): el siguiente deploy es
+  `./scripts/server/deploy.sh main`.
 - **Registro:** `DISABLE_SIGNUP=false`, pero el hook `private.hook_before_user_created` deja crear
   cuentas **solo con Google** (D127); el registro con correo responde 403 `signup_requires_google`.
   Ya no es un registro cerrado como el de la 12 parte 2.
@@ -1138,6 +1144,7 @@ celulares antes de la 12A (confirmado el 2026-11-03).
 | 2026-11-11 | 12 parte 2 (v0.12.5) | `claude/sharp-pasteur-xo4lz6` @ `10a0e7d` | `pre-deploy-app-parejas-20261111-231847.dump` | Migraciones `…000_audio_answers`, `…001_security_hardening` y `…002_member_timezones` (16 registradas), bucket `answer-audio`, `stories-cleanup` sincronizada, `security_audit.sql` OK, smoke test OK sin avisos. **Restauración probada** (29 tablas, 3 usuarios, 13 migraciones; solo errores esperados de pg_cron en la BD temporal). **Registro cerrado** con `DISABLE_SIGNUP=true` (signup responde 422 `signup_disabled`; anotado en `CREDENCIALES.md`). El tercer usuario (2026-10-31, solo en otra pareja) se conserva. Probada en los celulares sin errores (2026-11-12). |
 | 2026-11-12 | 10 Banco de contenido (v0.13.0) | `claude/great-albattani-iafnq4` @ `c0ac4b9` | `pre-deploy-app-parejas-20261112-014101.dump` | Migraciones `…000_content_bank` y `…001_game_round_size` (18 registradas) y seed: 3,530 preguntas activas, 212 palabras, 8 temas, 0 del seed desactivadas. `security_audit.sql` OK, `get_packs()` con 8 filas, smoke test OK sin avisos. Sin secretos nuevos. APK v0.13.0. |
 | 2026-11-17 | Ajustes v0.13.x (micrófono, Google; APK v0.13.2) | `ccr-123c9893-9q9zk2` @ `31dfccc` | No aplica (respaldo del `.env`: `secrets/.env.bak-pre-google`, por borrar) | `deploy.sh ccr-123c9893-9q9zk2`; se aplicó solo `20261113000000_google_signup_hook` (19 registradas). GoTrue `supabase/gotrue:v2.197.0` (soporta el hook) y override copiado al stack; `/auth/v1/settings` con `external.google=true` y `disable_signup=false`. Registro con correo rechazado (403, sin crear usuario; `auth.users` sigue en 3). Smoke test OK sin avisos, 10 contenedores healthy. Variables anotadas en `CREDENCIALES.md`. |
+| 2026-11-18 | Ajustes v0.13.4 (distancia, frutas, widgets) | `ccr-fec3a528-3qrn1l` @ `ccbf21f` | `backups/db/app-parejas-20261118-002615.dump` (1.1 M) + el automático de `deploy.sh` | Se aplicaron solo `20261118000000_more_fruits` y `20261118000001_precise_location` (21 registradas); queda solo `set_my_location` de 4 parámetros. `notify` sincronizada y `functions` reiniciado. Smoke test OK sin avisos, 10 contenedores healthy, 3,530 preguntas activas. |
 
 ---
 

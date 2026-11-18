@@ -621,7 +621,8 @@ begin
     if sqlerrm <> 'descartar_prueba' then raise; end if;
   end;
 end $$;
-select pg_temp.expect_error($q$select public.create_story('text', null, null, 'hola', 'fresa', 'hand')$q$, 'invalid_story');
+select pg_temp.expect_error($q$select public.create_story('text', null, null, 'hola', 'kiwano', 'hand')$q$, 'invalid_story');
+select pg_temp.assert((select bg = 'fresa' from public.create_story('text', null, null, 'hola', 'fresa', 'hand')), 'acepta las frutas nuevas de fondo');
 select pg_temp.expect_error($q$select public.create_story('text', null, null, 'hola', 'Uva', 'hand')$q$, 'invalid_story');
 reset role;
 

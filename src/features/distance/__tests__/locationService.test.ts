@@ -3,10 +3,11 @@ import { Platform } from 'react-native';
 
 import {
   applyShareMode,
+  getForegroundPermission,
   BACKGROUND_DISTANCE_M,
   BACKGROUND_INTERVAL_MS,
   LOCATION_TASK,
-  readApproxPosition,
+  readPosition,
   sendLocation,
 } from '../locationService';
 import { readLastSent, readShareMode } from '../preferences';
@@ -19,7 +20,7 @@ jest.mock('../api', () => ({
 }));
 
 jest.mock('expo-location', () => ({
-  Accuracy: { Low: 2 },
+  Accuracy: { Low: 2, Balanced: 3 },
   getForegroundPermissionsAsync: jest.fn(),
   requestForegroundPermissionsAsync: jest.fn(),
   getBackgroundPermissionsAsync: jest.fn(),
@@ -36,10 +37,17 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
-const granted = { granted: true, canAskAgain: true, status: 'granted' };
+const granted = {
+  granted: true,
+  canAskAgain: true,
+  status: 'granted',
+  android: { accuracy: 'fine' },
+};
 const denied = { granted: false, canAskAgain: false, status: 'denied' };
 const asking = { granted: false, canAskAgain: true, status: 'undetermined' };
-const pos = (latitude: number, longitude: number) => ({ coords: { latitude, longitude } });
+const pos = (latitude: number, longitude: number, accuracy: number | null = 12) => ({
+  coords: { latitude, longitude, accuracy },
+});
 
 beforeEach(async () => {
   jest.clearAllMocks();
@@ -52,22 +60,47 @@ beforeEach(async () => {
   mockLoc.getBackgroundPermissionsAsync.mockResolvedValue(granted);
 });
 
-describe('readApproxPosition', () => {
-  it('redondea a ~1 km y usa la última conocida', async () => {
-    expect(await readApproxPosition()).toEqual({ lat: 19.43, lng: -99.13 });
+describe('readPosition', () => {
+  it('redondea a ~11 m y usa una lectura reciente y buena con su precisión', async () => {
+    mockLoc.getLastKnownPositionAsync.mockResolvedValue(pos(19.43261, -99.13321, 12));
+    expect(await readPosition()).toEqual({ lat: 19.4326, lng: -99.1332, accuracy: 12 });
+    expect(mockLoc.getLastKnownPositionAsync).toHaveBeenCalledWith({
+      maxAge: 120_000,
+      requiredAccuracy: 100,
+    });
     expect(mockLoc.getCurrentPositionAsync).not.toHaveBeenCalled();
   });
 
-  it('sin última conocida pide una lectura de precisión baja', async () => {
+  it('sin lectura reciente pide una de precisión equilibrada', async () => {
     mockLoc.getLastKnownPositionAsync.mockResolvedValue(null);
-    mockLoc.getCurrentPositionAsync.mockResolvedValue(pos(25.671, -100.309));
-    expect(await readApproxPosition()).toEqual({ lat: 25.67, lng: -100.31 });
-    expect(mockLoc.getCurrentPositionAsync).toHaveBeenCalledWith({ accuracy: 2 });
+    mockLoc.getCurrentPositionAsync.mockResolvedValue(pos(25.67112, -100.30988, 35));
+    expect(await readPosition()).toEqual({ lat: 25.6711, lng: -100.3099, accuracy: 35 });
+    expect(mockLoc.getCurrentPositionAsync).toHaveBeenCalledWith({ accuracy: 3 });
+  });
+
+  it('si la lectura nueva no llega, usa la última conocida de hasta 30 min', async () => {
+    mockLoc.getLastKnownPositionAsync
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(pos(19.5, -99.2, null));
+    mockLoc.getCurrentPositionAsync.mockResolvedValue(null);
+    expect(await readPosition()).toEqual({ lat: 19.5, lng: -99.2, accuracy: null });
+    expect(mockLoc.getLastKnownPositionAsync).toHaveBeenLastCalledWith({ maxAge: 1_800_000 });
   });
 
   it('si falla devuelve null', async () => {
     mockLoc.getLastKnownPositionAsync.mockRejectedValue(new Error('apagada'));
-    expect(await readApproxPosition()).toBeNull();
+    expect(await readPosition()).toBeNull();
+  });
+});
+
+describe('permisos', () => {
+  it('distingue la ubicación precisa de la aproximada', async () => {
+    expect((await getForegroundPermission()).precise).toBe(true);
+    mockLoc.getForegroundPermissionsAsync.mockResolvedValue({
+      ...granted,
+      android: { accuracy: 'coarse' },
+    });
+    expect((await getForegroundPermission()).precise).toBe(false);
   });
 });
 
@@ -76,7 +109,12 @@ describe('sendLocation', () => {
 
   it('manda con ciudad y guarda el envío', async () => {
     expect(await sendLocation(here, { now: 1_000 })).toBe('sent');
-    expect(mockSet).toHaveBeenCalledWith({ lat: 19.43, lng: -99.13, city: 'Ciudad de México' });
+    expect(mockSet).toHaveBeenCalledWith({
+      lat: 19.43,
+      lng: -99.13,
+      city: 'Ciudad de México',
+      accuracy: undefined,
+    });
     expect(await readLastSent()).toEqual({ ...here, at: 1_000 });
   });
 
@@ -90,7 +128,22 @@ describe('sendLocation', () => {
   it('sin geocodificación manda sin ciudad', async () => {
     mockLoc.reverseGeocodeAsync.mockRejectedValue(new Error('web'));
     await sendLocation(here, { now: 1 });
-    expect(mockSet).toHaveBeenCalledWith({ lat: 19.43, lng: -99.13, city: null });
+    expect(mockSet).toHaveBeenCalledWith({
+      lat: 19.43,
+      lng: -99.13,
+      city: null,
+      accuracy: undefined,
+    });
+  });
+
+  it('manda la precisión de la lectura', async () => {
+    await sendLocation({ lat: 19.432611, lng: -99.133212, accuracy: 18.4 }, { now: 1 });
+    expect(mockSet).toHaveBeenCalledWith({
+      lat: 19.4326,
+      lng: -99.1332,
+      city: 'Ciudad de México',
+      accuracy: 18.4,
+    });
   });
 });
 
@@ -132,7 +185,7 @@ describe('applyShareMode', () => {
     ];
     expect(task).toBe(LOCATION_TASK);
     expect(options).toMatchObject({
-      accuracy: 2,
+      accuracy: 3,
       distanceInterval: BACKGROUND_DISTANCE_M,
       timeInterval: BACKGROUND_INTERVAL_MS,
       deferredUpdatesInterval: BACKGROUND_INTERVAL_MS,

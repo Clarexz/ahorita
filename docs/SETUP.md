@@ -105,23 +105,28 @@ tarjeta de Inicio).
 
 **Qué pide** (`expo-location` en `app.config.ts`):
 
-- `ACCESS_COARSE_LOCATION`: ubicación **aproximada**. La precisa (`ACCESS_FINE_LOCATION`) se
-  bloquea en el manifiesto, así que Android no ofrece "Exacta".
+- `ACCESS_COARSE_LOCATION` y `ACCESS_FINE_LOCATION`: desde la v0.13.4 (D130) Android deja elegir
+  **precisa** o aproximada. Con la precisa la app sabe cuándo están juntos; con la aproximada
+  Android mueve la ubicación unos kilómetros y la pantalla Distancia pide prender "Usar ubicación
+  precisa".
 - `ACCESS_BACKGROUND_LOCATION` (+ `RECEIVE_BOOT_COMPLETED`): solo se solicita si eliges **También
   en segundo plano**. No hay servicio en primer plano ni notificación fija.
 
 **Modos** (preferencia local de cada celular):
 
 1. *Apagado*: se borra tu fila de `locations` y se detiene la tarea.
-2. *Al abrir la app*: al abrir la app o volver a ella se lee la última ubicación conocida (o una
-   lectura de precisión baja), se redondea a 2 decimales (~1 km), se obtiene la ciudad y se manda
-   con `set_my_location`. No se manda si pasaron menos de 10 minutos y no te moviste más de 1 km.
+2. *Al abrir la app*: al abrir la app o volver a ella se usa una lectura de menos de 2 minutos con
+   precisión ≤ 100 m o se pide una nueva de precisión equilibrada (si tarda, la última de hasta
+   30 min); se redondea a 4 decimales (~11 m), se obtiene la ciudad y se manda con su precisión
+   en metros a `set_my_location`. No se manda si pasaron menos de 10 minutos y no te moviste más
+   de 50 m.
 3. *También en segundo plano*: igual que el anterior, más una tarea de `expo-task-manager` de baja
-   frecuencia (precisión baja, cada ~1 km o ~30 min, agrupada).
+   frecuencia (precisión equilibrada, cada ~100 m o ~15 min, agrupada; Android la limita a pocas
+   por hora).
 
 **Activar "Permitir todo el tiempo"** (modo en segundo plano). La app primero pide el permiso
 normal; después Android 11+ te manda a Ajustes: **Permisos → Ubicación → Permitir todo el tiempo**
-(y deja "Usar ubicación precisa" apagado). Si ya lo habías negado: Ajustes → Apps → App Parejas →
+(y deja "Usar ubicación precisa" prendido para que la app sepa cuándo están juntos). Si ya lo habías negado: Ajustes → Apps → App Parejas →
 Permisos → Ubicación. Si lo niegas, la app se queda en *Al abrir la app* y lo avisa.
 
 **Consumo esperado.** En primer plano es una sola lectura al abrir la app. En segundo plano Android

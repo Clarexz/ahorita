@@ -4,17 +4,20 @@ import type { ReactElement } from 'react';
 import { ThemeProvider } from '@/theme';
 
 import { FruitPicker, blockedReason } from '../FruitPicker';
-import { fruitOptions } from '@/lib/fruits';
+import { FRUIT_GROUP_LABELS, FRUIT_KEYS, fruitOptions } from '@/lib/fruits';
 
 const wrap = (ui: ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>);
 
 describe('FruitPicker', () => {
-  it('muestra las 7 frutas con su nombre', async () => {
+  it('muestra todas las frutas agrupadas por color', async () => {
     await wrap(<FruitPicker value="sandia" partnerFruit={null} onChange={() => {}} />);
-    for (const name of ['Sandía', 'Mango', 'Mandarina', 'Limón', 'Uva', 'Arándano', 'Pitaya']) {
+    for (const name of ['Sandía', 'Fresa', 'Manzana roja', 'Manzana verde', 'Pitaya', 'Coco']) {
       expect(screen.getByText(name)).toBeTruthy();
     }
-    expect(screen.getAllByRole('radio')).toHaveLength(7);
+    for (const label of Object.values(FRUIT_GROUP_LABELS)) {
+      expect(screen.getByRole('header', { name: label })).toBeTruthy();
+    }
+    expect(screen.getAllByRole('radio')).toHaveLength(FRUIT_KEYS.length);
   });
 
   it('elegir una fruta libre llama onChange', async () => {
@@ -26,7 +29,7 @@ describe('FruitPicker', () => {
 
   it('una fruta bloqueada no dispara onChange y queda deshabilitada', async () => {
     const onChange = jest.fn();
-    // Pareja con Mango: Mango es la misma y Limón se le parece.
+    // Pareja con Mango: Mango es la misma, Limón se le parece (manual) y Plátano es del mismo color.
     await wrap(
       <FruitPicker value="sandia" partnerFruit="mango" partnerName="Ximena" onChange={onChange} />,
     );
@@ -38,7 +41,12 @@ describe('FruitPicker', () => {
     await fireEvent.press(similar);
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.getByText('es de Ximena')).toBeTruthy();
+    // Limón y Mandarina (manual).
     expect(screen.getAllByText('se parece a la suya')).toHaveLength(2);
+    expect(screen.getAllByText('mismo color')).toHaveLength(5);
+    expect(screen.getByRole('radio', { name: /^Plátano/ }).props.accessibilityState.disabled).toBe(
+      true,
+    );
   });
 
   it('marca la seleccionada y la sugerida', async () => {
@@ -55,7 +63,9 @@ describe('FruitPicker', () => {
     const free = options.find((o) => o.fruit.key === 'uva');
     expect(blockedReason(same!, 'Ale')).toBe('es de Ale');
     expect(blockedReason(same!)).toBe('es de tu pareja');
-    expect(blockedReason(similar!)).toBe('se parece a la suya');
+    expect(blockedReason(similar!, undefined, 'sandia')).toBe('se parece a la suya');
+    const sameColor = options.find((o) => o.fruit.key === 'fresa');
+    expect(blockedReason(sameColor!, undefined, 'sandia')).toBe('mismo color');
     expect(blockedReason(free!)).toBeNull();
   });
 });

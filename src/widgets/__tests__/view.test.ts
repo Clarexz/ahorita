@@ -104,6 +104,26 @@ describe('widgetView', () => {
     expect(widgetView('Countdown', model()).face).toEqual({ shape: 'next', progress: 0.5 });
   });
 
+  it('distancia: juntos dice "juntos" y junta los círculos', () => {
+    const at = NOW.toISOString();
+    const m = model({
+      distance: {
+        me: { city: 'CDMX', at },
+        partner: { city: 'CDMX', at },
+        km: 0.04,
+        together: true,
+      },
+    });
+    const view = widgetView('Distance', m);
+    expect(view).toMatchObject({ text: 'juntos', a11y: 'Están juntos.' });
+    expect(view.face).toEqual({ shape: 'dist', km: 0 });
+    // Un snapshot viejo (sin `together`) muestra los metros.
+    const old = model({
+      distance: { me: { city: null, at }, partner: { city: null, at }, km: 0.4 },
+    });
+    expect(widgetView('Distance', old).text).toBe('400 m');
+  });
+
   it('distancia: sin km queda vacío y explica qué falta', () => {
     const m = model({
       distance: { me: { city: null, at: NOW.toISOString() }, partner: null, km: null },

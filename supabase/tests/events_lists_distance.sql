@@ -444,9 +444,12 @@ select pg_temp.as_user('A');
 create temp table t_loc1 as select * from public.set_my_location(19.43261, -99.13321, ' CDMX ');
 grant select on t_loc1 to authenticated, service_role;
 reset role;
-select pg_temp.assert((select lat = 19.43 and lng = -99.13 and city = 'CDMX' and user_id = pg_temp.u('A') and couple_id = (select id from t_couple) from t_loc1), 'redondeo a 2 decimales y ciudad recortada');
+select pg_temp.assert((select lat = 19.4326 and lng = -99.1332 and city = 'CDMX' and accuracy_m is null and user_id = pg_temp.u('A') and couple_id = (select id from t_couple) from t_loc1), 'redondeo a 4 decimales, sin precisión y ciudad recortada');
 select pg_temp.as_user('A');
-select pg_temp.assert((select lat = 25.69 and lng = -100.32 and city is null from public.set_my_location(25.6866, -100.3161, '   ')), 'segunda llamada actualiza (ciudad vacía = null)');
+select pg_temp.assert((select lat = 25.6866 and lng = -100.3161 and city is null from public.set_my_location(25.68664, -100.31612, '   ')), 'segunda llamada actualiza (ciudad vacía = null)');
+select pg_temp.assert((select accuracy_m = 13 from public.set_my_location(25.6866, -100.3161, null, 12.6)), 'guarda la precisión redondeada');
+select pg_temp.assert((select accuracy_m = 100000 from public.set_my_location(25.6866, -100.3161, null, 250000)), 'precisión topada a 100 km');
+select pg_temp.assert((select accuracy_m is null from public.set_my_location(25.6866, -100.3161)), 'sin precisión = null');
 reset role;
 select pg_temp.assert((select count(*) from public.locations where user_id = pg_temp.u('A')) = 1, 'una sola fila por usuario');
 select pg_temp.as_user('A');
@@ -457,6 +460,8 @@ select public.set_my_location(19.43261, -99.13321, 'CDMX');
 select pg_temp.expect_error($q$select public.set_my_location(91, 0, 'x')$q$, 'invalid_location');
 select pg_temp.expect_error($q$select public.set_my_location(-91, 0, 'x')$q$, 'invalid_location');
 select pg_temp.expect_error($q$select public.set_my_location(0, 181, 'x')$q$, 'invalid_location');
+select pg_temp.expect_error($q$select public.set_my_location(0, 0, 'x', -1)$q$, 'invalid_location');
+select pg_temp.expect_error($q$select public.set_my_location(0, 0, 'x', 'NaN')$q$, 'invalid_location');
 select pg_temp.expect_error($q$select public.set_my_location(0, -181, 'x')$q$, 'invalid_location');
 select pg_temp.expect_error($q$select public.set_my_location(0, -181.5, 'x')$q$, 'invalid_location');
 select pg_temp.expect_error($q$select public.set_my_location('NaN'::double precision, 0, 'x')$q$, 'invalid_location');
@@ -465,7 +470,7 @@ select pg_temp.expect_error($q$select public.set_my_location(null, 0, 'x')$q$, '
 select pg_temp.expect_error($q$select public.set_my_location(0, null, 'x')$q$, 'invalid_location');
 select pg_temp.expect_error($q$select public.set_my_location(0, 0, repeat('c', 81))$q$, 'invalid_location');
 reset role;
-select pg_temp.assert((select lat = 19.43 and lng = -99.13 and city = 'CDMX' from public.locations where user_id = pg_temp.u('A')), 'las inválidas no cambiaron la fila');
+select pg_temp.assert((select lat = 19.4326 and lng = -99.1332 and city = 'CDMX' from public.locations where user_id = pg_temp.u('A')), 'las inválidas no cambiaron la fila');
 
 -- Visibilidad: Beto ve la de Ana; Caro no; Ana no ve la de Beto hasta que la comparta.
 select pg_temp.as_user('B');
@@ -537,11 +542,11 @@ select pg_temp.as_user('A'); select public.set_my_location(19.43261, -99.13321, 
 select pg_temp.assert((select count(*) from pg_temp.queued()) = (select n from t_n) + 1, 'primera ubicación encola');
 select pg_temp.assert((select e ->> 'kind' || ':' || (e -> 'data' ->> 'scope') from pg_temp.queued() e offset 2) = 'widget:distance', 'ubicación: widget/distance');
 
-select pg_temp.as_user('A'); select public.set_my_location(19.43299, -99.13301, ' CDMX '); reset role;
-select pg_temp.assert((select count(*) from pg_temp.queued()) = (select n from t_n) + 1, 'mismo redondeo y ciudad: no vuelve a encolar');
+select pg_temp.as_user('A'); select public.set_my_location(19.43299, -99.13301, ' CDMX ', 20); reset role;
+select pg_temp.assert((select count(*) from pg_temp.queued()) = (select n from t_n) + 1, 'menos de 50 m y misma ciudad: no vuelve a encolar');
 
-select pg_temp.as_user('A'); select public.set_my_location(19.44, -99.13, 'CDMX'); reset role;
-select pg_temp.assert((select count(*) from pg_temp.queued()) = (select n from t_n) + 2, 'cambia lo redondeado: encola');
+select pg_temp.as_user('A'); select public.set_my_location(19.4336, -99.1330, 'CDMX'); reset role;
+select pg_temp.assert((select count(*) from pg_temp.queued()) = (select n from t_n) + 2, 'más de 50 m: encola');
 
 select pg_temp.as_user('A'); select public.set_my_location(19.44, -99.13, 'Ciudad de México'); reset role;
 select pg_temp.assert((select count(*) from pg_temp.queued()) = (select n from t_n) + 3, 'cambia la ciudad: encola');

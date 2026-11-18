@@ -9,7 +9,9 @@ import { supabase } from '@/lib/supabase';
 import { LOCATION_TASK, sendLocation } from './locationService';
 
 type TaskBody = {
-  data?: { locations?: { coords: { latitude: number; longitude: number } }[] } | null;
+  data?: {
+    locations?: { coords: { latitude: number; longitude: number; accuracy?: number | null } }[];
+  } | null;
   error?: unknown;
 };
 
@@ -22,7 +24,10 @@ export async function locationTask({ data, error }: TaskBody, now = Date.now()):
     // getSession() refresca el token con el refresh token persistido si ya venció.
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) return;
-    await sendLocation({ lat: last.coords.latitude, lng: last.coords.longitude }, { now });
+    await sendLocation(
+      { lat: last.coords.latitude, lng: last.coords.longitude, accuracy: last.coords.accuracy },
+      { now },
+    );
   } catch {
     // best effort: la siguiente actualización lo vuelve a intentar
   }
