@@ -1,10 +1,12 @@
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { RefreshControl, View } from 'react-native';
 
 import { EmptyState, LoadingSymbol, Screen, ScreenHeader, Text } from '@/components';
 import { useCouple } from '@/features/couple';
 import { QuestionRow, useCategories, useCategoryQuestions } from '@/features/questions';
+import { sortForMe } from '@/lib/questionsView';
 import { useTheme } from '@/theme';
 
 export default function CategoryScreen() {
@@ -17,6 +19,8 @@ export default function CategoryScreen() {
   const category = categories.find((c) => c.slug === slug);
   const partnerName = partner?.nickname || partner?.display_name || 'Tu pareja';
   const done = list.questions.filter((q) => q.answered_by_me && q.answered_by_partner).length;
+  // Primero las que ya contestó tu pareja y te faltan.
+  const questions = useMemo(() => sortForMe(list.questions), [list.questions]);
 
   const header = (
     <View style={{ gap: spacing.xl, paddingBottom: spacing.xl }}>
@@ -52,7 +56,7 @@ export default function CategoryScreen() {
   return (
     <Screen>
       <FlashList
-        data={list.questions}
+        data={questions}
         keyExtractor={(q) => q.id}
         ListHeaderComponent={header}
         ListEmptyComponent={

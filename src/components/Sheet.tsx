@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Modal, Pressable, View, useWindowDimensions } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -61,7 +62,8 @@ export function Sheet({ visible, onClose, title, children }: Props) {
 
   return (
     <Modal transparent visible={mounted} animationType="none" onRequestClose={onClose}>
-      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+      {/* Con el teclado abierto la hoja sube y se encoge (maxHeight en %) para no tapar el input. */}
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1, justifyContent: 'flex-end' }}>
         <Animated.View
           style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }, veilStyle]}
         >
@@ -75,7 +77,7 @@ export function Sheet({ visible, onClose, title, children }: Props) {
         <Animated.View
           style={[
             {
-              maxHeight: height * 0.9,
+              maxHeight: '90%',
               backgroundColor: colors.bg,
               borderTopLeftRadius: radius.sheet,
               borderTopRightRadius: radius.sheet,
@@ -104,7 +106,7 @@ export function Sheet({ visible, onClose, title, children }: Props) {
           ) : null}
           {children}
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

@@ -9,6 +9,7 @@ import { cardState, type QuestionCard } from '@/lib/questions';
 import { useTheme } from '@/theme';
 
 import { useDailyQuestion } from '../hooks';
+import { PairDoneChip } from './PairDoneChip';
 
 type ViewProps = {
   card: QuestionCard;
@@ -38,6 +39,7 @@ export function DailyQuestionCardView({ card, partnerName, onPress }: ViewProps)
   return (
     <Card
       onPress={onPress}
+      accent={state === 'both' ? 'pair' : undefined}
       accessibilityLabel={`La pregunta del día: ${card.question.text}. ${status}. ${footer}`}
     >
       <View style={{ gap: spacing.md }}>
@@ -45,7 +47,11 @@ export function DailyQuestionCardView({ card, partnerName, onPress }: ViewProps)
           <Text variant="label" tone="muted" style={{ flex: 1 }}>
             Pregunta del día
           </Text>
-          <Chip label={status} selected={state === 'unanswered'} />
+          {state === 'both' ? (
+            <PairDoneChip label={status} />
+          ) : (
+            <Chip label={status} selected={state === 'unanswered'} />
+          )}
         </View>
         <Text variant="h3" numberOfLines={4}>
           {card.question.text}

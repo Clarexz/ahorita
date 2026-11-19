@@ -14,6 +14,7 @@ export {
   useHistory,
   useMyFeedback,
   usePacks,
+  usePendingForMe,
   useQuestion,
   useQuestionsRealtime,
   useReactToComment,
@@ -33,4 +34,6 @@ export { AnswerAudio } from './components/AnswerAudio';
 export { StreakNote } from './components/StreakNote';
 export { QuestionView } from './components/QuestionView';
 export { QuestionRow } from './components/QuestionRow';
+export { PairDoneChip } from './components/PairDoneChip';
+export { PendingForMeCard } from './components/PendingForMeCard';
 export { PackProgress } from './components/PackProgress';

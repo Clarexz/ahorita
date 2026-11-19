@@ -4,6 +4,10 @@ import {
   answerExcerpt,
   categoryRowState,
   historyPartnerLine,
+  pendingByCategory,
+  pendingForMe,
+  pendingLine,
+  sortForMe,
   spicyCopy,
   streakHeadline,
 } from '../questionsView';
@@ -84,5 +88,45 @@ describe('questionsView', () => {
     });
     expect(spicyCopy(m(false, true), 'me', 'Caleb').active).toBe(false);
     expect(spicyCopy(m(true, false), 'me', 'Caleb').partnerLine).toBe('Caleb todavía no.');
+  });
+
+  it('pendingForMe: solo lo que contestó la pareja y me falta, sin la de hoy ni picantes', () => {
+    const q = (id: string, over: Partial<HistoryItem['question']> = {}) => ({
+      ...item({}).question,
+      id,
+      ...over,
+    });
+    const items = [
+      item({ question: q('vieja'), partner_answered: true, last_activity: '2026-11-01T00:00:00Z' }),
+      item({ question: q('nueva'), partner_answered: true, last_activity: '2026-11-18T00:00:00Z' }),
+      item({ question: q('hoy'), partner_answered: true }),
+      item({ question: q('mia'), mine: answer('x'), partner_answered: true }),
+      item({ question: q('sola'), mine: answer('x') }),
+      item({ question: q('picante', { intensity: 'picante' }), partner_answered: true }),
+    ];
+    const ids = (spicyActive: boolean) =>
+      pendingForMe(items, { excludeId: 'hoy', spicyActive }).map((p) => p.question.id);
+    expect(ids(false)).toEqual(['nueva', 'vieja']);
+    expect(ids(true)).toContain('picante');
+    expect(pendingByCategory(pendingForMe(items, {}))).toEqual({ amor: 3 });
+    expect(pendingLine(1, 'Chu')).toBe('Chu contestó una pregunta que te falta.');
+    expect(pendingLine(3, 'Chu')).toBe('Chu contestó 3 preguntas que te faltan.');
+  });
+
+  it('sortForMe sube las que me faltan y contestó la pareja; estable', () => {
+    const r = (id: string, me: boolean, partner: boolean) => ({
+      id,
+      answered_by_me: me,
+      answered_by_partner: partner,
+    });
+    const sorted = sortForMe([
+      r('a', true, true),
+      r('b', false, false),
+      r('c', false, true),
+      r('d', true, false),
+      r('e', false, true),
+      r('f', false, false),
+    ]);
+    expect(sorted.map((x) => x.id)).toEqual(['c', 'e', 'b', 'f', 'd', 'a']);
   });
 });

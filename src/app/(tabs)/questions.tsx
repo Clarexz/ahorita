@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import { Button, Card, EmptyState, Icon, LoadingSymbol, Screen, Sheet, Text } from '@/components';
@@ -8,12 +8,15 @@ import { GamesSection, useGameOverview } from '@/features/games';
 import {
   DailyQuestionCard,
   PackProgress,
+  PendingForMeCard,
   useCategories,
   usePacks,
+  usePendingForMe,
   useStreak,
 } from '@/features/questions';
 import { ShareCardButton } from '@/features/share';
 import { StreakChip } from '@/features/questions/components/StreakChip';
+import { FRUITS } from '@/lib/fruits';
 import { packProgress, packStatus } from '@/lib/packs';
 import {
   REPAIR_TODAY_NOTE,
@@ -24,13 +27,17 @@ import {
   repairsLeftLine,
 } from '@/lib/questionCopy';
 import { spicyState } from '@/lib/questions';
-import { streakHeadline } from '@/lib/questionsView';
+import { pendingByCategory, streakHeadline } from '@/lib/questionsView';
 import { page, useTheme } from '@/theme';
 
 export default function QuestionsScreen() {
-  const { spacing, colors } = useTheme();
+  const { spacing, colors, fruit } = useTheme();
+  const partnerFruit = fruit.partner ?? FRUITS[fruit.me.suggested];
   const router = useRouter();
-  const { members, me } = useCouple();
+  const { members, me, partner } = useCouple();
+  const partnerName = partner?.nickname || partner?.display_name || 'Tu pareja';
+  const pendingQ = usePendingForMe();
+  const pendingCounts = useMemo(() => pendingByCategory(pendingQ.pending), [pendingQ.pending]);
   const streak = useStreak();
   const categories = useCategories();
   const packs = usePacks();
@@ -43,6 +50,7 @@ export default function QuestionsScreen() {
     void categories.refetch();
     void packs.refetch();
     void games.refetch();
+    void pendingQ.refetch();
   };
   const loading = streak.isLoading || categories.isLoading;
   const failed = streak.isError || categories.isError;
@@ -62,6 +70,7 @@ export default function QuestionsScreen() {
             Preguntas
           </Text>
           <DailyQuestionCard />
+          <PendingForMeCard partnerName={partnerName} />
 
           {loading ? (
             <View style={{ alignItems: 'center', paddingVertical: spacing.xl }}>
@@ -135,11 +144,16 @@ export default function QuestionsScreen() {
                   >
                     {categories.categories.map((c) => {
                       const locked = c.intensity === 'picante' && !spicyActive;
+                      const waiting = locked ? 0 : (pendingCounts[c.slug] ?? 0);
                       return (
                         <View key={c.slug} style={{ width: '48.5%' }}>
                           <Card
                             accessibilityLabel={
-                              locked ? `${c.name}, bloqueada` : `${c.name}. ${c.description}`
+                              locked
+                                ? `${c.name}, bloqueada`
+                                : `${c.name}. ${c.description}${
+                                    waiting > 0 ? `. ${partnerName} te espera en ${waiting}` : ''
+                                  }`
                             }
                             onPress={() =>
                               locked
@@ -173,6 +187,35 @@ export default function QuestionsScreen() {
                                 <Icon name="lock" size={18} color={colors.inkMuted} />
                               ) : null}
                             </View>
+                            {waiting > 0 ? (
+                              <View
+                                accessibilityElementsHidden
+                                importantForAccessibility="no"
+                                style={{
+                                  position: 'absolute',
+                                  top: -spacing.xs,
+                                  right: -spacing.xs,
+                                  minWidth: 22,
+                                  height: 22,
+                                  paddingHorizontal: 6,
+                                  borderRadius: 11,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  backgroundColor: partnerFruit.hex,
+                                }}
+                              >
+                                <Text
+                                  variant="note"
+                                  style={{
+                                    color: partnerFruit.on,
+                                    fontWeight: '700',
+                                    lineHeight: 18,
+                                  }}
+                                >
+                                  {waiting}
+                                </Text>
+                              </View>
+                            ) : null}
                           </Card>
                         </View>
                       );

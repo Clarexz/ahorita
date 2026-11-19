@@ -20,6 +20,7 @@ import { HomeListsCard, useLists, useListsRealtime } from '@/features/lists';
 import { OnThisDayCard } from '@/features/memories';
 import { MoodSheet, useMoodRealtime, useMoods } from '@/features/mood';
 import { usePushSoftAsk } from '@/features/notifications';
+import { PendingForMeCard } from '@/features/questions';
 import { groupActive, useActiveStories } from '@/features/stories';
 import { UpdateNotice } from '@/features/updates';
 import { FRUITS } from '@/lib/fruits';
@@ -154,6 +155,7 @@ export default function HomeScreen() {
 
         <View style={{ gap: spacing.md }}>
           <HomeQuestionCard />
+          <PendingForMeCard partnerName={partnerName} variant="compact" />
           {softAsk.visible ? (
             <SoftAskNote
               partnerName={partner?.nickname || partner?.display_name}

@@ -1689,6 +1689,16 @@ export const SCENARIOS = {
     streak: () => ({ ...streakWith(13, 23, []), today_done: true }),
     routes: ['/'],
   },
+  // Pestaña Preguntas con la del día contestada por los dos y extras pendientes (prefijo `preguntas-ambos-`).
+  preguntas_ambos: {
+    prefix: 'preguntas-ambos',
+    me: profiles.me,
+    partner: profiles.partner,
+    members: [member(ME_ID), member(PARTNER_ID)],
+    daily: () => todayCard('both'),
+    streak: () => ({ ...streakWith(1, 1, []), today_done: true }),
+    routes: ['/questions'],
+  },
   inicio_racha_cero: {
     prefix: 'inicio-cero',
     me: profiles.me,

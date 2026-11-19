@@ -117,6 +117,8 @@ jest.mock('@/features/love-languages', () => ({
 jest.mock('@/features/memories', () => ({ OnThisDayCard: () => null }));
 jest.mock('@/features/updates', () => ({ UpdateNotice: () => null }));
 jest.mock('@/features/questions', () => ({
+  PairDoneChip: () => null,
+  PendingForMeCard: () => null,
   useDailyQuestion: () => ({
     card: {
       question: { text: '¿Qué extrañas más?' },
