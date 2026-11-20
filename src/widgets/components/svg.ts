@@ -312,9 +312,9 @@ export function mascotSvg(o: WidgetShapeOptions & { mood?: MascotMood }): string
 // La próxima vez: media luna de tu fruta que se llena con la de tu pareja.
 // ---------------------------------------------------------------------------
 
-const MOON = 'M6 76 A44 44 0 0 1 94 76 Z';
-const MOON_BASE = 76;
-const MOON_RADIUS = 44;
+export const MOON = 'M6 76 A44 44 0 0 1 94 76 Z';
+export const MOON_BASE = 76;
+export const MOON_RADIUS = 44;
 
 /** Nivel de llenado (0 a 1) con el que se dibuja la media luna. */
 export const clampProgress = (p: number): number =>

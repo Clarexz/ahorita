@@ -5,12 +5,13 @@ import {
   type QueryClient,
   type QueryKey,
 } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useSession } from '@/features/auth';
 import { useCouple } from '@/features/couple';
 import { useProfile } from '@/features/profile';
 import { supabase } from '@/lib/supabase';
+import { markStorySeenLocally } from '@/widgets/update';
 
 import {
   createStory,
@@ -112,6 +113,7 @@ export function useStory(id: string | null | undefined) {
 
 /** URL firmada de un archivo del bucket `stories` (null si no hay ruta). */
 export function useStoryMediaUrl(path: string | null | undefined) {
+  const qc = useQueryClient();
   const query = useQuery({
     queryKey: storyKeys.media(path ?? null),
     queryFn: () => storyMediaUrl(path as string),
@@ -119,7 +121,22 @@ export function useStoryMediaUrl(path: string | null | undefined) {
     staleTime: MEDIA_STALE_MS,
     gcTime: MEDIA_STALE_MS * 2,
   });
-  return { url: query.data ?? null, isLoading: !!path && query.isLoading, isError: query.isError };
+  /** Pide una URL firmada nueva (la guardada pudo caducar o fallar) y reemplaza la de la caché. */
+  const refresh = useCallback(async () => {
+    if (!path) return;
+    try {
+      const url = await storyMediaUrl(path, true);
+      qc.setQueryData(storyKeys.media(path), url);
+    } catch {
+      void qc.invalidateQueries({ queryKey: storyKeys.media(path) });
+    }
+  }, [qc, path]);
+  return {
+    url: query.data ?? null,
+    isLoading: !!path && query.isLoading,
+    isError: query.isError,
+    refresh,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -210,6 +227,8 @@ export function useMarkStorySeen() {
       await cancelStories(qc);
       const current = findInCaches(qc, id);
       if (!userId || !current || current.user_id === userId) return { snapshot: [] as Snapshot };
+      // El widget deja de decir "nueva" al instante, sin esperar al servidor.
+      void markStorySeenLocally(id);
       if (current.views.some((v) => v.user_id === userId)) return { snapshot: [] as Snapshot };
       const seenAt = new Date().toISOString();
       const snapshot = patchStory(qc, id, (s) => ({

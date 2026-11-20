@@ -101,7 +101,7 @@ describe('widgetView', () => {
       model({ events: [{ ...input().events![0], date: '2026-10-30' }] }),
     );
     expect(view.face).toEqual({ shape: 'next', progress: 1 });
-    expect(widgetView('Countdown', model()).face).toEqual({ shape: 'next', progress: 0.5 });
+    expect(widgetView('Countdown', model()).face).toEqual({ shape: 'next', progress: 0.6 });
   });
 
   it('distancia: juntos dice "juntos" y junta los círculos', () => {
@@ -151,6 +151,24 @@ describe('widgetView', () => {
     expect(view.face).toEqual({ shape: 'story', photo: 'data:image/jpeg;base64,AAAA', dot: true });
     expect(view.route).toBe('/story/view?user=p1');
     expect(widgetView('PartnerStory', model()).route).toBe('/stories');
+  });
+
+  it('story ya vista: "ver" sin punto, la ruta sigue a la story', () => {
+    const m = model({
+      partnerStory: {
+        id: 's1',
+        kind: 'text',
+        created_at: '2026-10-30T16:00:00Z',
+        expires_at: '2026-10-31T16:00:00Z',
+        text: 'Hola',
+        seen: true,
+      },
+    });
+    const view = widgetView('PartnerStory', m);
+    expect(view.text).toBe('ver');
+    expect(view.face).toMatchObject({ shape: 'story', dot: false });
+    expect(view.a11y).toContain('ya viste');
+    expect(view.route).toBe('/story/view?user=p1');
   });
 
   it('racha en 0: apagada y "a contestar"', () => {

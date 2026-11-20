@@ -157,11 +157,12 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
         face: {
           shape: 'story',
           photo: story?.kind === 'photo' ? story.thumb : null,
-          dot: story !== null,
+          // El punto avisa solo de una story que todavía no has visto.
+          dot: story !== null && !story.seen,
         },
-        text: story ? 'nueva' : 'ver',
+        text: story && !story.seen ? 'nueva' : 'ver',
         a11y: story
-          ? `${who} subió una story ${story.ago}. Toca para verla.`
+          ? `${who} subió una story ${story.ago}${story.seen ? ' que ya viste' : ''}. Toca para verla.`
           : `${who} no ha subido nada hoy. Toca para abrir las stories.`,
         route: story && model.partnerId ? `/story/view?user=${model.partnerId}` : '/stories',
         fruits,

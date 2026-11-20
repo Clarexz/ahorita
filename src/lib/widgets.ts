@@ -20,10 +20,15 @@ import { DEFAULT_FRUITS, resolveFruits, type FruitKey } from './fruits';
 import { moodLabel } from './mood';
 import { isStoryActive, storyAgo, type StoryBg, type StoryFont, type StoryKind } from './stories';
 import { DEFAULT_TIME_ZONE } from './timezone';
+import { waitProgress, type WaitProgress } from './waitProgress';
 
 export { nextBirthday } from './events';
 
-export const WIDGET_SNAPSHOT_VERSION = 4;
+export const WIDGET_SNAPSHOT_VERSION = 5;
+/** Versiones anteriores que aún se leen (se completan los campos nuevos al parsear). */
+const COMPATIBLE_VERSIONS: readonly number[] = [4, WIDGET_SNAPSHOT_VERSION];
+/** Cuántos `end_date` de visitas pasadas se guardan para "desde que se vieron". */
+export const MAX_VISIT_ENDS = 5;
 
 /** Nombres con los que se registran los widgets (app.config.ts y el task handler). */
 export const WIDGET_NAMES = [
@@ -69,6 +74,8 @@ export type SnapshotStory = {
   font: StoryFont | null;
   /** drawing: trazos ya simplificados. */
   strokes: Stroke[] | null;
+  /** v5: ¿ya la vi yo? Ausente en snapshots viejos (se toma como no vista). */
+  seen?: boolean;
 };
 
 /** Un lado de la distancia: null = esa persona no comparte su ubicación. */
@@ -114,6 +121,8 @@ export type WidgetSnapshot = {
   fruits: SnapshotFruits;
   /** Fase 12A: racha de preguntas (v4). */
   streak: SnapshotStreak | null;
+  /** v5: `end_date` de las últimas visitas ya pasadas (tabla `visits`), de la más nueva a la más vieja. */
+  visitEnds: IsoDate[];
   /** ISO del momento en que se armó el snapshot. */
   updatedAt: string;
 };
@@ -125,8 +134,10 @@ export type WidgetCountdown = {
   emoji: string | null;
   date: IsoDate;
   daysUntil: number;
-  /** 0 a 1: qué tanto de la espera ya pasó (0.5 si no hay de dónde medir). */
+  /** 0 a 1: qué tanto de la espera ya pasó (ver `waitProgress`). */
   progress: number;
+  /** Con qué se midió el avance (desde cuándo, cuántos días). */
+  wait: WaitProgress;
 };
 
 export type WidgetDistance = {
@@ -145,7 +156,7 @@ export type WidgetDistance = {
 export type WidgetStory = Pick<
   SnapshotStory,
   'id' | 'kind' | 'thumb' | 'text' | 'bg' | 'font' | 'strokes'
-> & { ago: string };
+> & { ago: string; /** ¿Ya la viste? */ seen: boolean };
 
 export type WidgetModel = {
   status: WidgetStatus;
@@ -173,6 +184,8 @@ export type SnapshotInput = {
   partner: { name: string | null | undefined; birthday: string | null | undefined } | null;
   partnerMood: { emoji: string; note: string | null; created_at: string } | null;
   events?: readonly (EventInput & { created_at?: string | null })[];
+  /** Visitas de la tabla `visits` (basta `end_date`). */
+  visits?: readonly { end_date: string }[];
   distance?: SnapshotDistance | null;
   fruits?: SnapshotFruits;
   streak?: SnapshotStreak | null;
@@ -187,6 +200,8 @@ export type SnapshotInput = {
     bg?: StoryBg | null;
     font?: StoryFont | null;
     strokes?: Stroke[] | null;
+    /** ¿Ya la vi yo (story_views con mi user_id)? */
+    seen?: boolean;
   } | null;
   now?: Date;
 };
@@ -217,7 +232,21 @@ function cleanStory(v: SnapshotInput['partnerStory']): SnapshotStory | null {
       v.kind === 'drawing' && v.strokes
         ? v.strokes.map((st) => ({ ...st, p: simplifyStroke(st.p, WIDGET_STROKE_TOLERANCE) }))
         : null,
+    seen: v.seen === true,
   };
+}
+
+/** Los últimos `end_date` de visitas que ya pasaron (<= hoy), de la más nueva a la más vieja. */
+export function pastVisitEnds(
+  visits: readonly { end_date: string }[] | undefined,
+  today: IsoDate,
+): IsoDate[] {
+  return (visits ?? [])
+    .map((v) => cleanDate(v.end_date))
+    .filter((d): d is IsoDate => d !== null && d <= today)
+    .sort()
+    .reverse()
+    .slice(0, MAX_VISIT_ENDS);
 }
 
 /** La story activa más nueva de `userId` (null si no hay). */
@@ -297,6 +326,10 @@ export function buildWidgetSnapshot(input: SnapshotInput): WidgetSnapshot {
     streak: cleanStreak(input.streak),
     partnerId: input.partnerId ?? null,
     partnerStory: cleanStory(input.partnerStory),
+    visitEnds: pastVisitEnds(
+      input.visits,
+      todayIn(input.timezone || DEFAULT_TIME_ZONE, input.now ?? new Date()),
+    ),
     updatedAt: (input.now ?? new Date()).toISOString(),
   };
 }
@@ -317,6 +350,7 @@ export function emptyWidgetSnapshot(status: Exclude<WidgetStatus, 'ready'>, now 
     streak: null,
     partnerId: null,
     partnerStory: null,
+    visitEnds: [],
     updatedAt: now.toISOString(),
   };
   return s;
@@ -329,13 +363,31 @@ export function parseWidgetSnapshot(raw: string | null | undefined): WidgetSnaps
     const v: unknown = JSON.parse(raw);
     if (typeof v !== 'object' || v === null) return null;
     const s = v as Partial<WidgetSnapshot>;
-    if (s.version !== WIDGET_SNAPSHOT_VERSION) return null;
+    if (typeof s.version !== 'number' || !COMPATIBLE_VERSIONS.includes(s.version)) return null;
     if (s.status !== 'ready' && s.status !== 'signed_out' && s.status !== 'no_couple') return null;
     if (typeof s.updatedAt !== 'string' || typeof s.timezone !== 'string') return null;
-    return s as WidgetSnapshot;
+    // Un snapshot de la versión anterior no trae los campos nuevos: se completan.
+    return {
+      ...s,
+      version: WIDGET_SNAPSHOT_VERSION,
+      visitEnds: Array.isArray(s.visitEnds) ? s.visitEnds : [],
+    } as WidgetSnapshot;
   } catch {
     return null;
   }
+}
+
+/**
+ * Marca como vista la story de tu pareja en el snapshot (sin ir al servidor). Devuelve el mismo
+ * snapshot si no hay nada que cambiar (otra story, ya vista o sin snapshot).
+ */
+export function markStorySeenInSnapshot(
+  s: WidgetSnapshot | null,
+  storyId: string,
+): WidgetSnapshot | null {
+  const story = s?.partnerStory;
+  if (!s || !story || story.id !== storyId || story.seen === true) return s;
+  return { ...s, partnerStory: { ...story, seen: true } };
 }
 
 /** ¿Cambió algo que se vea en un widget? (ignora `updatedAt`). */
@@ -360,38 +412,22 @@ export function nextCountdown(s: WidgetSnapshot, today: IsoDate): WidgetCountdow
   if (!c) return null;
   const events = s.events ?? [];
   const own = c.key.startsWith('event:') ? events.find((e) => `event:${e.id}` === c.key) : null;
-  const lastVisit = events
-    .filter((e) => e.kind === 'visit' && e.date <= today && e.date < c.date)
-    .reduce<IsoDate | null>((best, e) => (best === null || e.date > best ? e.date : best), null);
+  const wait = waitProgress({
+    today,
+    target: c.date,
+    visitEnds: s.visitEnds ?? [],
+    eventVisitDates: events.filter((e) => e.kind === 'visit').map((e) => e.date),
+    createdAt: own?.createdAt ?? null,
+  });
   return {
     kind: c.kind,
     title: c.title,
     emoji: c.emoji,
     date: c.date,
     daysUntil: c.daysUntil,
-    progress: countdownProgress({
-      today,
-      target: c.date,
-      since: lastVisit ?? (own?.createdAt ? own.createdAt.slice(0, 10) : null),
-    }),
+    progress: wait.progress,
+    wait,
   };
-}
-
-/**
- * Avance de la espera, de 0 a 1: días transcurridos desde `since` (la última visita o el día en
- * que se creó la cuenta regresiva) entre el total hasta `target`. Sin dato válido: 0.5.
- */
-export function countdownProgress(input: {
-  today: IsoDate;
-  target: IsoDate;
-  since: IsoDate | null;
-}): number {
-  const { today, target, since } = input;
-  if (!parseIsoDate(since) || !parseIsoDate(target)) return 0.5;
-  const total = daysBetween(since as IsoDate, target);
-  if (total <= 0) return 0.5;
-  const elapsed = daysBetween(since as IsoDate, today);
-  return Math.min(1, Math.max(0, elapsed / total));
 }
 
 /** "ahorita", "hace 5 min", "hace 2 h", "ayer", "hace 3 días". */
@@ -459,6 +495,7 @@ export function widgetModel(s: WidgetSnapshot | null, now: Date = new Date()): W
             font: story.font,
             strokes: story.strokes,
             ago: storyAgo(story.createdAt, now),
+            seen: story.seen === true,
           }
         : null,
     stale: now.getTime() - Date.parse(snap.updatedAt) > SNAPSHOT_STALE_MS,

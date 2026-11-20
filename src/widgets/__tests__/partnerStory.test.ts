@@ -102,6 +102,48 @@ describe('storyToSnapshotInput', () => {
   });
 });
 
+describe('story vista por mí', () => {
+  it('seen si mi user_id está en las vistas', async () => {
+    const seen = await storyToSnapshotInput(
+      row({ kind: 'text', views: [{ user_id: 'me' }] }),
+      null,
+      async () => null,
+      'me',
+    );
+    expect(seen?.seen).toBe(true);
+    const unseen = await storyToSnapshotInput(
+      row({ kind: 'text', views: [{ user_id: 'otro' }] }),
+      null,
+      async () => null,
+      'me',
+    );
+    expect(unseen?.seen).toBe(false);
+    expect((await storyToSnapshotInput(row({ kind: 'text' }), null, async () => null))?.seen).toBe(
+      false,
+    );
+  });
+
+  it('conserva "vista" del snapshot local aunque el servidor aún no lo sepa', async () => {
+    const previous = previousWith(null);
+    const marked = { ...previous, partnerStory: { ...previous.partnerStory!, seen: true } };
+    const out = await storyToSnapshotInput(
+      row({ kind: 'text', views: [] }),
+      marked,
+      async () => null,
+      'me',
+    );
+    expect(out?.seen).toBe(true);
+    // otra story distinta no hereda la marca
+    const other = await storyToSnapshotInput(
+      row({ id: 's2', kind: 'text', views: [] }),
+      marked,
+      async () => null,
+      'me',
+    );
+    expect(other?.seen).toBe(false);
+  });
+});
+
 describe('pickPartnerStory', () => {
   it('elige la más nueva y activa de tu pareja', async () => {
     const rows = [

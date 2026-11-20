@@ -2,6 +2,7 @@
 import { fetchCoupleState } from '@/features/couple/api';
 import { fetchLocations } from '@/features/distance/api';
 import { fetchEvents } from '@/features/events/api';
+import { fetchVisits } from '@/features/visits/api';
 import { fetchMoods } from '@/features/mood/api';
 import { fetchStreak } from '@/features/questions/api';
 import { supabase } from '@/lib/supabase';
@@ -46,15 +47,21 @@ async function read(): Promise<WidgetSnapshot> {
   if (!state.couple) return emptyWidgetSnapshot('no_couple');
 
   const previous = await readSnapshot();
-  const [moods, events, locations, streak] = await Promise.all([
+  const [moods, events, visits, locations, streak] = await Promise.all([
     fetchMoods(state.couple.id, 20),
     fetchEvents(state.couple.id),
+    // Las visitas son solo para el avance de la media luna: si falla la lectura, sin ellas.
+    fetchVisits(state.couple.id).catch(
+      () => previous?.visitEnds.map((end_date) => ({ end_date })) ?? [],
+    ),
     fetchLocations(state.couple.id),
     readStreak(previous?.streak ?? null),
   ]);
   const partnerMood = state.partner ? (latestMoodByUser(moods)[state.partner.id] ?? null) : null;
   // La miniatura de la story se reutiliza del snapshot anterior si no cambió la story.
-  const partnerStory = state.partner ? await fetchPartnerStory(state.partner.id, previous) : null;
+  const partnerStory = state.partner
+    ? await fetchPartnerStory(state.partner.id, previous, userId)
+    : null;
   const nameOf = (p: typeof state.me) =>
     p ? { name: p.nickname || p.display_name, birthday: p.birthday } : null;
 
@@ -68,6 +75,7 @@ async function read(): Promise<WidgetSnapshot> {
     partnerId: state.partner?.id ?? null,
     partnerStory,
     events,
+    visits,
     // `profiles.fruit` puede no existir todavía en el servidor: sin ella caen Sandía / Mango.
     fruits: snapshotFruits(profileFruit(state.me), profileFruit(state.partner)),
     streak,

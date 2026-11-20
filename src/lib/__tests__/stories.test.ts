@@ -3,12 +3,14 @@ import {
   clampSticker,
   groupStories,
   isStoryActive,
+  photoFit,
   STORY_BGS,
   STORY_FONT_LABELS,
   STORY_FONTS,
   STORY_REACTIONS,
   STORY_STICKERS,
   STORY_TTL_MS,
+  splitByDay,
   storyAgo,
   storyDurationMs,
   storyPaths,
@@ -240,5 +242,44 @@ describe('archiveByMonth', () => {
   });
   it('vacío', () => {
     expect(archiveByMonth([], 'UTC')).toEqual([]);
+  });
+});
+
+describe('splitByDay', () => {
+  const mk = (id: string, createdAt: string) => ({ id, created_at: createdAt });
+  it('separa las de hoy y las anteriores según el día de la pareja', () => {
+    const list = [
+      mk('ayer', '2026-10-30T03:00:00Z'), // 29 oct 21:00 en CDMX
+      mk('hoy1', '2026-10-30T07:00:00Z'), // 30 oct 01:00
+      mk('hoy2', '2026-10-30T17:00:00Z'),
+    ];
+    const r = splitByDay(list, '2026-10-30', 'America/Mexico_City');
+    expect(r.today.map((s) => s.id)).toEqual(['hoy1', 'hoy2']);
+    expect(r.earlier.map((s) => s.id)).toEqual(['ayer']);
+  });
+  it('respeta la zona: la misma hora puede ser otro día', () => {
+    const list = [mk('a', '2026-10-30T03:00:00Z')];
+    expect(splitByDay(list, '2026-10-30', 'UTC').today).toHaveLength(1);
+    expect(splitByDay(list, '2026-10-30', 'America/Mexico_City').today).toHaveLength(0);
+  });
+  it('fechas inválidas cuentan como anteriores', () => {
+    const r = splitByDay([mk('x', 'nope')], '2026-10-30', 'UTC');
+    expect(r.earlier).toHaveLength(1);
+  });
+});
+
+describe('photoFit', () => {
+  it('vertical 9:16 llena el marco', () => {
+    expect(photoFit(1080, 1920)).toBe('cover');
+    expect(photoFit(900, 1600)).toBe('cover');
+  });
+  it('horizontal, cuadrada y 3:4 se ven completas', () => {
+    expect(photoFit(1600, 900)).toBe('contain');
+    expect(photoFit(1000, 1000)).toBe('contain');
+    expect(photoFit(900, 1200)).toBe('contain');
+  });
+  it('sin dimensiones no recorta', () => {
+    expect(photoFit()).toBe('contain');
+    expect(photoFit(0, 100)).toBe('contain');
   });
 });

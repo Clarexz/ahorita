@@ -10,6 +10,8 @@ import { DistanceRoute } from './DistanceRoute';
 type ViewProps = {
   view: DistanceView;
   partnerName: string;
+  /** Mi apodo o primer nombre (en vez de "Tú"). */
+  meName?: string;
   loading?: boolean;
   onPress: () => void;
 };
@@ -18,7 +20,13 @@ type ViewProps = {
  * Distancia en Inicio (toca → pantalla Distancia). Con los dos compartiendo es la tarjeta con los
  * kilómetros; si falta alguien, una invitación de una línea. Sin datos remotos: se prueba directo.
  */
-export function DistanceCardView({ view, partnerName, loading = false, onPress }: ViewProps) {
+export function DistanceCardView({
+  view,
+  partnerName,
+  meName,
+  loading = false,
+  onPress,
+}: ViewProps) {
   const { spacing } = useTheme();
   if (loading) {
     return (
@@ -38,8 +46,10 @@ export function DistanceCardView({ view, partnerName, loading = false, onPress }
       meActive={view.kind === 'both' || view.kind === 'only_me'}
       partnerActive={view.kind === 'both' || view.kind === 'only_partner'}
       km={view.km}
-      meInitial="T"
+      meInitial={initialOf(meName || 'Tú')}
       partnerInitial={initialOf(partnerName)}
+      meLabel={meName}
+      partnerLabel={partnerName}
     />
   );
 

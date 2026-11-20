@@ -7,6 +7,7 @@ import { useEvents } from '@/features/events';
 import { useMoods } from '@/features/mood';
 import { useStreak } from '@/features/questions';
 import { useActiveStories } from '@/features/stories';
+import { useVisits } from '@/features/visits';
 import { coupleDayZone } from '@/lib/coupleDay';
 import { snapshotDistance } from '@/lib/distance';
 import type { OnboardingStage } from '@/lib/onboarding';
@@ -36,6 +37,7 @@ export function useWidgetSync(stage: OnboardingStage): void {
   const { latestByUser } = useMoods();
   const { stories, isLoading: storiesLoading, isError: storiesError } = useActiveStories();
   const { events, isLoading: eventsLoading, isError: eventsError } = useEvents();
+  const { visits, isLoading: visitsLoading, isError: visitsError } = useVisits();
   const { rows: locations, isLoading: locationsLoading, isError: locationsError } = useLocations();
   const { streak, isLoading: streakLoading, isError: streakError } = useStreak();
   const latest = useRef<WidgetSnapshot | null>(null);
@@ -47,6 +49,7 @@ export function useWidgetSync(stage: OnboardingStage): void {
   const partnerStory = partner ? latestActiveStory(stories, partner.id, new Date()) : null;
   // Igual que las stories: mientras eventos o ubicaciones no cargan se conserva lo anterior.
   const eventsPending = eventsLoading || eventsError;
+  const visitsPending = visitsLoading || visitsError;
   const locationsPending = locationsLoading || locationsError;
   const distance = locationsPending
     ? null
@@ -68,11 +71,21 @@ export function useWidgetSync(stage: OnboardingStage): void {
     mood ? [mood.id, mood.emoji, mood.note, mood.created_at] : null,
     partner?.id ?? null,
     storiesPending,
-    partnerStory ? [partnerStory.id, partnerStory.expires_at, partnerStory.deleted_at] : null,
+    partnerStory
+      ? [
+          partnerStory.id,
+          partnerStory.expires_at,
+          partnerStory.deleted_at,
+          // Cuando la veo, el widget deja de decir "nueva".
+          !!me && partnerStory.views.some((v) => v.user_id === me.id),
+        ]
+      : null,
     eventsPending,
     eventsPending
       ? null
       : events.map((e) => [e.id, e.kind, e.title, e.emoji, e.date, e.recurring_yearly]),
+    visitsPending,
+    visitsPending ? null : visits.map((v) => v.end_date),
     locationsPending,
     distance,
     fruits,
@@ -88,7 +101,7 @@ export function useWidgetSync(stage: OnboardingStage): void {
           const previous = await readSnapshot();
           const story = storiesPending
             ? null
-            : await pickPartnerStory(stories, partner?.id, previous);
+            : await pickPartnerStory(stories, partner?.id, previous, new Date(), me?.id);
           snapshot = buildWidgetSnapshot({
             anniversary: couple.anniversary_date,
             timezone: coupleDayZone([detectTimeZone(), partner?.timezone], couple.timezone),
@@ -100,6 +113,9 @@ export function useWidgetSync(stage: OnboardingStage): void {
             partnerId: partner?.id ?? null,
             partnerStory: story,
             events: eventsPending ? (previous?.events ?? []) : events,
+            visits: visitsPending
+              ? (previous?.visitEnds ?? []).map((end_date) => ({ end_date }))
+              : visits,
             distance: locationsPending ? (previous?.distance ?? null) : distance,
             fruits,
             streak: streakValue

@@ -137,11 +137,15 @@ describe('errorMessage', () => {
       'nudge_too_soon',
       'no_partner',
       'invalid_nudge',
+      'nudge_daily_limit',
       'invalid_token',
     ]) {
       expect(errorMessage({ code: 'P0001', message: key })).not.toMatch(/Algo no salió/);
     }
-    expect(errorMessage({ code: 'P0001', message: 'nudge_too_soon' })).toMatch(/hace un ratito/);
+    expect(errorMessage({ code: 'P0001', message: 'nudge_too_soon' })).toMatch(/unos segundos/);
+    expect(errorMessage({ code: 'P0001', message: 'nudge_daily_limit' })).toMatch(
+      /todos los toques de hoy/,
+    );
   });
 
   it('traduce las claves de juegos', () => {

@@ -14,7 +14,7 @@ import {
   ScreenHeader,
   Text,
 } from '@/components';
-import { useCouple } from '@/features/couple';
+import { useCouple, useToday } from '@/features/couple';
 import { useSignedUrl } from '@/features/profile';
 import {
   NewStorySheet,
@@ -23,7 +23,7 @@ import {
   groupActive,
   useActiveStories,
 } from '@/features/stories';
-import { storyAgo } from '@/lib/stories';
+import { splitByDay, storyAgo, storyTimeLeft } from '@/lib/stories';
 import { useTheme } from '@/theme';
 
 export default function StoriesScreen() {
@@ -31,6 +31,7 @@ export default function StoriesScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { me, partner } = useCouple();
+  const { today, timeZone } = useToday();
   const { stories, isLoading, isError, refetch, isRefetching } = useActiveStories();
   const [sheetOpen, setSheetOpen] = useState(false);
   const myAvatar = useSignedUrl(me?.avatar_path);
@@ -44,8 +45,37 @@ export default function StoriesScreen() {
     [stories, me?.id, partner?.id],
   );
 
+  // Las stories viven 24 h: las de ayer siguen vivas pero ya no son "de hoy".
+  const days = useMemo(
+    () => splitByDay(groups.mine, today, timeZone),
+    [groups.mine, today, timeZone],
+  );
+
   const gap = spacing.md;
   const thumbW = Math.floor((Math.min(width, 520) - page.gutter * 2 - gap * 2) / 3);
+
+  const renderCard = (s: (typeof groups.mine)[number], showLeft: boolean) => {
+    const seenBy = s.views.some((v) => v.user_id === partner?.id);
+    return (
+      <View key={s.id} style={{ width: thumbW, gap: spacing.sm }}>
+        <StoryThumb
+          story={s}
+          width={thumbW}
+          fruit={fruit.me}
+          onPress={() => router.push({ pathname: '/story/view', params: { story: s.id } })}
+          accessibilityLabel={`Tu story de ${storyAgo(s.created_at, now)}`}
+          accessibilityHint="Toca para verla"
+        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+          {seenBy && fruit.partner ? <FruitDot fruit={fruit.partner} /> : null}
+          <Text variant="note" tone="muted" style={{ flexShrink: 1 }}>
+            {seenBy ? 'Vista' : 'Sin ver'}
+            {showLeft ? ` · ${storyTimeLeft(s.expires_at, now)}` : ''}
+          </Text>
+        </View>
+      </View>
+    );
+  };
 
   return (
     <Screen scroll refreshing={isRefetching} onRefresh={() => void refetch()}>
@@ -82,33 +112,17 @@ export default function StoriesScreen() {
               </Text>
               {groups.mine.length > 0 ? (
                 <>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap, rowGap: spacing.lg }}>
-                    {groups.mine.map((s) => {
-                      const seenBy = s.views.some((v) => v.user_id === partner?.id);
-                      return (
-                        <View key={s.id} style={{ width: thumbW, gap: spacing.sm }}>
-                          <StoryThumb
-                            story={s}
-                            width={thumbW}
-                            fruit={fruit.me}
-                            onPress={() =>
-                              router.push({ pathname: '/story/view', params: { story: s.id } })
-                            }
-                            accessibilityLabel={`Tu story de ${storyAgo(s.created_at, now)}`}
-                            accessibilityHint="Toca para verla"
-                          />
-                          <View
-                            style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}
-                          >
-                            {seenBy && fruit.partner ? <FruitDot fruit={fruit.partner} /> : null}
-                            <Text variant="note" tone="muted" style={{ flexShrink: 1 }}>
-                              {seenBy ? 'Vista' : 'Sin ver'}
-                            </Text>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
+                  {days.today.length > 0 ? (
+                    <View
+                      style={{ flexDirection: 'row', flexWrap: 'wrap', gap, rowGap: spacing.lg }}
+                    >
+                      {days.today.map((s) => renderCard(s, false))}
+                    </View>
+                  ) : (
+                    <Text variant="body" tone="muted">
+                      Hoy todavía no subes nada.
+                    </Text>
+                  )}
                   <View style={{ marginTop: spacing.sm }}>
                     <Button
                       title="Crear una story"
@@ -127,6 +141,20 @@ export default function StoriesScreen() {
                 />
               )}
             </View>
+
+            {days.earlier.length > 0 ? (
+              <View style={{ gap: spacing.md }}>
+                <Text variant="h3" accessibilityRole="header">
+                  De ayer
+                </Text>
+                <Text variant="note" tone="muted">
+                  Siguen vivas hasta cumplir sus 24 horas.
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap, rowGap: spacing.lg }}>
+                  {days.earlier.map((s) => renderCard(s, true))}
+                </View>
+              </View>
+            ) : null}
 
             <ListGroup>
               <ListRow

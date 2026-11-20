@@ -40,7 +40,8 @@ const BY_CODE: Record<string, string> = {
   invalid_comment: 'No pudimos mandar el comentario. Hazlo más cortito e intenta otra vez.',
   comment_not_found: 'Ese comentario ya no está. Actualiza para ver lo más reciente.',
   invalid_reaction: 'No pudimos guardar la reacción. Prueba con otro emoji.',
-  nudge_too_soon: 'Ya le avisaste hace un ratito. Dale un poco de tiempo.',
+  nudge_too_soon: 'Con calma, espera unos segundos antes del siguiente toque.',
+  nudge_daily_limit: 'Ya mandaste todos los toques de hoy. Mañana hay más.',
   no_partner: 'Esto es de a dos y aún no se une tu pareja. Cuando llegue, lo hacen juntos.',
   invalid_nudge: 'No pudimos mandar el aviso. Intenta otra vez.',
   // RPC de stories
