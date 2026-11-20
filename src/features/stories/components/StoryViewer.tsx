@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
@@ -23,6 +24,7 @@ import { useSignedUrl } from '@/features/profile';
 import { formatTimeIn } from '@/lib/dates';
 import { errorMessage } from '@/lib/errors';
 import { haptic } from '@/lib/haptics';
+import { imageCacheKey, remoteImageSource } from '@/lib/imageCache';
 import {
   STORY_REACTIONS,
   STORY_REPLY_MAX,
@@ -210,9 +212,40 @@ function ViewerBody({ userId, storyId }: Props) {
   const authorName = mine ? 'Tú' : partnerName;
   const authorFruit = mine ? fruit.me : (fruit.partner ?? fruit.me);
   const authorAvatar = useSignedUrl(mine ? me?.avatar_path : partner?.avatar_path);
-  const { url: mediaUrl, isError: mediaFailed } = useStoryMediaUrl(
-    story?.kind === 'photo' ? story.media_path : null,
+  const {
+    url: mediaUrl,
+    isError: urlFailed,
+    refresh: refreshMedia,
+  } = useStoryMediaUrl(story?.kind === 'photo' ? story.media_path : null);
+  // La miniatura (casi siempre ya en caché por la cuadrícula) se ve mientras baja la foto grande.
+  const { url: thumbUrl } = useStoryMediaUrl(story?.kind === 'photo' ? story.thumb_path : null);
+  // La siguiente foto se baja de una vez para que al avanzar ya esté lista.
+  const upcoming = list[safeIndex + 1];
+  const { url: nextUrl } = useStoryMediaUrl(
+    upcoming?.kind === 'photo' ? upcoming.media_path : null,
   );
+
+  // Carga de la foto: el tiempo no corre hasta que se pinta. Si falla se pide una URL firmada
+  // nueva una vez y, si vuelve a fallar, se ofrece reintentar con un toque.
+  const [loadedId, setLoadedId] = useState<string | null>(null);
+  const [imageFailedId, setImageFailedId] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
+  const autoRetried = useRef<string | null>(null);
+  const loaded = !!story && loadedId === story.id;
+  const mediaFailed = urlFailed || (!!story && imageFailedId === story.id);
+  const onMediaError = () => {
+    if (!story) return;
+    if (autoRetried.current !== story.id) {
+      autoRetried.current = story.id;
+      void refreshMedia().then(() => setReload((n) => n + 1));
+      return;
+    }
+    setImageFailedId(story.id);
+  };
+  const retryMedia = () => {
+    setImageFailedId(null);
+    void refreshMedia().then(() => setReload((n) => n + 1));
+  };
 
   const close = useCallback(() => {
     if (router.canGoBack()) router.back();
@@ -230,7 +263,7 @@ function ViewerBody({ userId, storyId }: Props) {
   const [typing, setTyping] = useState(false);
   const [repliesOpen, setRepliesOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const photoPending = story?.kind === 'photo' && !mediaUrl && !mediaFailed;
+  const photoPending = story?.kind === 'photo' && !loaded && !mediaFailed;
   const paused = holding || typing || repliesOpen || confirmDelete || photoPending || !story;
 
   // Marca visto al mostrar una story de tu pareja.
@@ -412,9 +445,40 @@ function ViewerBody({ userId, storyId }: Props) {
                 story={story}
                 width={frameW}
                 mediaUrl={mediaUrl}
+                placeholderUrl={thumbUrl}
+                reloadKey={reload}
+                onMediaLoad={() => setLoadedId(story.id)}
+                onMediaError={onMediaError}
                 caption={story.kind === 'photo' ? story.text : null}
                 fruit={authorFruit}
               />
+              {photoPending ? (
+                <View
+                  pointerEvents="none"
+                  accessibilityLabel="Cargando la foto"
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <LoadingSymbol />
+                </View>
+              ) : null}
+              {nextUrl ? (
+                <Image
+                  source={remoteImageSource(nextUrl)}
+                  cachePolicy="memory-disk"
+                  recyclingKey={imageCacheKey(nextUrl)}
+                  style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                />
+              ) : null}
               <View
                 style={{
                   position: 'absolute',
@@ -446,17 +510,23 @@ function ViewerBody({ userId, storyId }: Props) {
               </View>
               {mediaFailed ? (
                 <View
+                  pointerEvents="box-none"
                   style={{
                     position: 'absolute',
                     left: 0,
                     right: 0,
-                    top: '45%',
+                    top: 0,
+                    bottom: 0,
                     alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: spacing.md,
+                    padding: spacing.xl,
                   }}
                 >
-                  <Text variant="note" tone="muted">
+                  <Text variant="body" tone="muted" style={{ textAlign: 'center' }}>
                     La foto no cargó.
                   </Text>
+                  <Button title="Reintentar" variant="secondary" size="sm" onPress={retryMedia} />
                 </View>
               ) : null}
             </View>

@@ -1,5 +1,5 @@
 import { CLASSIC_FRUIT_KEYS, type FruitKey } from './fruits';
-import { parseIsoDate, todayIn } from './dates';
+import { parseIsoDate, todayIn, type IsoDate } from './dates';
 import { DEFAULT_TIME_ZONE } from './timezone';
 
 /** Vida de una story: 24 horas. */
@@ -146,6 +146,37 @@ export function groupStories<T extends StoryLike>(
   const partnerUnseen = partner.filter((s) => !seenIds.has(s.id)).length;
   const idx = partner.findIndex((s) => !seenIds.has(s.id));
   return { mine, partner, partnerUnseen, firstUnseenIndex: Math.max(0, idx) };
+}
+
+/**
+ * Separa stories (ya ordenadas) en las creadas en el día `today` de la pareja (en `timeZone`) y las
+ * de días anteriores que siguen vivas (duran 24 h, así que las de ayer aún se ven). Conserva el
+ * orden de entrada; las fechas inválidas cuentan como anteriores.
+ */
+export function splitByDay<T extends { created_at: string }>(
+  stories: T[],
+  today: IsoDate,
+  timeZone: string,
+): { today: T[]; earlier: T[] } {
+  const result: { today: T[]; earlier: T[] } = { today: [], earlier: [] };
+  for (const s of stories) {
+    const ms = Date.parse(s.created_at);
+    const isToday = Number.isFinite(ms) && todayIn(timeZone, new Date(ms)) === today;
+    (isToday ? result.today : result.earlier).push(s);
+  }
+  return result;
+}
+
+/**
+ * Cómo acomodar una foto en el marco 9:16 sin deformarla: `cover` si ya es casi vertical (entre
+ * 1:2 y 5:8, cerca de 9:16), donde recortar unos bordes casi no se nota; `contain` (completa,
+ * sobre un fondo difuminado de la misma foto) para horizontales, cuadradas y 3:4 u otras.
+ * Sin dimensiones conocidas usa `contain`, que nunca recorta.
+ */
+export function photoFit(width?: number | null, height?: number | null): 'cover' | 'contain' {
+  if (!width || !height || width <= 0 || height <= 0) return 'contain';
+  const ratio = width / height;
+  return ratio >= 0.5 && ratio <= 0.625 ? 'cover' : 'contain';
 }
 
 /** Rutas en el bucket: `<pareja>/<usuario>/<id>.jpg` y su miniatura `_thumb.jpg`. */

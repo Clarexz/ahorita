@@ -18,7 +18,6 @@ import {
   Button,
   Chip,
   IconButton,
-  Input,
   LoadingSymbol,
   Notice,
   Sheet,
@@ -43,8 +42,8 @@ import { useTheme } from '@/theme';
 import { useCreateStory, type CreateStoryVars } from '../hooks';
 import { DrawingPad } from './DrawingPad';
 import { StickerLayer } from './StickerLayer';
-import { StoryFrame, storyTextStyle } from './StoryFrame';
-import { FONT_LABELS, bgForFruit, storyBgColor, storyBgName } from './palette';
+import { StoryFrame, storyCaptionStyle, storyTextStyle } from './StoryFrame';
+import { CAPTION_TEXT, FONT_LABELS, bgForFruit, storyBgColor, storyBgName } from './palette';
 
 export type ComposerKind = 'camera' | 'library' | 'text' | 'drawing';
 
@@ -164,8 +163,6 @@ export function StoryComposer({ kind }: { kind: ComposerKind }) {
         }
         const options = {
           mediaTypes: ['images'] as ImagePicker.MediaType[],
-          allowsEditing: true,
-          aspect: [9, 16] as [number, number],
           quality: 1,
         };
         const result =
@@ -348,7 +345,26 @@ export function StoryComposer({ kind }: { kind: ComposerKind }) {
                 story={draft}
                 width={frameWidth}
                 mediaUrl={photoFrame ? photoUri : null}
-                caption={photoFrame ? caption.trim() || null : null}
+                captionSlot={
+                  photoFrame ? (
+                    <TextInput
+                      value={caption}
+                      onChangeText={setCaption}
+                      multiline
+                      scrollEnabled={false}
+                      maxLength={STORY_CAPTION_MAX}
+                      placeholder="Toca para escribir un pie"
+                      placeholderTextColor={CAPTION_TEXT}
+                      selectionColor={CAPTION_TEXT}
+                      accessibilityLabel="Pie de foto (opcional)"
+                      editable={!publishing}
+                      style={[
+                        storyCaptionStyle(frameWidth, { fonts }),
+                        { padding: 0, opacity: caption ? 1 : 0.7 },
+                      ]}
+                    />
+                  ) : undefined
+                }
               >
                 {kind === 'text' ? (
                   <TextInput
@@ -412,19 +428,13 @@ export function StoryComposer({ kind }: { kind: ComposerKind }) {
         {kind === 'drawing' ? <BgPicker value={bg} onChange={setBg} /> : null}
 
         {photoFrame ? (
-          <View style={{ gap: spacing.xs }}>
-            <Input
-              label="Pie de foto (opcional)"
-              value={caption}
-              onChangeText={setCaption}
-              maxLength={STORY_CAPTION_MAX}
-              placeholder="Lo que quieras decir"
-              editable={!publishing}
-            />
-            <Text variant="note" tone="muted" accessibilityLiveRegion="polite">
-              {caption.length}/{STORY_CAPTION_MAX}
-            </Text>
-          </View>
+          <Text
+            variant="note"
+            tone={caption.length >= STORY_CAPTION_MAX ? 'danger' : 'muted'}
+            accessibilityLiveRegion="polite"
+          >
+            Pie de foto: {caption.length}/{STORY_CAPTION_MAX}
+          </Text>
         ) : null}
 
         <View style={{ gap: spacing.md }}>
