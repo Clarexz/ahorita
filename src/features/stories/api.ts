@@ -210,8 +210,12 @@ export async function setStoryArchive(enabled: boolean): Promise<void> {
 
 const urlCache = new Map<string, { url: string; expiresAt: number }>();
 
-/** URL firmada (1 h) de un archivo del bucket `stories`; se reutiliza mientras no esté por vencer. */
-export async function storyMediaUrl(path: string): Promise<string> {
+/**
+ * URL firmada (1 h) de un archivo del bucket `stories`; se reutiliza mientras no esté por vencer.
+ * Con `fresh` se descarta la guardada y se pide una nueva (p. ej. si la foto no cargó).
+ */
+export async function storyMediaUrl(path: string, fresh = false): Promise<string> {
+  if (fresh) urlCache.delete(path);
   const cached = urlCache.get(path);
   if (cached && cached.expiresAt > Date.now()) return cached.url;
   const { data, error } = await supabase.storage

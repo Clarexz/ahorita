@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ToastProvider } from '@/components/Toast';
+import { todayIn as mockTodayIn } from '@/lib/dates';
 import { ThemeProvider, lightColors } from '@/theme';
 
 import StoriesScreen from '../../../app/(tabs)/stories';
@@ -36,8 +37,19 @@ jest.mock('@/features/couple', () => ({
     me: { id: 'u1', display_name: 'Ale', nickname: null, avatar_path: null },
     partner: { id: 'u2', display_name: 'Caleb', nickname: null, avatar_path: null },
   }),
-  useToday: () => ({ today: '2026-10-30', timeZone: 'America/Mexico_City' }),
+  useToday: () => ({
+    today: mockTodayIn('America/Mexico_City', new Date()),
+    timeZone: 'America/Mexico_City',
+  }),
 }));
+jest.mock('expo-image', () => {
+  const { View } = jest.requireActual('react-native');
+  return {
+    Image: (props: { source?: { cacheKey?: string } }) => (
+      <View {...props} testID={`img:${props.source?.cacheKey ?? ''}`} />
+    ),
+  };
+});
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/features/profile', () => ({ useSignedUrl: () => null }));
 
@@ -65,6 +77,7 @@ const row = (id: string, userId: string, extra: Record<string, unknown> = {}) =>
 
 let mockStories: ReturnType<typeof row>[] = [];
 const mockReact = jest.fn();
+const mockRefresh = jest.fn(() => Promise.resolve());
 const mockReply = jest.fn();
 const mockMarkSeen = jest.fn();
 jest.mock('../hooks', () => ({
@@ -76,7 +89,12 @@ jest.mock('../hooks', () => ({
     refetch: jest.fn(),
   }),
   useStory: () => ({ story: null, isLoading: false, isError: false, refetch: jest.fn() }),
-  useStoryMediaUrl: () => ({ url: null, isLoading: false, isError: false }),
+  useStoryMediaUrl: (path: string | null) => ({
+    url: path ? `https://x.supabase.co/storage/v1/object/sign/stories/${path}?token=t` : null,
+    isLoading: false,
+    isError: false,
+    refresh: mockRefresh,
+  }),
   useMarkStorySeen: () => ({ mutate: mockMarkSeen }),
   useReactToStory: () => ({ mutate: mockReact }),
   useReplyToStory: () => ({ mutate: mockReply }),
@@ -115,12 +133,39 @@ describe('pestaña Stories', () => {
 
   it('muestra quién vio las tuyas', async () => {
     mockStories = [
-      row('s2', 'u1', { views: [{ user_id: 'u2', seen_at: iso(1) }] }),
-      row('s3', 'u1'),
+      row('s2', 'u1', { views: [{ user_id: 'u2', seen_at: iso(1) }], created_at: iso(0) }),
+      row('s3', 'u1', { created_at: iso(0) }),
     ];
     await wrap(<StoriesScreen />);
     expect(screen.getByText('Vista')).toBeTruthy();
     expect(screen.getByText('Sin ver')).toBeTruthy();
+  });
+
+  it('las de ayer que siguen vivas salen aparte, no en "de hoy"', async () => {
+    mockStories = [
+      row('s5', 'u1', { created_at: iso(0) }),
+      row('s6', 'u1', {
+        created_at: iso(30),
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+      }),
+    ];
+    await wrap(<StoriesScreen />);
+    expect(screen.getByText('Las tuyas de hoy')).toBeTruthy();
+    expect(screen.getByText('De ayer')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /^Tu story de/ })).toHaveLength(2);
+    expect(screen.getByText(/quedan 1 h|queda un minuto|quedan \d+ min/)).toBeTruthy();
+  });
+
+  it('si solo hay de ayer, hoy dice que no has subido nada', async () => {
+    mockStories = [
+      row('s7', 'u1', {
+        created_at: iso(30),
+        expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+      }),
+    ];
+    await wrap(<StoriesScreen />);
+    expect(screen.getByText('Hoy todavía no subes nada.')).toBeTruthy();
+    expect(screen.getByText('De ayer')).toBeTruthy();
   });
 
   it('"Crear una story" abre las opciones y manda a crear', async () => {
@@ -179,6 +224,50 @@ describe('visor de stories', () => {
     await wrap(<StoryViewer userId="u2" />);
     const frame = screen.getByLabelText('Story con un dibujo');
     expect(StyleSheet.flatten(frame.props.style).backgroundColor).toBe(lightColors.bg);
+  });
+
+  it('con foto muestra la carga hasta que se pinta, y la siguiente se baja de antemano', async () => {
+    mockStories = [
+      row('p1', 'u2', {
+        kind: 'photo',
+        media_path: 'c1/u2/a.jpg',
+        thumb_path: 'c1/u2/a_thumb.jpg',
+      }),
+      row('p2', 'u2', {
+        kind: 'photo',
+        media_path: 'c1/u2/b.jpg',
+        thumb_path: 'c1/u2/b_thumb.jpg',
+      }),
+    ];
+    mockStories[1].created_at = iso(1);
+    await wrap(<StoryViewer userId="u2" />);
+    expect(screen.getByLabelText('Cargando la foto')).toBeTruthy();
+    // La visible usa la ruta de Storage como llave de caché; la oculta es la siguiente.
+    // (antes de cargar hay una copia difuminada detrás; la foto de verdad es la última)
+    const visible = screen.getAllByTestId('img:storage:stories/c1/u2/a.jpg').at(-1)!;
+    expect(
+      screen.getByTestId('img:storage:stories/c1/u2/b.jpg', { includeHiddenElements: true }),
+    ).toBeTruthy();
+    await fireEvent(visible, 'load', { source: { width: 1600, height: 900 } });
+    expect(screen.queryByLabelText('Cargando la foto')).toBeNull();
+  });
+
+  it('si la foto falla pide URL nueva y luego ofrece reintentar', async () => {
+    mockStories = [
+      row('p3', 'u2', {
+        kind: 'photo',
+        media_path: 'c1/u2/c.jpg',
+        thumb_path: 'c1/u2/c_thumb.jpg',
+      }),
+    ];
+    await wrap(<StoryViewer userId="u2" />);
+    const find = () => screen.getAllByTestId('img:storage:stories/c1/u2/c.jpg').at(-1)!;
+    await fireEvent(find(), 'error', {});
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    await fireEvent(find(), 'error', {});
+    expect(screen.getByText('La foto no cargó.')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(mockRefresh).toHaveBeenCalledTimes(2);
   });
 
   it('sin stories dice que ya se borró', async () => {

@@ -1,12 +1,18 @@
 import { Image } from 'expo-image';
-import { memo, type ReactNode } from 'react';
+import { memo, useState, type ReactNode } from 'react';
 import { Text as RNText, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { CANVAS_H, CANVAS_W, strokePath, type Stroke } from '@/lib/drawing';
 import type { Fruit } from '@/lib/fruits';
 import { imageCacheKey, remoteImageSource } from '@/lib/imageCache';
-import type { StoryBg, StoryFont, StoryKind, StorySticker } from '@/lib/stories';
+import {
+  photoFit,
+  type StoryBg,
+  type StoryFont,
+  type StoryKind,
+  type StorySticker,
+} from '@/lib/stories';
 import { useTheme, type Theme } from '@/theme';
 
 import {
@@ -42,6 +48,16 @@ type Props = {
   fruit?: Fruit;
   /** En `text`, reemplaza al texto (el editor mete aquí su `TextInput`). */
   children?: ReactNode;
+  /** En `photo`, reemplaza al pie fijo (el editor mete aquí su `TextInput`). */
+  captionSlot?: ReactNode;
+  /** Miniatura (ya firmada) que se ve mientras baja la foto completa. */
+  placeholderUrl?: string | null;
+  /** Cambia para forzar que la foto se vuelva a pedir (reintento). */
+  reloadKey?: number;
+  /** La foto terminó de cargarse y se pintó. */
+  onMediaLoad?: () => void;
+  /** La foto no pudo cargarse (URL caducada, sin red...). */
+  onMediaError?: () => void;
 };
 
 const REFERENCE_WIDTH = 360;
@@ -76,6 +92,17 @@ export function storyTextStyle(
     fontSize,
     lineHeight: Math.round(fontSize * 1.2),
     textAlign: 'center' as const,
+  };
+}
+
+/** Estilo del pie de foto (a 360 dp de ancho); lo comparten el marco y el editor. */
+export function storyCaptionStyle(width: number, theme: { fonts: Theme['fonts'] }) {
+  const scale = width / REFERENCE_WIDTH;
+  return {
+    color: CAPTION_TEXT,
+    fontFamily: theme.fonts.textSemi,
+    fontSize: Math.max(14, Math.round(18 * scale)),
+    lineHeight: Math.max(20, Math.round(24 * scale)),
   };
 }
 
@@ -197,7 +224,19 @@ export function StickersView({
  * Una story dibujada en un marco 9:16 a cualquier ancho: foto con pie, texto sobre una fruta, o
  * dibujo vectorial; con stickers encima (DISENO §7).
  */
-export function StoryFrame({ story, width, mediaUrl, caption, fruit, children }: Props) {
+export function StoryFrame({
+  story,
+  width,
+  mediaUrl,
+  caption,
+  fruit,
+  children,
+  captionSlot,
+  placeholderUrl,
+  reloadKey = 0,
+  onMediaLoad,
+  onMediaError,
+}: Props) {
   const { fonts, radius, fruit: mine } = useTheme();
   const height = (width * CANVAS_H) / CANVAS_W;
   const scale = width / REFERENCE_WIDTH;
@@ -205,6 +244,12 @@ export function StoryFrame({ story, width, mediaUrl, caption, fruit, children }:
   const stickers = asStickers(story.stickers);
   const text = story.text ?? '';
   const label = caption ?? (story.kind === 'photo' ? text || null : null);
+  // La foto conserva su proporción: casi vertical llena el marco; el resto se ve completa sobre
+  // una copia difuminada de sí misma. Las dimensiones llegan al cargar.
+  const mediaKey = imageCacheKey(mediaUrl) ?? mediaUrl ?? '';
+  const [size, setSize] = useState<{ key: string; w: number; h: number } | null>(null);
+  const known = size && size.key === mediaKey ? size : null;
+  const fit = photoFit(known?.w, known?.h);
 
   return (
     <View
@@ -224,13 +269,33 @@ export function StoryFrame({ story, width, mediaUrl, caption, fruit, children }:
         borderRadius: Math.min(radius.card, width * 0.08),
       }}
     >
-      {story.kind === 'photo' && mediaUrl ? (
+      {story.kind === 'photo' && mediaUrl && fit === 'contain' ? (
         <Image
           source={remoteImageSource(mediaUrl)}
           cachePolicy="memory-disk"
-          recyclingKey={imageCacheKey(mediaUrl)}
-          style={{ position: 'absolute', width, height }}
+          recyclingKey={mediaKey}
+          style={{ position: 'absolute', width, height, opacity: 0.55 }}
           contentFit="cover"
+          blurRadius={40}
+          accessibilityIgnoresInvertColors
+        />
+      ) : null}
+      {story.kind === 'photo' && mediaUrl ? (
+        <Image
+          key={`${mediaKey}:${reloadKey}`}
+          source={remoteImageSource(mediaUrl)}
+          cachePolicy="memory-disk"
+          recyclingKey={mediaKey}
+          placeholder={placeholderUrl ? remoteImageSource(placeholderUrl) : undefined}
+          placeholderContentFit={fit}
+          transition={120}
+          style={{ position: 'absolute', width, height }}
+          contentFit={fit}
+          onLoad={(e) => {
+            setSize({ key: mediaKey, w: e.source.width, h: e.source.height });
+            onMediaLoad?.();
+          }}
+          onError={() => onMediaError?.()}
           accessibilityIgnoresInvertColors
         />
       ) : null}
@@ -260,7 +325,7 @@ export function StoryFrame({ story, width, mediaUrl, caption, fruit, children }:
         </View>
       ) : null}
 
-      {story.kind === 'photo' && label ? (
+      {story.kind === 'photo' && (label || captionSlot) ? (
         <View
           style={{
             position: 'absolute',
@@ -276,19 +341,11 @@ export function StoryFrame({ story, width, mediaUrl, caption, fruit, children }:
               paddingHorizontal: 12 * scale,
               paddingVertical: 8 * scale,
               maxWidth: '100%',
+              minWidth: captionSlot ? '60%' : undefined,
               borderRadius: 14 * scale,
             }}
           >
-            <RNText
-              style={{
-                color: CAPTION_TEXT,
-                fontFamily: fonts.textSemi,
-                fontSize: Math.max(14, Math.round(18 * scale)),
-                lineHeight: Math.max(20, Math.round(24 * scale)),
-              }}
-            >
-              {label}
-            </RNText>
+            {captionSlot ?? <RNText style={storyCaptionStyle(width, { fonts })}>{label}</RNText>}
           </View>
         </View>
       ) : null}
