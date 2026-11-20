@@ -39,7 +39,7 @@ const GOOGLE_FONTS = './node_modules/@expo-google-fonts';
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: APP_NAME,
-  slug: 'app-parejas',
+  slug: 'ahorita',
   version,
   orientation: 'portrait',
   icon: './assets/images/icon.png',

@@ -2,6 +2,8 @@ name: Release APK
 
 # Compila el APK release firmado y lo publica como (pre-)release en GitHub Releases.
 # Se lanza a mano (Actions -> Release APK -> Run workflow) o empujando un tag v*.
+# Con distribucion=play compila en cambio el AAB para Play Store (sin buscador de versiones
+# dentro de la app) y solo lo sube como artifact: el AAB se sube a mano a Play Console.
 # Convención de versiones y secretos: docs/releases/README.md
 
 on:
@@ -20,6 +22,14 @@ on:
         description: 'Versión / tag (p. ej. v0.0.1). Debe existir docs/releases/<version>.md'
         required: true
         type: string
+      distribucion:
+        description: 'github = APK en GitHub Releases; play = AAB para Play Store (solo artifact)'
+        required: false
+        default: github
+        type: choice
+        options:
+          - github
+          - play
   push:
     tags:
       - 'v*'
@@ -52,8 +62,10 @@ jobs:
           INPUT_FASE: ${{ inputs.fase }}
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
+          INPUT_DISTRIBUCION: ${{ inputs.distribucion }}
         run: |
           set -euo pipefail
+          distribucion="${INPUT_DISTRIBUCION:-github}"
           if [ "$EVENT_NAME" = "push" ]; then
             version="$REF_NAME"
           else
@@ -90,9 +102,18 @@ jobs:
             echo "fase=$fase"
             echo "notes=$notes"
             echo "prerelease=$prerelease"
-            echo "apk_name=app-parejas-${version}.apk"
+            echo "distribucion=$distribucion"
+            if [ "$distribucion" = "play" ]; then
+              echo "apk_name=ahorita-${version}-play.aab"
+              echo "gradle_task=bundleRelease"
+              echo "gradle_output=android/app/build/outputs/bundle/release/app-release.aab"
+            else
+              echo "apk_name=ahorita-${version}.apk"
+              echo "gradle_task=assembleRelease"
+              echo "gradle_output=android/app/build/outputs/apk/release/app-release.apk"
+            fi
           } >> "$GITHUB_OUTPUT"
-          echo "Versión: $version | Fase: $fase | Pre-release: $prerelease"
+          echo "Versión: $version | Fase: $fase | Pre-release: $prerelease | Distribución: $distribucion"
 
       - name: Validar secretos requeridos
         env:
@@ -206,6 +227,7 @@ jobs:
         env:
           APP_VERSION: ${{ steps.meta.outputs.version_name }}
           APP_VERSION_CODE: ${{ github.run_number }}
+          EXPO_PUBLIC_DISTRIBUTION: ${{ steps.meta.outputs.distribucion }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
           # Opcional: sin él la app no muestra "Continuar con Google" (docs/SETUP.md).
@@ -215,11 +237,12 @@ jobs:
       - name: Gradle (caché)
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Compilar APK release
+      - name: Compilar release (APK o AAB)
         working-directory: android
         env:
           APP_VERSION: ${{ steps.meta.outputs.version_name }}
           APP_VERSION_CODE: ${{ github.run_number }}
+          EXPO_PUBLIC_DISTRIBUTION: ${{ steps.meta.outputs.distribucion }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
           EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
@@ -228,20 +251,26 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         # Solo ABIs de celulares reales (arm): x86/x86_64 son de emuladores y cada una suma ~6 min
         # de C++ cuando la caché de Gradle está fría (la v0.13.6 se pasó de 60 min por eso).
-        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+        run: ./gradlew ${{ steps.meta.outputs.gradle_task }} --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
 
-      - name: Verificar firma y renombrar APK
+      - name: Verificar firma y renombrar APK/AAB
         id: apk
         env:
           APK_NAME: ${{ steps.meta.outputs.apk_name }}
+          GRADLE_OUTPUT: ${{ steps.meta.outputs.gradle_output }}
         run: |
           set -euo pipefail
-          src="android/app/build/outputs/apk/release/app-release.apk"
+          src="$GRADLE_OUTPUT"
           test -f "$src" || { echo "::error::No se generó $src"; exit 1; }
 
-          apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
-          certs="$("$apksigner" verify --print-certs "$src")"
-          echo "$certs"
+          if [[ "$src" == *.aab ]]; then
+            # El AAB se firma con la clave de subida (upload key) de Play; jarsigner lo verifica.
+            certs="$(jarsigner -verify -verbose:summary -certs "$src")"
+          else
+            apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+            certs="$("$apksigner" verify --print-certs "$src")"
+          fi
+          echo "$certs" | tail -n 20
           if echo "$certs" | grep -qi "Android Debug"; then
             echo "::error::El APK quedó firmado con la clave de debug; la firma release no se aplicó."
             exit 1
@@ -251,7 +280,7 @@ jobs:
           mv "$src" "dist/$APK_NAME"
           echo "path=dist/$APK_NAME" >> "$GITHUB_OUTPUT"
 
-      - name: Subir APK como artifact
+      - name: Subir APK/AAB como artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.meta.outputs.apk_name }}
@@ -260,6 +289,7 @@ jobs:
           retention-days: 30
 
       - name: Publicar release en GitHub
+        if: steps.meta.outputs.distribucion == 'github'
         env:
           VERSION: ${{ steps.meta.outputs.version }}
           FASE: ${{ steps.meta.outputs.fase }}

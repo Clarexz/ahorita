@@ -35,6 +35,17 @@ incluidos los pre-releases, en cuanto se publica.
   vivo, no hace falta recompilar.
 - El APK se descarga en el navegador del celular; Android lo instala encima (misma firma y
   `versionCode` mayor), sin perder la sesión.
+- La API se consulta **sin token**, así que el repo (`GITHUB_REPO` en `src/constants/app.ts`)
+  tiene que ser **público**; si es privado, la app nunca encuentra versiones nuevas.
+- Los builds para **Play Store** (`distribucion=play`) no traen el buscador: Play prohíbe que una
+  app se actualice por fuera de Play (D138).
+
+## Build para Play Store
+
+`release-apk.yml` con `distribucion=play` compila un **AAB** (`ahorita-vX.Y.Z-play.aab`) con
+`EXPO_PUBLIC_DISTRIBUTION=play` y lo deja como artifact de la corrida (no crea release en GitHub).
+Ese archivo se sube a mano en Play Console. El `versionCode` es el número de corrida, así que
+siempre crece y no choca entre los APK de GitHub y los AAB de Play.
 
 ## Cómo lanzar
 

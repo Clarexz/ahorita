@@ -3,7 +3,9 @@
  * públicos de GitHub. Módulo puro: la red y la UI viven en `src/features/updates`.
  */
 
-export const RELEASES_API = 'https://api.github.com/repos/Clarexz/app-parejas/releases?per_page=15';
+import { GITHUB_REPO } from '@/constants/app';
+
+export const RELEASES_API = `https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=15`;
 
 /**
  * Marca para que un release NO se ofrezca dentro de la app (p. ej. un APK que necesita un deploy

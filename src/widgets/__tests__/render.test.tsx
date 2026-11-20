@@ -138,12 +138,12 @@ describe('renderWidget', () => {
 
   it('todo el widget abre la ruta del deep link', () => {
     const expected: Record<string, string> = {
-      DaysTogether: 'appparejas://',
-      PartnerMood: 'appparejas://moods',
-      Countdown: 'appparejas://events',
-      PartnerStory: 'appparejas://stories',
-      Distance: 'appparejas://distance',
-      Streak: 'appparejas://questions',
+      DaysTogether: 'ahorita://',
+      PartnerMood: 'ahorita://moods',
+      Countdown: 'ahorita://events',
+      PartnerStory: 'ahorita://stories',
+      Distance: 'ahorita://distance',
+      Streak: 'ahorita://questions',
     };
     for (const name of WIDGET_NAMES) {
       const tree = treeOf(name, MODELS.ready);
@@ -164,14 +164,14 @@ describe('renderWidget', () => {
   it('la story abre la de tu pareja', () => {
     const tree = treeOf('PartnerStory', MODELS.storyFoto);
     expect(tree.props.clickActionData).toEqual({
-      uri: 'appparejas://story/view?user=11111111-1111-4111-8111-111111111111',
+      uri: 'ahorita://story/view?user=11111111-1111-4111-8111-111111111111',
     });
     expect(String(tree.props.accessibilityLabel)).toContain('Caleb subió una story');
   });
 
   it('sin story invita a abrir las stories', () => {
     const tree = treeOf('PartnerStory', MODELS.ready);
-    expect(tree.props.clickActionData).toEqual({ uri: 'appparejas://stories' });
+    expect(tree.props.clickActionData).toEqual({ uri: 'ahorita://stories' });
     expect(String(tree.props.accessibilityLabel)).toContain('Caleb no ha subido nada hoy');
   });
 

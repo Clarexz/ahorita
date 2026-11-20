@@ -23,7 +23,7 @@ export const FONT = {
   semiBold: fonts.textSemi,
 } as const;
 
-/** Deep link de un widget: `appparejas://moods`, o `appparejas://` para el inicio. */
+/** Deep link de un widget: `ahorita://moods`, o `ahorita://` para el inicio. */
 export function widgetUri(name: WidgetName, routeOverride?: string): string {
   const route = (routeOverride ?? WIDGET_ROUTES[name]).replace(/^\/+/, '');
   return `${APP_SCHEME}://${route}`;

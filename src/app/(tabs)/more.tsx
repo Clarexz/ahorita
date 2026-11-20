@@ -12,6 +12,7 @@ import {
   ScreenHeader,
   Text,
 } from '@/components';
+import { SELF_UPDATES_ENABLED } from '@/constants/app';
 import { AppLockOptions, AppLockRow } from '@/features/appLock';
 import { useSignOut } from '@/features/auth';
 import { useCouple, useFruits, useLeaveCouple } from '@/features/couple';
@@ -143,7 +144,7 @@ export default function MoreScreen() {
             icon="signal"
             onPress={() => router.push('/conexion')}
           />
-          {Platform.OS === 'android' ? (
+          {Platform.OS === 'android' && SELF_UPDATES_ENABLED ? (
             <ListRow
               label={
                 appUpdate.update
