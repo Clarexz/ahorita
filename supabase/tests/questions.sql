@@ -941,19 +941,50 @@ select pg_temp.as_user('C');
 do $$ begin assert (select count(*) from public.nudges) = 0, 'otra pareja no ve toques'; end $$;
 select pg_temp.as_user('E');
 do $$ begin assert (select count(*) from public.nudges) = 0, 'sin pareja no ve toques'; end $$;
--- Pasan los 10 minutos.
+-- Menos de 5 segundos desde el último: todavía no.
 reset role;
-update public.nudges set created_at = now() - interval '9 minutes' where from_user = pg_temp.u('A');
+update public.nudges set created_at = now() - interval '4 seconds' where from_user = pg_temp.u('A');
 select pg_temp.as_user('A');
 select pg_temp.expect_error($q$select public.send_nudge()$q$, 'nudge_too_soon');
+-- Pasaron más de 5 segundos: se puede otra vez (ráfaga).
 reset role;
-update public.nudges set created_at = now() - interval '11 minutes' where from_user = pg_temp.u('A');
+update public.nudges set created_at = now() - interval '6 seconds' where from_user = pg_temp.u('A');
+select pg_temp.as_user('A');
+do $$
+declare
+  s jsonb;
+begin
+  perform public.send_nudge();
+  assert (select count(*) from public.nudges) = 3, 'a los 6 segundos se puede otra vez';
+  s := public.nudge_status();
+  assert (s ->> 'sent_today')::int = 2 and (s ->> 'daily_limit')::int = 10, 'estado: 2 de 10';
+end $$;
+-- Completo 10 en el día (Ana ya lleva 2): el 11.º se rechaza aunque hayan pasado los 5 s.
+reset role;
+insert into public.nudges (couple_id, from_user, to_user, created_at)
+select pg_temp.cid(pg_temp.u('A')), pg_temp.u('A'), pg_temp.u('B'), now() - interval '1 minute'
+from generate_series(1, 8);
+update public.nudges set created_at = now() - interval '1 minute' where from_user = pg_temp.u('A');
+select pg_temp.as_user('A');
+select pg_temp.expect_error($q$select public.send_nudge()$q$, 'nudge_daily_limit');
+do $$
+begin
+  assert (public.nudge_status() ->> 'sent_today')::int = 10, 'estado: 10 de 10';
+end $$;
+-- Beto tiene su propio tope.
+select pg_temp.as_user('B');
+do $$ begin assert (public.nudge_status() ->> 'sent_today')::int = 1, 'Beto lleva 1'; end $$;
+-- Otro día: el contador vuelve a cero.
+reset role;
+update public.nudges set created_at = now() - interval '3 days' where from_user = pg_temp.u('A');
 select pg_temp.as_user('A');
 do $$
 begin
+  assert (public.nudge_status() ->> 'sent_today')::int = 0, 'otro día, cuenta en cero';
   perform public.send_nudge();
-  assert (select count(*) from public.nudges) = 3, 'a los 11 minutos se puede otra vez';
 end $$;
+select pg_temp.as_user('E');
+select pg_temp.expect_error($q$select public.nudge_status()$q$, 'no_couple');
 reset role;
 
 -- =============================================================================

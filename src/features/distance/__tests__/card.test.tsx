@@ -18,12 +18,13 @@ const row = (id: string, lat: number, lng: number, city: string): LocationRowLik
 const me = row('me', 19.43, -99.13, 'Ciudad de México');
 const her = row('her', 25.67, -100.31, 'Monterrey');
 
-const show = async (rows: LocationRowLike[], onPress = jest.fn()) => {
+const show = async (rows: LocationRowLike[], onPress = jest.fn(), meName?: string) => {
   await render(
     <ThemeProvider>
       <DistanceCardView
         view={distanceView(rows, 'me', 'her', NOW)}
         partnerName="Caleb"
+        meName={meName}
         onPress={onPress}
       />
     </ThemeProvider>,
@@ -38,6 +39,21 @@ describe('DistanceCardView', () => {
     expect(screen.getByText('Ciudad de México ↔ Monterrey')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText(/Distancia: 704 kilómetros/));
     expect(onPress).toHaveBeenCalled();
+  });
+
+  it('muestra el nombre de cada quien, no "Tú"', async () => {
+    await show([me, her], jest.fn(), 'Pau');
+    expect(await screen.findByText('Pau', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByText('Caleb', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.queryByText('T', { includeHiddenElements: true })).toBeNull();
+  });
+
+  it('un nombre larguísimo se recorta a una línea', async () => {
+    await show([me, her], jest.fn(), 'Maria Fernanda de los Angeles Sanchez');
+    const label = await screen.findByText('Maria Fernanda de los Angeles Sanchez', {
+      includeHiddenElements: true,
+    });
+    expect(label.props.numberOfLines).toBe(1);
   });
 
   it('sin nadie: invita a activar', async () => {

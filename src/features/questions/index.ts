@@ -19,7 +19,7 @@ export {
   useQuestionsRealtime,
   useReactToComment,
   useRetireCustomQuestion,
-  useSendNudge,
+  useNudge,
   useSetFeedback,
   useSetSpicyOptIn,
   useStreak,

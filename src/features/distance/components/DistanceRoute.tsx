@@ -15,6 +15,9 @@ type Props = {
   /** Inicial de cada quien dentro del círculo. */
   meInitial: string;
   partnerInitial: string;
+  /** Apodo o primer nombre de cada quien: va debajo del círculo, en una línea. */
+  meLabel?: string;
+  partnerLabel?: string;
   /** Versión chica para la tarjeta de Inicio. */
   compact?: boolean;
 };
@@ -33,14 +36,19 @@ export function DistanceRoute({
   km,
   meInitial,
   partnerInitial,
+  meLabel,
+  partnerLabel,
   compact = false,
 }: Props) {
   const { colors, fruit } = useTheme();
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   const partnerFruit = fruit.partner ?? FRUITS[fruit.me.suggested];
   const r = compact ? 18 : 30;
-  const height = r * 2 + 4;
-  const cy = height / 2;
+  const hasLabels = !!(meLabel || partnerLabel);
+  const labelH = hasLabels ? 20 : 0;
+  const circleH = r * 2 + 4;
+  const height = circleH + labelH;
+  const cy = circleH / 2;
   // Espacio entre los centros: de 45 % a 100 % del ancho útil según qué tan lejos están.
   const span = width - r * 2 - 8;
   const share = km == null ? 1 : Math.min(1, Math.max(0.45, km / FAR_KM));
@@ -88,6 +96,28 @@ export function DistanceRoute({
     </View>
   );
 
+  // Etiqueta con el nombre: centrada bajo el círculo, sin salirse del ancho ni pisar a la otra.
+  const labelAt = (x: number, text: string | undefined, active: boolean) => {
+    if (!text) return null;
+    const w = Math.max(40, Math.min(130, Math.floor(width / 2) - 8));
+    const left = Math.min(Math.max(0, x - w / 2), Math.max(0, width - w));
+    return (
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', left, top: circleH, width: w, alignItems: 'center' }}
+      >
+        <Text
+          variant="note"
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={{ color: active ? colors.ink : colors.inkMuted, maxWidth: w }}
+        >
+          {text}
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <View
       accessibilityElementsHidden
@@ -95,7 +125,7 @@ export function DistanceRoute({
       onLayout={(e: LayoutChangeEvent) => setWidth(Math.round(e.nativeEvent.layout.width))}
       style={{ height }}
     >
-      <Svg width={width} height={height}>
+      <Svg width={width} height={circleH}>
         <Line
           x1={leftX + r + 8}
           y1={cy}
@@ -111,6 +141,8 @@ export function DistanceRoute({
       </Svg>
       {initialAt(leftX, meInitial, meActive, fruit.me.on)}
       {initialAt(rightX, partnerInitial, partnerActive, partnerFruit.on)}
+      {labelAt(leftX, meLabel, meActive)}
+      {labelAt(rightX, partnerLabel, partnerActive)}
     </View>
   );
 }

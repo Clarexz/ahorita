@@ -8,6 +8,7 @@ import {
 } from '@/lib/customQuestions';
 import { parseFeedbackVote, type FeedbackVote } from '@/lib/feedback';
 import { randomUuid } from '@/lib/ids';
+import { parseNudgeStatus, type NudgeStatus } from '@/lib/nudges';
 import { parsePack, type Pack } from '@/lib/packs';
 import {
   parseCategoryQuestion,
@@ -259,4 +260,11 @@ export async function addCustomQuestion(input: CustomQuestionInput): Promise<str
 export async function retireCustomQuestion(questionId: string): Promise<void> {
   const { error } = await supabase.rpc('retire_custom_question', { p_question_id: questionId });
   if (error) throw error;
+}
+
+/** Cuántos toques llevo hoy (día de la pareja) y cuándo fue el último. */
+export async function fetchNudgeStatus(): Promise<NudgeStatus> {
+  const { data, error } = await supabase.rpc('nudge_status');
+  if (error) throw error;
+  return parseNudgeStatus(data);
 }

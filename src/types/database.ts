@@ -1534,6 +1534,7 @@ export type Database = {
       memory_path_writable: { Args: { p_name: string }; Returns: boolean };
       my_couple_id: { Args: Record<PropertyKey, never>; Returns: string };
       notify_actor_fruit: { Args: { p_user: string }; Returns: string };
+      nudge_status: { Args: Record<PropertyKey, never>; Returns: Json };
       pick_daily_question: { Args: { p_couple_id: string }; Returns: string };
       question_card: {
         Args: { p_couple_id: string; p_day: string; p_question_id: string };

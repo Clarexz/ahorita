@@ -11,6 +11,8 @@ import { QuestionView } from '../QuestionView';
 const mockMutateAsync = jest.fn();
 const mockSetFeedback = jest.fn();
 const mockReplace = jest.fn();
+const mockNudgeSend = jest.fn();
+let mockNudgeView = { remaining: 10, cooldown: 0, canSend: true, exhausted: false };
 let mockVote: 1 | -1 | null = null;
 let mockPacks: Pack[] = [];
 let mockPacksFetching = false;
@@ -38,7 +40,11 @@ jest.mock('../../hooks', () => ({
       missing_days: [],
     } satisfies Streak,
   }),
-  useSendNudge: () => ({ mutate: jest.fn(), isPending: false }),
+  useNudge: () => ({
+    view: mockNudgeView,
+    isPending: false,
+    send: mockNudgeSend,
+  }),
   useComments: () => ({
     comments: [],
     isLoading: false,
@@ -108,6 +114,8 @@ describe('QuestionView', () => {
     mockSetFeedback.mockClear();
     mockReplace.mockClear();
     mockVote = null;
+    mockNudgeSend.mockClear();
+    mockNudgeView = { remaining: 10, cooldown: 0, canSend: true, exhausted: false };
     mockPacks = [];
     mockPacksFetching = false;
   });
@@ -166,6 +174,28 @@ describe('QuestionView', () => {
     expect(screen.getByRole('button', { name: 'Pícale a Caleb' })).toBeTruthy();
     expect(screen.getByText('Nadie ha dicho nada todavía. Empiecen ustedes.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Editar' })).toBeTruthy();
+  });
+
+  it('toques: muestra cuántos quedan, la cuenta regresiva y el tope', async () => {
+    mockNudgeView = { remaining: 7, cooldown: 0, canSend: true, exhausted: false };
+    await renderView({ ...base, mine: answer('u1', 'A la playa') });
+    expect(screen.getByText('Te quedan 7')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Pícale a Caleb' }));
+    expect(mockNudgeSend).toHaveBeenCalledTimes(1);
+  });
+
+  it('toques: durante la espera se ve "Otra vez en 5…" y no manda', async () => {
+    mockNudgeView = { remaining: 6, cooldown: 5, canSend: false, exhausted: false };
+    await renderView({ ...base, mine: answer('u1', 'A la playa') });
+    expect(screen.getByText('Otra vez en 5…')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Pícale a Caleb' }));
+    expect(mockNudgeSend).not.toHaveBeenCalled();
+  });
+
+  it('toques: al llegar a 10 avisa que ya fueron todos los de hoy', async () => {
+    mockNudgeView = { remaining: 0, cooldown: 0, canSend: false, exhausted: true };
+    await renderView({ ...base, mine: answer('u1', 'A la playa') });
+    expect(screen.getByText(/todos los toques de hoy/)).toBeTruthy();
   });
 
   it('los dos contestaron: se ve la respuesta de tu pareja', async () => {
