@@ -1,6 +1,5 @@
-export { shortDate, countdownProgress } from './format';
+export { shortDate } from './format';
 export {
-  HalfMoon,
   HomeHeader,
   HomePrompt,
   HomeQuestionCard,

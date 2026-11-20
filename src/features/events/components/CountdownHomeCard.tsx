@@ -15,7 +15,7 @@ import { NextVisitCard } from './NextVisitCard';
 export function CountdownHomeCard() {
   const { spacing } = useTheme();
   const router = useRouter();
-  const { featured, visit, isLoading } = useCountdowns();
+  const { featured, featuredWait, visit, isLoading } = useCountdowns();
   const open = () => router.push('/events');
 
   let body;
@@ -32,6 +32,7 @@ export function CountdownHomeCard() {
       <NextVisitCard
         countdown={featured}
         heading={visit ? undefined : 'Lo próximo'}
+        wait={featuredWait}
         onPress={open}
       />
     );

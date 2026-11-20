@@ -2,7 +2,13 @@
 import { Platform } from 'react-native';
 import { requestWidgetUpdate } from 'react-native-android-widget';
 
-import { WIDGET_NAMES, snapshotChanged, widgetModel, type WidgetSnapshot } from '@/lib/widgets';
+import {
+  WIDGET_NAMES,
+  markStorySeenInSnapshot,
+  snapshotChanged,
+  widgetModel,
+  type WidgetSnapshot,
+} from '@/lib/widgets';
 
 import { renderWidget } from './render';
 import { readSnapshot, writeSnapshot } from './storage';
@@ -33,6 +39,19 @@ export async function saveAndRefresh(snapshot: WidgetSnapshot): Promise<void> {
     const changed = snapshotChanged(previous, snapshot);
     await writeSnapshot(snapshot);
     if (changed) await refreshWidgets(snapshot);
+  } catch {
+    // best effort
+  }
+}
+
+/** Marca como vista la story de tu pareja en el snapshot local y redibuja (sin ir al servidor). */
+export async function markStorySeenLocally(storyId: string): Promise<void> {
+  try {
+    const previous = await readSnapshot();
+    const next = markStorySeenInSnapshot(previous, storyId);
+    if (!next || next === previous) return;
+    await writeSnapshot(next);
+    await refreshWidgets(next);
   } catch {
     // best effort
   }
