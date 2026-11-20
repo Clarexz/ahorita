@@ -7,6 +7,7 @@ import { useCouple } from '@/features/couple';
 import { distanceView, type DistanceView, type ShareMode } from '@/lib/distance';
 import { randomUuid } from '@/lib/ids';
 import { supabase } from '@/lib/supabase';
+import { callName } from '@/lib/names';
 
 import { fetchLocations, type LocationRow } from './api';
 import {
@@ -73,6 +74,8 @@ export function useLocations() {
 
 export type UseDistance = DistanceView & {
   partnerName: string;
+  /** Mi apodo o primer nombre. */
+  meName: string;
   isLoading: boolean;
   isError: boolean;
   refetch: () => Promise<unknown>;
@@ -85,7 +88,8 @@ export function useDistance(): UseDistance {
   const view = distanceView(rows, me?.id, partner?.id, new Date());
   return {
     ...view,
-    partnerName: partner?.nickname || partner?.display_name || 'tu pareja',
+    partnerName: callName(partner?.nickname, partner?.display_name, 'tu pareja'),
+    meName: callName(me?.nickname, me?.display_name, 'Tú'),
     isLoading,
     isError,
     refetch,

@@ -148,6 +148,7 @@ export default function HomeScreen() {
           <DistanceCardView
             view={distance.isError ? { ...distance, kind: 'none' } : distance}
             partnerName={distance.partnerName}
+            meName={distance.meName}
             loading={distance.isLoading}
             onPress={() => router.push('/distance')}
           />

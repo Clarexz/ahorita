@@ -13,7 +13,7 @@ import { useSetMood } from '../hooks';
 type Props = {
   visible: boolean;
   onClose: () => void;
-  /** Mi mood actual: se preselecciona (con su nota). */
+  /** Mi mood actual: se preselecciona el emoji; el mensaje siempre arranca vacío. */
   current?: Mood | null;
 };
 
@@ -26,7 +26,8 @@ function MoodForm({
 }) {
   const { colors, spacing, radius } = useTheme();
   const [emoji, setEmoji] = useState(current?.emoji ?? '');
-  const [note, setNote] = useState(current?.note ?? '');
+  // El mensaje arranca vacío cada vez que se abre: el anterior no se arrastra.
+  const [note, setNote] = useState('');
 
   return (
     <View style={{ gap: spacing.lg }}>
@@ -102,6 +103,13 @@ function MoodForm({
 export function MoodSheet({ visible, onClose, current }: Props) {
   const toast = useToast();
   const setMood = useSetMood();
+  // Cada apertura es un formulario nuevo (mensaje vacío), aunque el Sheet siga montado al cerrar.
+  const [openCount, setOpenCount] = useState(visible ? 1 : 0);
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
+    if (visible) setOpenCount((n) => n + 1);
+  }
 
   const submit = (value: { emoji: string; note: string }) => {
     setMood.mutate(value, {
@@ -116,7 +124,7 @@ export function MoodSheet({ visible, onClose, current }: Props) {
 
   return (
     <Sheet visible={visible} onClose={onClose} title="¿Cómo te sientes?">
-      <MoodForm current={current} onSubmit={submit} />
+      <MoodForm key={openCount} current={current} onSubmit={submit} />
     </Sheet>
   );
 }

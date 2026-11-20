@@ -22,6 +22,7 @@ import { useToast } from '@/components/Toast';
 import { useCouple, useToday } from '@/features/couple';
 import type { AudioDraft } from '@/lib/audio';
 import { errorMessage } from '@/lib/errors';
+import { nudgeHint } from '@/lib/nudges';
 import { haptic } from '@/lib/haptics';
 import { sameChoice } from '@/lib/questionCopy';
 import { answerDisplay } from '@/lib/questionsView';
@@ -37,7 +38,7 @@ import {
 import { useTheme } from '@/theme';
 
 import { useCelebrationStore } from '../celebration';
-import { useDeleteAnswer, useSendNudge, useStreak, useSubmitAnswer } from '../hooks';
+import { useDeleteAnswer, useNudge, useStreak, useSubmitAnswer } from '../hooks';
 import { AnswerAudio } from './AnswerAudio';
 import { AUDIO_RECORDING_SUPPORTED, AudioRecorderField } from './AudioRecorderField';
 import { CommentComposer, CommentList } from './CommentThread';
@@ -200,7 +201,7 @@ export function QuestionView({ card, pack }: { card: QuestionCard; pack?: string
   const fruits = usePairFruits();
   const submit = useSubmitAnswer();
   const remove = useDeleteAnswer();
-  const nudge = useSendNudge();
+  const nudge = useNudge();
   const { streak } = useStreak();
   const celebrate = useCelebrationStore((s) => s.celebrate);
   const scrollRef = useRef<KeyboardAwareScrollViewRef>(null);
@@ -248,14 +249,14 @@ export function QuestionView({ card, pack }: { card: QuestionCard; pack?: string
     }
   };
 
-  const onNudge = () =>
-    nudge.mutate(undefined, {
-      onSuccess: () => {
-        haptic.light();
-        toast.show({ message: `Le avisamos a ${partnerName}.`, tone: 'success' });
-      },
+  const onNudge = () => {
+    if (!nudge.view.canSend || nudge.isPending) return;
+    haptic.light();
+    nudge.send(undefined, {
+      onSuccess: () => toast.show({ message: `Le avisamos a ${partnerName}.`, tone: 'success' }),
       onError: (e) => toast.show({ message: errorMessage(e), tone: 'danger' }),
     });
+  };
 
   const matched = question.type === 'choice' && partnerOpen && sameChoice(card);
 
@@ -345,13 +346,17 @@ export function QuestionView({ card, pack }: { card: QuestionCard; pack?: string
         {mine && !card.partner_answered ? (
           <View style={{ gap: spacing.md }}>
             <Notice tone="info">{`${partnerName} todavía no contesta.`}</Notice>
-            <View style={{ alignItems: 'flex-start' }}>
+            <View style={{ alignItems: 'flex-start', gap: spacing.xs }}>
               <Button
                 title={`Pícale a ${partnerName}`}
                 variant="secondary"
                 loading={nudge.isPending}
+                disabled={!nudge.view.canSend}
                 onPress={onNudge}
               />
+              <Text variant="note" tone="muted" accessibilityLiveRegion="polite">
+                {nudgeHint(nudge.view)}
+              </Text>
             </View>
           </View>
         ) : null}
