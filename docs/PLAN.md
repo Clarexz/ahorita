@@ -1106,7 +1106,7 @@ de publicar el APK sin `<!-- sin-aviso -->`).
 | Widgets tonales y mascota | ✅ Mergeada (v0.13.3) | #24 | Fuera el vidrio simulado: estilo tonal en los 6 widgets; el de mood usa la **mascota** (símbolo con cara) con pose por cada uno de los 16 moods; estado vacío con la mascota (D128). Sin cambios de servidor. APK v0.13.3 publicado y PR mergeado a `main` a pedido del usuario (2026-11-18); falta probar en los celulares con `docs/releases/v0.13.3.md`. |
 | Ajustes v0.13.4 (distancia, frutas, widgets) | ✅ Desplegada y mergeada (v0.13.4) | #26 | Distancia precisa con "juntos" (D130), 40 frutas por color (D129) y vistas previas del selector de widgets (D131). Migraciones `20261118000000_more_fruits` y `20261118000001_precise_location` + `notify`, desplegadas el 2026-11-18 (`ccbf21f`). Vistas previas regeneradas con el estilo tonal de la v0.13.3. Notas en `docs/releases/v0.13.4.md`. |
 | Ajustes v0.13.5 (preguntas visibles, teclado) | ✅ Mergeada (v0.13.5) | #27 | Distintivo de "contestaron los dos" (franja con las dos frutas y píldora), pendientes de la pareja en Inicio y Preguntas con número por categoría y orden "te toca" primero en la categoría (D132), y teclado que ya no tapa inputs en el editor de stories, de memorias y en las hojas. Sin cambios de servidor. APK v0.13.5 publicado y probado por el usuario; PR mergeado a `main` a pedido del usuario (2026-11-20). |
-| Ajustes v0.13.6 (widgets, stories, mood, toques) | 🟡 Código listo, falta deploy (2026-11-20) | | D134–D137. Notas en `docs/releases/v0.13.6.md`. Media luna con una sola regla (desde la última visita), atrás desde widgets a Inicio, widget de story con "ya la viste", mood sin mensaje pegado, nombres en Distancia, stories de hoy, visor sin pantalla negra, foto sin recorte, un solo pie de foto y 10 toques al día con 5 s entre uno y otro (migración de `send_nudge`). |
+| Ajustes v0.13.6 (widgets, stories, mood, toques) | 🟡 Desplegada, APK v0.13.6 (2026-11-20) | | D134–D137. Servidor desplegado el 2026-11-20 (`825cfb9`, migración `20261120000000_nudge_burst`, 22 registradas). Notas en `docs/releases/v0.13.6.md`; falta probar en los celulares. Media luna con una sola regla (desde la última visita), atrás desde widgets a Inicio, widget de story con "ya la viste", mood sin mensaje pegado, nombres en Distancia, stories de hoy, visor sin pantalla negra, foto sin recorte, un solo pie de foto y 10 toques al día con 5 s entre uno y otro (migración de `send_nudge`). |
 
 ### 10.1 Camino a la v1.0.0
 
@@ -1121,6 +1121,10 @@ Estamos cerca de la v1.0.0, pero antes faltan:
    - El usuario dice que hay más cosas por corregir: preguntarle la lista al empezar.
 
 **Pruebas en el celular pendientes** (una línea por release, con su lista en `docs/releases/`):
+
+- **v0.13.6** (`v0.13.6.md`): media luna igual en widget/Inicio/Cuentas regresivas, atrás desde
+  widgets, widget de story "ya la viste", mood, nombres en Distancia, stories de hoy/ayer, visor,
+  foto sin recorte, pie de foto y 10 toques.
 
 - **v0.13.4** (`v0.13.4.md`, cuando se publique): "juntos" en la tarjeta y el widget de Distancia
   estando lado a lado (con "Usar ubicación precisa"), el selector de frutas por color y las vistas
@@ -1152,9 +1156,9 @@ celulares antes de la 12A (confirmado el 2026-11-03).
 
 **Estado del servidor**
 
-- El clon del VPS (`/opt/app-parejas/repo`) está en la rama `ccr-fec3a528-3qrn1l` (`ccbf21f`), con
-  21 migraciones registradas (desde el 2026-11-18, incluye `20261118000000_more_fruits` y
-  `20261118000001_precise_location`). La rama ya está mergeada (PR #26): el siguiente deploy es
+- El clon del VPS (`/opt/app-parejas/repo`) está en la rama `claude/hopeful-wright-rvnns3`
+  (`825cfb9`), con 22 migraciones registradas (desde el 2026-11-20, la última
+  `20261120000000_nudge_burst`). Cuando se mergee (PR de v0.13.6), el siguiente deploy es
   `./scripts/server/deploy.sh main`.
 - **Registro:** `DISABLE_SIGNUP=false`, pero el hook `private.hook_before_user_created` deja crear
   cuentas **solo con Google** (D127); el registro con correo responde 403 `signup_requires_google`.
@@ -1185,6 +1189,7 @@ celulares antes de la 12A (confirmado el 2026-11-03).
 | 2026-11-12 | 10 Banco de contenido (v0.13.0) | `claude/great-albattani-iafnq4` @ `c0ac4b9` | `pre-deploy-app-parejas-20261112-014101.dump` | Migraciones `…000_content_bank` y `…001_game_round_size` (18 registradas) y seed: 3,530 preguntas activas, 212 palabras, 8 temas, 0 del seed desactivadas. `security_audit.sql` OK, `get_packs()` con 8 filas, smoke test OK sin avisos. Sin secretos nuevos. APK v0.13.0. |
 | 2026-11-17 | Ajustes v0.13.x (micrófono, Google; APK v0.13.2) | `ccr-123c9893-9q9zk2` @ `31dfccc` | No aplica (respaldo del `.env`: `secrets/.env.bak-pre-google`, por borrar) | `deploy.sh ccr-123c9893-9q9zk2`; se aplicó solo `20261113000000_google_signup_hook` (19 registradas). GoTrue `supabase/gotrue:v2.197.0` (soporta el hook) y override copiado al stack; `/auth/v1/settings` con `external.google=true` y `disable_signup=false`. Registro con correo rechazado (403, sin crear usuario; `auth.users` sigue en 3). Smoke test OK sin avisos, 10 contenedores healthy. Variables anotadas en `CREDENCIALES.md`. |
 | 2026-11-18 | Ajustes v0.13.4 (distancia, frutas, widgets) | `ccr-fec3a528-3qrn1l` @ `ccbf21f` | `backups/db/app-parejas-20261118-002615.dump` (1.1 M) + el automático de `deploy.sh` | Se aplicaron solo `20261118000000_more_fruits` y `20261118000001_precise_location` (21 registradas); queda solo `set_my_location` de 4 parámetros. `notify` sincronizada y `functions` reiniciado. Smoke test OK sin avisos, 10 contenedores healthy, 3,530 preguntas activas. |
+| 2026-11-20 | Ajustes v0.13.6 (widgets, stories, mood, toques) | `claude/hopeful-wright-rvnns3` @ `825cfb9` | `pre-deploy-app-parejas-20261120-214655.dump` (1.2 M) | Solo `20261120000000_nudge_burst` (22 registradas). `nudge_status()` con EXECUTE para `authenticated`; `private.my_nudges_today` cerrada. Smoke test OK sin avisos. `backup.sh` borró por retención el pre-deploy más viejo (`…20261030-231635`). |
 
 ---
 
