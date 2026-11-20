@@ -478,7 +478,8 @@ Las fases 7, 8, 9 y 11 son bastante independientes y se pueden reordenar.
 
 **Orden acordado desde el 2026-10-31 (D86):** 9 → 11B → 12. Las fases **10** (banco de 3,000+
 preguntas) y **11A** (Pienso en ti, cápsula, cupones, ruleta) quedan **pospuestas** para después de
-la 12 por tiempo; se retoman con sus mismos prompts de arranque.
+la 12 por tiempo; se retoman con sus mismos prompts de arranque. La 10 ya se hizo (v0.13.0); la
+**11A se cancela** (D133, 2026-11-20).
 
 ---
 
@@ -949,6 +950,10 @@ APK en GitHub Releases, §10, DECISIONS.md y PR).
 
 Extras confirmados (todos se hacen). Son 7, así que la fase se divide en dos sesiones: **11A** y **11B**.
 
+> **11A cancelada (D133, 2026-11-20)** a pedido del usuario: "Pienso en ti", cápsula, cupones y
+> ruleta de citas no se hacen. Se conserva la descripción y el prompt solo como referencia; no
+> bloquea la v1.0.0.
+
 | Sesión | Extra | Descripción |
 |---|---|---|
 | 11A | **"Pienso en ti"** | Botón de un toque que le manda a tu pareja una vibración/notificación con un corazón (y contador diario). |
@@ -1044,6 +1049,38 @@ Fase 12 (pulido y v1.0.0).
 
 ---
 
+### Ajustes v0.13.6 — Widgets, stories, mood y toques
+
+Observaciones del usuario al usar la v0.13.5 (2026-11-20). Rama `claude/hopeful-wright-rvnns3`.
+
+**Tareas:**
+1. **Media luna de "La próxima vez"** (widget, Inicio y Cuentas regresivas): una sola función pura
+   para el avance. Hoy hay tres fórmulas: el widget cuenta desde que se *creó* la cuenta regresiva
+   (por eso un día estaba vacía y al siguiente 1/7), la pantalla usa una ventana fija de 60 días (a
+   6 días se ve casi toda de un color) e Inicio otra de 30. Regla nueva: la espera va desde **el
+   último día que se vieron** (fin de la última visita registrada) hasta la fecha; sin visitas,
+   desde que se apuntó la fecha; sin dato, ventana de 30 días. En la app la media luna va
+   **acostada como en el widget** y se dice contra qué se compara ("X de Y días desde que se
+   vieron").
+2. **Atrás desde un widget**: al abrir una pantalla desde un widget, el gesto de atrás debe llevar
+   a Inicio (hoy cierra la app; el botón "Atrás" sí regresa).
+3. **Widget de story**: guarda si ya la viste; al verla (desde el widget o desde la app) se
+   actualiza el widget y deja de decir "nueva" y de mostrar el punto.
+4. **Mood**: el mensaje opcional empieza vacío cada vez que se abre la hoja; si no se guarda nada,
+   se queda el mood y mensaje anteriores.
+5. **Tarjeta Distancia en Inicio**: apodo (o primer nombre) de cada quien en lugar de iniciales/"T".
+6. **Stories**: "Las tuyas de hoy" solo muestra las del día de hoy (las de ayer siguen vivas 24 h
+   pero en otra sección); el visor no se queda en negro al volver a ver stories (caché e
+   indicador de carga); la foto se sube como sale de la cámara/galería, **sin recorte** (con la
+   confirmación de siempre), y queda solo el pie de foto sobre la imagen (fuera el input repetido).
+7. **Toques "Recuérdale"**: hasta **10 por día** con **5 s** entre uno y otro (antes 1 cada
+   10 min). Migración nueva de `send_nudge` y botón con cuenta regresiva de 5 s y "te quedan N".
+
+**Entregable APK:** `v0.13.6`. Backend: migración de `send_nudge` (prompt para el servidor antes
+de publicar el APK sin `<!-- sin-aviso -->`).
+
+---
+
 ## 10. Estado del proyecto
 
 | Fase | Estado | PR | Notas |
@@ -1060,22 +1097,24 @@ Fase 12 (pulido y v1.0.0).
 | 8 Eventos, listas, distancia | ✅ Cerrada y desplegada | #12 | Cuentas regresivas con "la próxima vez que nos vemos", listas compartidas, distancia opt-in aproximada y widget Distancia (D78–D84). Desplegada y probada antes de la Fase 12A. |
 | 9 Juegos | ✅ Cerrada y desplegada | #15 | Cuatro juegos en rondas asíncronas, reto de dibujo, push y 200 ítems + 80 palabras (D87–D91). Desplegada y probada antes de la Fase 12A. |
 | 10 Banco de contenido | ✅ Cerrada y desplegada (v0.13.0) | #23 | 3,530 ítems (2,270 diarias en 14 categorías, 1,000+ de juegos, 8 temas con 221) + 212 palabras; temas como quiz, 👍/👎, "Agregar pregunta" (no van a la pregunta del día), `check-content` e `import-questions`, rondas de 10/15/20 y pestaña Preguntas compacta (D119–D125). Servidor desplegado y PR mergeado a `main` a pedido del usuario (2026-11-12); falta probar el APK en los celulares. |
-| 11A Extras (pienso en ti, cápsula, cupones, ruleta) | ⏸️ Pospuesta (D86) | | Siguiente fase (después de la 10). |
+| 11A Extras (pienso en ti, cápsula, cupones, ruleta) | ❌ Cancelada (D133, 2026-11-20) | | Pospuesta en D86 y cancelada a pedido del usuario. No se borra del plan; ya no bloquea la v1.0.0. |
 | 11B Extras (lenguajes del amor, visitas, estadísticas) | ✅ Cerrada y desplegada | #17 | Test de lenguajes del amor, calendario de visitas y estadísticas; push `love_language` y `visit` (D92–D96). Desplegada y probada antes de la Fase 12A. |
-| 12 Pulido y entrega | 🟡 Parte 2 (v0.12.5) | #18, #22 | Parte 1: nombre, icono y textos (v0.12.0); aviso de versión nueva (D107, v0.12.3). **Parte 2** (D112–D118): respuestas en audio, tarjeta compartible, bloqueo con huella, caché offline, reintentos, error boundary, FlashList y auditoría de RLS/RPC con prueba permanente y día de la pareja según la zona de cada quien. Servidor desplegado, restauración probada y registro cerrado (2026-11-11); v0.12.5 probada en los celulares y mergeada a `main` (2026-11-12). La **v1.0.0** espera a la Fase 11A y a las correcciones listadas en §10.1 ("Camino a la v1.0.0"). |
+| 12 Pulido y entrega | 🟡 Parte 2 (v0.12.5) | #18, #22 | Parte 1: nombre, icono y textos (v0.12.0); aviso de versión nueva (D107, v0.12.3). **Parte 2** (D112–D118): respuestas en audio, tarjeta compartible, bloqueo con huella, caché offline, reintentos, error boundary, FlashList y auditoría de RLS/RPC con prueba permanente y día de la pareja según la zona de cada quien. Servidor desplegado, restauración probada y registro cerrado (2026-11-11); v0.12.5 probada en los celulares y mergeada a `main` (2026-11-12). La **v1.0.0** espera a las correcciones listadas en §10.1 ("Camino a la v1.0.0"). |
 | 12A Rediseño "ahorita" | ✅ Cerrada (2026-11-03) | #19 | Nombre "ahorita", frutas por persona (`set_fruit`), DISENO v2, tema y componentes nuevos (sin Bitácora), todas las pantallas rediseñadas en claro y oscuro, 6 widgets 1×1 con vidrio + Racha (snapshot v4), ícono/splash/avisos con la fruta, fondos de story con las 7 frutas y copy con la voz del manual (D97–D106). Spike de widgets v0.12.1; APK v0.12.2. Servidor desplegado (`2e800d5`), PR mergeado a `main` a pedido del usuario. Falta probar el APK v0.12.2 en los dos celulares (§10.1). |
 | Ajustes post-12A (cambios menores) | ✅ Cerrada (2026-11-04) | #21 | Racha estilo TikTok (5 recuperaciones/mes, solo ayer), opción "Otra", teclado, Inicio con distancia/listas/lenguaje del amor/tiempo juntos, Preguntas + Juegos, memorias con visitas, Más → "Otros ajustes", "mesario", sin rebotes (D108–D111). Migración `20261110000000_streak_repairs_other_choice_memory_visits.sql`: **requiere deploy antes de instalar el APK** (notas en `docs/releases/v0.12.4.md`). Mergeada a `main` y APK **v0.12.4** lanzado a pedido del usuario; servidor desplegado (migración aplicada, confirmado el 2026-11-11). |
 | Ajustes v0.13.x (micrófono, Google) | ✅ Desplegada y mergeada (v0.13.2) | #25 | Micrófono de las respuestas en audio (la solicitud sale la primera vez que se toca "Grabar audio") y **"Continuar con Google"**: un solo botón para entrar y crear cuenta. Con `DISABLE_SIGNUP=false`, el hook `private.hook_before_user_created` deja crear cuentas solo con Google; el correo responde 403 `signup_requires_google`. Servidor desplegado el 2026-11-17 (`31dfccc`, migración `20261113000000_google_signup_hook`). APK **v0.13.2** publicado y PR #25 mergeado a `main` a pedido del usuario (2026-11-17); falta probarlo en los celulares (§10.1). D126–D127. |
 | Widgets tonales y mascota | ✅ Mergeada (v0.13.3) | #24 | Fuera el vidrio simulado: estilo tonal en los 6 widgets; el de mood usa la **mascota** (símbolo con cara) con pose por cada uno de los 16 moods; estado vacío con la mascota (D128). Sin cambios de servidor. APK v0.13.3 publicado y PR mergeado a `main` a pedido del usuario (2026-11-18); falta probar en los celulares con `docs/releases/v0.13.3.md`. |
 | Ajustes v0.13.4 (distancia, frutas, widgets) | ✅ Desplegada y mergeada (v0.13.4) | #26 | Distancia precisa con "juntos" (D130), 40 frutas por color (D129) y vistas previas del selector de widgets (D131). Migraciones `20261118000000_more_fruits` y `20261118000001_precise_location` + `notify`, desplegadas el 2026-11-18 (`ccbf21f`). Vistas previas regeneradas con el estilo tonal de la v0.13.3. Notas en `docs/releases/v0.13.4.md`. |
 | Ajustes v0.13.5 (preguntas visibles, teclado) | ✅ Mergeada (v0.13.5) | #27 | Distintivo de "contestaron los dos" (franja con las dos frutas y píldora), pendientes de la pareja en Inicio y Preguntas con número por categoría y orden "te toca" primero en la categoría (D132), y teclado que ya no tapa inputs en el editor de stories, de memorias y en las hojas. Sin cambios de servidor. APK v0.13.5 publicado y probado por el usuario; PR mergeado a `main` a pedido del usuario (2026-11-20). |
+| Ajustes v0.13.6 (widgets, stories, mood, toques) | 🟡 En curso (2026-11-20) | | Media luna con una sola regla (desde la última visita), atrás desde widgets a Inicio, widget de story con "ya la viste", mood sin mensaje pegado, nombres en Distancia, stories de hoy, visor sin pantalla negra, foto sin recorte, un solo pie de foto y 10 toques al día con 5 s entre uno y otro (migración de `send_nudge`). |
 
 ### 10.1 Camino a la v1.0.0
 
 Estamos cerca de la v1.0.0, pero antes faltan:
 
-1. **Fase 11A** (pienso en ti, cápsula, cupones, ruleta; D86).
-2. **Correcciones pendientes**, por definir con el usuario. En las dos, **pedirle el detalle al
+1. ~~Fase 11A~~ (cancelada, D133).
+2. **Ajustes v0.13.6** (en curso).
+3. **Correcciones pendientes**, por definir con el usuario. En las dos, **pedirle el detalle al
    usuario antes de corregir**:
    - Detalles de la tarjeta compartible (racha / tiempo juntos; D113).
    - Correcciones de diseño menores detectadas al probar la v0.3.0.
