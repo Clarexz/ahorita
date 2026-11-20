@@ -4,12 +4,13 @@ import {
   WIDGET_ROUTES,
   WIDGET_SNAPSHOT_VERSION,
   buildWidgetSnapshot,
-  countdownProgress,
   emptyWidgetSnapshot,
+  markStorySeenInSnapshot,
   formatAgo,
   nextBirthday,
   nextCountdown,
   parseWidgetSnapshot,
+  pastVisitEnds,
   profileFruit,
   snapshotChanged,
   snapshotFruits,
@@ -55,14 +56,14 @@ describe('buildWidgetSnapshot', () => {
     expect(s.fruits).toEqual({ me: 'sandia', partner: 'mango' });
   });
 
-  it('v4 guarda frutas y racha', () => {
+  it('v5 guarda frutas y racha', () => {
     const s = buildWidgetSnapshot(
       input({
         fruits: { me: 'uva', partner: 'limon' },
         streak: { current: 47.9, answeredToday: true },
       }),
     );
-    expect(WIDGET_SNAPSHOT_VERSION).toBe(4);
+    expect(WIDGET_SNAPSHOT_VERSION).toBe(5);
     expect(s.fruits).toEqual({ me: 'uva', partner: 'limon' });
     expect(s.streak).toEqual({ current: 47, answeredToday: true });
   });
@@ -229,6 +230,13 @@ describe('parseWidgetSnapshot', () => {
     const s = snap();
     expect(parseWidgetSnapshot(JSON.stringify(s))).toEqual(s);
   });
+  it('un snapshot v4 (sin visitEnds ni seen) no truena y se completa', () => {
+    const { visitEnds: _omit, ...rest } = snap();
+    const old = parseWidgetSnapshot(JSON.stringify({ ...rest, version: 4 }));
+    expect(old?.version).toBe(WIDGET_SNAPSHOT_VERSION);
+    expect(old?.visitEnds).toEqual([]);
+    expect(nextCountdown(old as WidgetSnapshot, '2026-06-15')).not.toBeUndefined();
+  });
   it('rechaza lo inválido', () => {
     expect(parseWidgetSnapshot(null)).toBeNull();
     expect(parseWidgetSnapshot(undefined)).toBeNull();
@@ -316,7 +324,14 @@ describe('nextCountdown', () => {
       emoji: null,
       date: '2026-06-20',
       daysUntil: 5,
-      progress: 0.5,
+      progress: 25 / 30,
+      wait: {
+        progress: 25 / 30,
+        since: '2026-05-21',
+        totalDays: 30,
+        elapsedDays: 25,
+        source: 'window',
+      },
     });
   });
   it('hoy cuenta con daysUntil 0 y gana el aniversario en un empate', () => {
@@ -489,40 +504,30 @@ describe('frutas y racha (v4)', () => {
   });
 });
 
-describe('countdownProgress', () => {
-  it('días transcurridos entre el total', () => {
-    expect(
-      countdownProgress({ today: '2026-06-15', target: '2026-06-25', since: '2026-06-05' }),
-    ).toBe(0.5);
-    expect(
-      countdownProgress({ today: '2026-06-08', target: '2026-06-28', since: '2026-06-01' }),
-    ).toBeCloseTo(7 / 27);
+describe('nextCountdown: avance de la media luna', () => {
+  const visit = (id: string, date: string) => ({
+    id,
+    kind: 'visit' as const,
+    title: 'Nos vemos',
+    emoji: null,
+    date,
+    recurring_yearly: false,
   });
-  it('sin dato, 0.5; acotado de 0 a 1', () => {
-    expect(countdownProgress({ today: '2026-06-15', target: '2026-06-25', since: null })).toBe(0.5);
-    expect(
-      countdownProgress({ today: '2026-06-15', target: '2026-06-15', since: '2026-06-15' }),
-    ).toBe(0.5);
-    expect(
-      countdownProgress({ today: '2026-06-30', target: '2026-06-25', since: '2026-06-05' }),
-    ).toBe(1);
-    expect(
-      countdownProgress({ today: '2026-06-01', target: '2026-06-25', since: '2026-06-05' }),
-    ).toBe(0);
-  });
-  it('mide desde la última visita pasada', () => {
-    const visit = (id: string, date: string) => ({
-      id,
-      kind: 'visit' as const,
-      title: 'Nos vemos',
-      emoji: null,
-      date,
-      recurring_yearly: false,
-    });
+  const base = { anniversary: null, me: null, partner: null };
+
+  it('mide desde el último end_date de visits', () => {
     const s = snap({
-      anniversary: null,
-      me: null,
-      partner: null,
+      ...base,
+      visitEnds: ['2026-06-05', '2026-05-01'],
+      events: [visit('next', '2026-06-25')],
+    });
+    const c = nextCountdown(s, '2026-06-15');
+    expect(c?.progress).toBe(0.5);
+    expect(c?.wait).toMatchObject({ source: 'visit', since: '2026-06-05', totalDays: 20 });
+  });
+  it('sin visits usa la última visita de events', () => {
+    const s = snap({
+      ...base,
       events: [
         visit('old', '2026-05-01'),
         visit('last', '2026-06-05'),
@@ -532,12 +537,11 @@ describe('countdownProgress', () => {
     const c = nextCountdown(s, '2026-06-15');
     expect(c?.date).toBe('2026-06-25');
     expect(c?.progress).toBe(0.5);
+    expect(c?.wait.source).toBe('visit');
   });
   it('un evento propio mide desde que se creó', () => {
     const s = snap({
-      anniversary: null,
-      me: null,
-      partner: null,
+      ...base,
       events: [
         {
           id: 'c1',
@@ -550,6 +554,67 @@ describe('countdownProgress', () => {
         },
       ],
     });
-    expect(nextCountdown(s, '2026-06-20')?.progress).toBe(0.75);
+    const c = nextCountdown(s, '2026-06-20');
+    expect(c?.progress).toBe(0.75);
+    expect(c?.wait.source).toBe('created');
+  });
+});
+
+describe('pastVisitEnds', () => {
+  it('solo las que ya pasaron, de la más nueva a la más vieja, máximo 5', () => {
+    const v = (end_date: string) => ({ end_date });
+    const out = pastVisitEnds(
+      [
+        v('2026-01-01'),
+        v('2026-06-20'),
+        v('2026-02-01'),
+        v('2026-03-01'),
+        v('2026-04-01'),
+        v('2026-05-01'),
+        v('2026-06-01'),
+        v('raro'),
+      ],
+      '2026-06-15',
+    );
+    expect(out).toEqual(['2026-06-01', '2026-05-01', '2026-04-01', '2026-03-01', '2026-02-01']);
+    expect(pastVisitEnds(undefined, '2026-06-15')).toEqual([]);
+  });
+  it('buildWidgetSnapshot las guarda', () => {
+    const s = buildWidgetSnapshot(
+      input({ visits: [{ end_date: '2026-06-10' }, { end_date: '2026-06-30' }] }),
+    );
+    expect(s.visitEnds).toEqual(['2026-06-10']);
+  });
+});
+
+describe('story vista', () => {
+  const story = {
+    id: 's1',
+    kind: 'text' as const,
+    created_at: '2026-06-15T15:00:00Z',
+    expires_at: '2026-06-16T15:00:00Z',
+    text: 'Hola',
+    bg: 'postit' as const,
+    font: 'hand' as const,
+  };
+  it('por defecto no está vista', () => {
+    const m = widgetModel(buildWidgetSnapshot(input({ partnerStory: story })), NOW);
+    expect(m.partnerStory?.seen).toBe(false);
+  });
+  it('seen se guarda y llega al modelo', () => {
+    const m = widgetModel(
+      buildWidgetSnapshot(input({ partnerStory: { ...story, seen: true } })),
+      NOW,
+    );
+    expect(m.partnerStory?.seen).toBe(true);
+  });
+  it('markStorySeenInSnapshot marca solo esa story', () => {
+    const s = buildWidgetSnapshot(input({ partnerStory: story }));
+    const seen = markStorySeenInSnapshot(s, 's1');
+    expect(seen?.partnerStory?.seen).toBe(true);
+    expect(s.partnerStory?.seen).toBe(false); // no muta
+    expect(markStorySeenInSnapshot(s, 'otra')).toBe(s);
+    expect(markStorySeenInSnapshot(seen, 's1')).toBe(seen);
+    expect(markStorySeenInSnapshot(null, 's1')).toBeNull();
   });
 });

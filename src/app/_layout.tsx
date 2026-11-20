@@ -32,6 +32,13 @@ import { QueryProvider } from '@/lib/query';
 import { ThemeProvider, useTheme } from '@/theme';
 import { FruitThemeBridge } from '@/theme/FruitThemeBridge';
 
+/**
+ * Ancla de la pila: cualquier deep link (widgets, notificaciones) que abra una pantalla de golpe
+ * deja `(tabs)` debajo, así que "atrás" regresa a Inicio en vez de cerrar la app. Si `(tabs)` está
+ * protegida (sesión cerrada, onboarding) expo-router la omite y se usa la primera ruta válida.
+ */
+export const unstable_settings = { anchor: '(tabs)' };
+
 /** Pantalla de error de expo-router para cualquier ruta que lance al pintarse. */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (

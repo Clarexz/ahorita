@@ -12,6 +12,8 @@ import {
 import { personName } from '@/lib/eventsView';
 import { randomUuid } from '@/lib/ids';
 import { supabase } from '@/lib/supabase';
+import { waitProgress, type WaitProgress } from '@/lib/waitProgress';
+import { useVisits } from '@/features/visits/hooks';
 
 import { deleteEvent, fetchEvents, saveEvent, type EventRow, type SaveEventInput } from './api';
 
@@ -121,6 +123,7 @@ export function useCountdowns() {
   const { couple, me, partner } = useCouple();
   const { today } = useToday();
   const { events, isLoading, isError, refetch, isRefetching } = useEvents();
+  const { visits } = useVisits();
   const anniversary = couple?.anniversary_date ?? null;
 
   const derived = useMemo(() => {
@@ -130,6 +133,8 @@ export function useCountdowns() {
         visit: null,
         featured: null,
         past: NO_EVENTS,
+        visitWait: null,
+        featuredWait: null,
       };
     }
     const input = {
@@ -141,13 +146,32 @@ export function useCountdowns() {
       events,
       today,
     };
+    const visitEnds = visits.map((v) => v.end_date);
+    const eventVisitDates = events.filter((e) => e.kind === 'visit').map((e) => e.date);
+    // Una sola regla para la media luna (visits → events → alta → ventana de 30 días).
+    const waitOf = (c: Countdown | null): WaitProgress | null =>
+      c
+        ? waitProgress({
+            today,
+            target: c.date,
+            visitEnds,
+            eventVisitDates,
+            createdAt: c.eventId
+              ? (events.find((e) => e.id === c.eventId)?.created_at ?? null)
+              : null,
+          })
+        : null;
+    const visit = nextVisit(events, today);
+    const featured = featuredCountdown(input);
     return {
       countdowns: buildCountdowns(input),
-      visit: nextVisit(events, today),
-      featured: featuredCountdown(input),
+      visit,
+      featured,
       past: pastEvents(events, today),
+      visitWait: waitOf(visit),
+      featuredWait: waitOf(featured),
     };
-  }, [couple, anniversary, me, partner, events, today]);
+  }, [couple, anniversary, me, partner, events, visits, today]);
 
   return { ...derived, events, today, isLoading, isError, refetch, isRefetching };
 }

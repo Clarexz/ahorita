@@ -24,6 +24,8 @@ export type PartnerStoryRow = {
   bg: StoryBg | string | null;
   font: StoryFont | string | null;
   strokes: unknown;
+  /** `views:story_views(user_id)`: quién ya la vio (la RLS deja leerlas a la pareja). */
+  views?: { user_id: string }[] | null;
 };
 
 type StoryInput = NonNullable<SnapshotInput['partnerStory']>;
@@ -54,6 +56,7 @@ export async function storyToSnapshotInput(
   row: PartnerStoryRow,
   previous: WidgetSnapshot | null,
   download: (path: string) => Promise<string | null> = downloadThumb,
+  viewerId?: string | null,
 ): Promise<StoryInput | null> {
   if (row.kind !== 'photo' && row.kind !== 'text' && row.kind !== 'drawing') return null;
   const kind: StoryKind = row.kind;
@@ -72,6 +75,10 @@ export async function storyToSnapshotInput(
           ? await download(row.thumb_path)
           : null;
   }
+  // Se conserva "vista" si el snapshot ya la marcó (la vista pudo no llegar aún al servidor).
+  const seen =
+    (!!viewerId && (row.views ?? []).some((v) => v.user_id === viewerId)) ||
+    (previous?.partnerStory?.id === row.id && previous.partnerStory.seen === true);
   return {
     id: row.id,
     kind,
@@ -82,6 +89,7 @@ export async function storyToSnapshotInput(
     bg: (row.bg as StoryBg | null) ?? null,
     font: (row.font as StoryFont | null) ?? null,
     strokes,
+    seen,
   };
 }
 
@@ -91,21 +99,23 @@ export async function pickPartnerStory(
   partnerId: string | null | undefined,
   previous: WidgetSnapshot | null,
   now = new Date(),
+  viewerId?: string | null,
 ): Promise<StoryInput | null> {
   const row = latestActiveStory(rows, partnerId, now);
-  return row ? storyToSnapshotInput(row, previous) : null;
+  return row ? storyToSnapshotInput(row, previous, downloadThumb, viewerId) : null;
 }
 
 /** Lee del servidor la story activa más nueva de tu pareja. Lanza si la consulta falla. */
 export async function fetchPartnerStory(
   partnerId: string,
   previous: WidgetSnapshot | null,
+  viewerId: string | null,
   now = new Date(),
 ): Promise<StoryInput | null> {
   const { data, error } = await supabase
     .from('stories')
     .select(
-      'id, user_id, kind, created_at, expires_at, deleted_at, thumb_path, text, bg, font, strokes',
+      'id, user_id, kind, created_at, expires_at, deleted_at, thumb_path, text, bg, font, strokes, views:story_views(user_id)',
     )
     .eq('user_id', partnerId)
     .is('deleted_at', null)
@@ -114,5 +124,7 @@ export async function fetchPartnerStory(
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  return data ? storyToSnapshotInput(data as PartnerStoryRow, previous) : null;
+  return data
+    ? storyToSnapshotInput(data as PartnerStoryRow, previous, downloadThumb, viewerId)
+    : null;
 }

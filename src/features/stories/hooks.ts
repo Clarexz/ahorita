@@ -11,6 +11,7 @@ import { useSession } from '@/features/auth';
 import { useCouple } from '@/features/couple';
 import { useProfile } from '@/features/profile';
 import { supabase } from '@/lib/supabase';
+import { markStorySeenLocally } from '@/widgets/update';
 
 import {
   createStory,
@@ -226,6 +227,8 @@ export function useMarkStorySeen() {
       await cancelStories(qc);
       const current = findInCaches(qc, id);
       if (!userId || !current || current.user_id === userId) return { snapshot: [] as Snapshot };
+      // El widget deja de decir "nueva" al instante, sin esperar al servidor.
+      void markStorySeenLocally(id);
       if (current.views.some((v) => v.user_id === userId)) return { snapshot: [] as Snapshot };
       const seenAt = new Date().toISOString();
       const snapshot = patchStory(qc, id, (s) => ({

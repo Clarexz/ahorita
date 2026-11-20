@@ -42,7 +42,7 @@ function asCountdown(e: EventRow): Countdown {
 export function CountdownsScreen() {
   const { spacing } = useTheme();
   const router = useRouter();
-  const { countdowns, visit, past, today, isLoading, isError, refetch, isRefetching } =
+  const { countdowns, visit, visitWait, past, today, isLoading, isError, refetch, isRefetching } =
     useCountdowns();
   const { visits } = useVisits();
   const unlogged = pendingVisitEvents(past, visits, today).length;
@@ -68,7 +68,11 @@ export function CountdownsScreen() {
     body = (
       <View style={{ gap: spacing.xl }}>
         {visit ? (
-          <NextVisitCard countdown={visit} onPress={() => visit.eventId && edit(visit.eventId)} />
+          <NextVisitCard
+            countdown={visit}
+            wait={visitWait}
+            onPress={() => visit.eventId && edit(visit.eventId)}
+          />
         ) : (
           <EmptyState
             art="circles"

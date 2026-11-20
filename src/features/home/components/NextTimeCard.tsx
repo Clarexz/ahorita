@@ -1,55 +1,22 @@
 import { useRouter } from 'expo-router';
-import { useId } from 'react';
 import { View } from 'react-native';
-import Svg, { ClipPath, Defs, Path, Rect } from 'react-native-svg';
 
-import { Button, Card, LoadingSymbol, Text, type FruitLike } from '@/components';
+import { Button, Card, HalfMoon, LoadingSymbol, Text } from '@/components';
 import { useFruits } from '@/features/couple';
 import { useCountdowns } from '@/features/events';
 import { formatNumber } from '@/lib/dates';
 import type { Countdown } from '@/lib/events';
 import { countdownSpoken } from '@/lib/eventsView';
 import { FRUITS } from '@/lib/fruits';
+import { waitCaption, type WaitProgress } from '@/lib/waitProgress';
 import { useTheme } from '@/theme';
 
-import { countdownProgress, shortDate } from '../format';
-
-const ARC = 'M3 24 A19 19 0 0 1 41 24 Z';
-
-/** Media luna chica: tu fruta, que se llena con la de tu pareja de abajo hacia arriba. */
-export function HalfMoon({
-  progress,
-  me,
-  partner,
-}: {
-  progress: number;
-  me: FruitLike;
-  partner: FruitLike;
-}) {
-  const { colors } = useTheme();
-  const id = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const hex = (f: FruitLike) => (typeof f === 'string' ? FRUITS[f].hex : f.hex);
-  // La media luna ocupa de y=5 a y=24: el relleno sube desde la base.
-  const top = 24 - 19 * progress;
-  return (
-    <Svg width={44} height={28} viewBox="0 0 44 28" accessibilityElementsHidden>
-      <Defs>
-        <ClipPath id={`fill-${id}`}>
-          <Rect x={0} y={top} width={44} height={28 - top} />
-        </ClipPath>
-      </Defs>
-      <Path d={ARC} fill={hex(me)} />
-      <Path d={ARC} fill={hex(partner)} clipPath={`url(#fill-${id})`} />
-      <Path d="M1 26.5H43" stroke={colors.ink} strokeWidth={2} strokeLinecap="round" />
-    </Svg>
-  );
-}
+import { shortDate } from '../format';
 
 type ViewProps = {
   countdown: Countdown | null;
-  /** Alta del evento (para el avance de la media luna). */
-  createdAt?: string | null;
-  today: string;
+  /** Avance de la espera (la regla única de `waitProgress`); null sin cuenta regresiva. */
+  wait?: WaitProgress | null;
   loading?: boolean;
   onOpen: () => void;
   onCreate: () => void;
@@ -58,8 +25,7 @@ type ViewProps = {
 /** La tarjeta "La próxima vez" y sus tres estados: cargando, con cuenta y vacía. */
 export function NextTimeCardView({
   countdown,
-  createdAt,
-  today,
+  wait = null,
   loading = false,
   onOpen,
   onCreate,
@@ -83,7 +49,7 @@ export function NextTimeCardView({
           <Text variant="label" tone="muted">
             La próxima vez
           </Text>
-          <HalfMoon progress={0.06} me={fruits.me} partner={partnerFruit} />
+          <HalfMoon width={56} progress={0} me={fruits.me} partner={partnerFruit} />
         </View>
         <Text variant="h3">¿Cuándo se ven?</Text>
         <Text variant="note" tone="muted">
@@ -117,7 +83,8 @@ export function NextTimeCardView({
           La próxima vez
         </Text>
         <HalfMoon
-          progress={countdownProgress(countdown.daysUntil, createdAt, today)}
+          width={56}
+          progress={wait ? wait.progress : 0}
           me={fruits.me}
           partner={partnerFruit}
         />
@@ -131,6 +98,11 @@ export function NextTimeCardView({
       <Text variant="note" tone="muted" numberOfLines={2}>
         {today0 ? where : `para el ${where}`}
       </Text>
+      {wait ? (
+        <Text variant="note" tone="muted">
+          {waitCaption(wait)}
+        </Text>
+      ) : null}
     </Card>
   );
 }
@@ -138,15 +110,11 @@ export function NextTimeCardView({
 /** Conectada a la cuenta regresiva destacada (la próxima visita o la más cercana). */
 export function NextTimeCard() {
   const router = useRouter();
-  const { featured, events, today, isLoading } = useCountdowns();
-  const createdAt = featured?.eventId
-    ? (events.find((e) => e.id === featured.eventId)?.created_at ?? null)
-    : null;
+  const { featured, featuredWait, isLoading } = useCountdowns();
   return (
     <NextTimeCardView
       countdown={featured}
-      createdAt={createdAt}
-      today={today}
+      wait={featuredWait ?? null}
       loading={isLoading}
       onOpen={() => router.push('/events')}
       onCreate={() => router.push({ pathname: '/events/edit', params: { kind: 'visit' } })}

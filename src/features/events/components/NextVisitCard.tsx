@@ -1,17 +1,20 @@
 import { View } from 'react-native';
 
-import { Card, Text } from '@/components';
+import { Card, HalfMoon, Text } from '@/components';
+import { useFruits } from '@/features/couple';
 import { formatLongDate } from '@/lib/dateParts';
 import type { Countdown } from '@/lib/events';
 import { countdownHeadline, countdownSpoken } from '@/lib/eventsView';
+import { FRUITS } from '@/lib/fruits';
+import { waitCaption, type WaitProgress } from '@/lib/waitProgress';
 import { useTheme } from '@/theme';
-
-import { MoonFill } from './MoonFill';
 
 type Props = {
   countdown: Countdown;
   /** Texto sobre el número; por defecto "Faltan" (o nada si es hoy). */
   heading?: string;
+  /** Avance de la espera (`waitProgress`); sin él no se dibuja la media luna. */
+  wait?: WaitProgress | null;
   onPress?: () => void;
 };
 
@@ -19,8 +22,10 @@ type Props = {
  * La cuenta regresiva destacada, como la tarjeta de Inicio: "Faltan" (`h3`), los días en
  * `display`, la fecha y el título, y la media luna que se llena con las dos frutas.
  */
-export function NextVisitCard({ countdown, heading, onPress }: Props) {
+export function NextVisitCard({ countdown, heading, wait = null, onPress }: Props) {
   const { spacing } = useTheme();
+  const fruits = useFruits();
+  const partnerFruit = fruits.partner ?? FRUITS[fruits.me.suggested];
   const { value, unit } = countdownHeadline(countdown.daysUntil);
   const title = countdown.emoji ? `${countdown.emoji} ${countdown.title}` : countdown.title;
   const lead = heading ?? (countdown.daysUntil > 0 ? 'Faltan' : null);
@@ -42,7 +47,14 @@ export function NextVisitCard({ countdown, heading, onPress }: Props) {
             {formatLongDate(countdown.date)}
           </Text>
         </View>
-        <MoonFill daysUntil={countdown.daysUntil} />
+        {wait ? (
+          <View style={{ alignItems: 'center', gap: spacing.xxs }}>
+            <HalfMoon progress={wait.progress} me={fruits.me} partner={partnerFruit} width={72} />
+            <Text variant="note" tone="muted" style={{ textAlign: 'center', maxWidth: 96 }}>
+              {waitCaption(wait)}
+            </Text>
+          </View>
+        ) : null}
       </View>
     </Card>
   );
