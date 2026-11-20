@@ -27,7 +27,12 @@ export function QuestionRow({ question: q, partnerName, onPress }: Props) {
           ? `${partnerName} contestó. Te toca.`
           : null;
   return (
-    <Card accessibilityLabel={note ? `${q.text}. ${note}` : q.text} onPress={onPress}>
+    <Card
+      tone={state === 'partner' ? 'partner' : 'surface'}
+      accent={state === 'both' ? 'pair' : undefined}
+      accessibilityLabel={note ? `${q.text}. ${note}` : q.text}
+      onPress={onPress}
+    >
       <Text variant="bodyStrong">{q.text}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
         <Text variant="note" tone="muted" style={{ flex: 1 }}>

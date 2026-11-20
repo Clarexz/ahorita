@@ -7,10 +7,10 @@ import {
   Platform,
   Pressable,
   type LayoutChangeEvent,
-  ScrollView,
   View,
   useWindowDimensions,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import {
   ArrivalOverlay,
@@ -499,7 +499,8 @@ export function MemoryEditor({ id }: { id?: string }) {
   return (
     <View style={{ flex: 1 }}>
       <Screen>
-        <ScrollView
+        <KeyboardAwareScrollView
+          bottomOffset={24}
           keyboardShouldPersistTaps="handled"
           scrollEnabled={!dragging}
           showsVerticalScrollIndicator={false}
@@ -741,7 +742,7 @@ export function MemoryEditor({ id }: { id?: string }) {
               ) : null}
             </View>
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
 
         <PlacePicker
           visible={pickerOpen}

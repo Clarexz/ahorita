@@ -6,11 +6,11 @@ import {
   Linking,
   Platform,
   Pressable,
-  ScrollView,
   TextInput,
   View,
   useWindowDimensions,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -299,7 +299,8 @@ export function StoryComposer({ kind }: { kind: ComposerKind }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView
+      <KeyboardAwareScrollView
+        bottomOffset={24}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           paddingTop: insets.top + spacing.sm,
@@ -451,7 +452,7 @@ export function StoryComposer({ kind }: { kind: ComposerKind }) {
             </View>
           ) : null}
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <Sheet
         visible={confirmClose}

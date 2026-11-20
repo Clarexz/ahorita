@@ -43,6 +43,14 @@ let mockMembers = [
   { user_id: 'u2', spicy_opt_in: false },
 ];
 let mockPacks: Pack[] = [];
+let mockCategories: {
+  slug: string;
+  name: string;
+  emoji: string;
+  description: string;
+  intensity: string;
+}[] = [];
+let mockPending: { question: { id: string; category: string } }[] = [];
 let mockPacksState = { isLoading: false, isError: false };
 
 const pack = (over: Partial<Pack>): Pack => ({
@@ -61,6 +69,8 @@ const pack = (over: Partial<Pack>): Pack => ({
 
 jest.mock('@/features/questions', () => ({
   DailyQuestionCard: () => null,
+  PendingForMeCard: () => null,
+  usePendingForMe: () => ({ pending: mockPending, refetch: jest.fn() }),
   useStreak: () => ({
     streak: mockStreak,
     isLoading: false,
@@ -77,7 +87,7 @@ jest.mock('@/features/questions', () => ({
     refetch: jest.fn(),
   }),
   useCategories: () => ({
-    categories: [],
+    categories: mockCategories,
     isLoading: false,
     isError: false,
     isRefetching: false,
@@ -111,6 +121,8 @@ describe('Pestaña Preguntas', () => {
     mockPush.mockClear();
     mockStreak = baseStreak;
     mockPacks = [];
+    mockCategories = [];
+    mockPending = [];
     mockPacksState = { isLoading: false, isError: false };
     mockMembers = [
       { user_id: 'u1', spicy_opt_in: false },
@@ -196,5 +208,22 @@ describe('Pestaña Preguntas', () => {
     await renderScreen();
     await fireEvent.press(screen.getByRole('button', { name: /^Agregar una pregunta/ }));
     expect(mockPush).toHaveBeenCalledWith('/add-question');
+  });
+
+  it('marca las categorías donde la pareja contestó y te faltan', async () => {
+    mockCategories = [
+      { slug: 'amor', name: 'Amor', emoji: '💌', description: 'De amor.', intensity: 'ligera' },
+      { slug: 'futuro', name: 'Futuro', emoji: '🧭', description: 'Planes.', intensity: 'ligera' },
+    ];
+    mockPending = [
+      { question: { id: 'q1', category: 'amor' } },
+      { question: { id: 'q2', category: 'amor' } },
+    ];
+    await renderScreen();
+    expect(
+      screen.getByRole('button', { name: 'Amor. De amor.. Caleb te espera en 2' }),
+    ).toBeTruthy();
+    expect(screen.getByText('2', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Futuro. Planes.' })).toBeTruthy();
   });
 });

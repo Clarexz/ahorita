@@ -5,7 +5,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useSession } from '@/features/auth';
 import { useCouple, useToday } from '@/features/couple';
@@ -15,6 +15,7 @@ import type { FeedbackVote } from '@/lib/feedback';
 import type { Pack } from '@/lib/packs';
 import {
   applyReaction,
+  spicyState,
   justCompleted,
   validateAnswerInput,
   validateComment,
@@ -23,6 +24,7 @@ import {
   type QuestionCard,
   type QuestionInfo,
 } from '@/lib/questions';
+import { pendingForMe, type PendingQuestion } from '@/lib/questionsView';
 import { supabase } from '@/lib/supabase';
 
 import {
@@ -65,6 +67,8 @@ export const questionKeys = {
   categoryQuestions: (coupleId: string | null, slug: string | null) =>
     ['category-questions', coupleId, slug] as const,
   historyAll: (coupleId: string | null) => ['history', coupleId] as const,
+  /** Bajo `history` para que se invalide junto con el historial. */
+  pendingForMe: (coupleId: string | null) => ['history', coupleId, 'pending-for-me'] as const,
   history: (coupleId: string | null, search: string, category: string | null) =>
     ['history', coupleId, search, category] as const,
   commentsAll: (coupleId: string | null) => ['comments', coupleId] as const,
@@ -288,6 +292,32 @@ export function useHistory({
     isFetchingNextPage: query.isFetchingNextPage,
     ...viewState(query, coupleId),
   };
+}
+
+const NO_PENDING: PendingQuestion[] = [];
+/** Lo más que pide el RPC de historial; lo pendiente casi siempre es reciente. */
+const PENDING_SCAN = 100;
+
+/**
+ * Preguntas que mi pareja ya contestó y a mí me faltan (extras, temas y días pasados), sin la
+ * pregunta de hoy, que ya tiene su tarjeta. Sale del historial: no necesita RPC nueva.
+ */
+export function usePendingForMe() {
+  const { couple, members, me } = useCouple();
+  const coupleId = couple?.id ?? null;
+  const daily = useDailyQuestion();
+  const spicyActive = spicyState(members, me?.id ?? '').active;
+  const excludeId = daily.card?.question.id ?? null;
+  const query = useQuery({
+    queryKey: questionKeys.pendingForMe(coupleId),
+    queryFn: () => fetchHistory({ limit: PENDING_SCAN }),
+    enabled: !!coupleId,
+  });
+  const pending = useMemo(
+    () => (query.data ? pendingForMe(query.data, { excludeId, spicyActive }) : NO_PENDING),
+    [query.data, excludeId, spicyActive],
+  );
+  return { pending, ...viewState(query, coupleId) };
 }
 
 export function useComments(questionId: string | null | undefined) {

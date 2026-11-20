@@ -97,3 +97,56 @@ export function spicyCopy(
   }
   return { partnerLine, result: 'Por ahora están apagadas para los dos.', active: false };
 }
+
+/** Pregunta que la pareja ya contestó y a mí me falta (para "Te toca" en Inicio y Preguntas). */
+export type PendingQuestion = Pick<HistoryItem, 'question' | 'day' | 'last_activity'>;
+
+/**
+ * De un historial, las preguntas que contestó la pareja y yo no, la más reciente primero.
+ * `excludeId` quita la pregunta del día de hoy (ya tiene su tarjeta); sin picantes activas
+ * tampoco se piden las picantes.
+ */
+export function pendingForMe(
+  items: HistoryItem[],
+  { excludeId = null, spicyActive = false }: { excludeId?: string | null; spicyActive?: boolean },
+): PendingQuestion[] {
+  return items
+    .filter(
+      (i) =>
+        !i.mine &&
+        i.partner_answered &&
+        i.question.id !== excludeId &&
+        (spicyActive || i.question.intensity !== 'picante'),
+    )
+    .sort((a, b) => b.last_activity.localeCompare(a.last_activity))
+    .map(({ question, day, last_activity }) => ({ question, day, last_activity }));
+}
+
+/** Cuántas preguntas pendientes hay por categoría (slug → número). */
+export function pendingByCategory(pending: PendingQuestion[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const p of pending) out[p.question.category] = (out[p.question.category] ?? 0) + 1;
+  return out;
+}
+
+/** "Chu contestó 2 preguntas que te faltan." */
+export function pendingLine(count: number, partnerName: string): string {
+  return count === 1
+    ? `${partnerName} contestó una pregunta que te falta.`
+    : `${partnerName} contestó ${count} preguntas que te faltan.`;
+}
+
+const ROW_ORDER: Record<CategoryRowState, number> = { partner: 0, unanswered: 1, mine: 2, both: 3 };
+
+/**
+ * Orden de una lista de categoría: primero las que contestó la pareja y me faltan, luego las
+ * nuevas, luego las que esperan a la pareja y al final las de los dos. Estable dentro de cada grupo.
+ */
+export function sortForMe<T extends { answered_by_me: boolean; answered_by_partner: boolean }>(
+  questions: T[],
+): T[] {
+  return questions
+    .map((q, i) => ({ q, i, rank: ROW_ORDER[categoryRowState(q)] }))
+    .sort((a, b) => a.rank - b.rank || a.i - b.i)
+    .map((x) => x.q);
+}

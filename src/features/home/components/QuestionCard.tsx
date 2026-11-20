@@ -3,7 +3,7 @@ import { View } from 'react-native';
 
 import { Button, Card, FruitDot, LoadingSymbol, Notice, Text } from '@/components';
 import { useCouple, useFruits } from '@/features/couple';
-import { useDailyQuestion } from '@/features/questions';
+import { PairDoneChip, useDailyQuestion } from '@/features/questions';
 import { errorMessage } from '@/lib/errors';
 import { FRUITS } from '@/lib/fruits';
 import { questionErrorKind } from '@/lib/questionCopy';
@@ -35,11 +35,15 @@ export function QuestionCardView({ card, partnerName, onOpen }: ViewProps) {
   const partnerFruit = fruits.partner ?? FRUITS[fruits.me.suggested];
   const status = questionStatus(card, partnerName);
   const toAnswer = cardState(card) === 'unanswered';
+  const done = status.dot === 'both';
   return (
-    <Card style={{ padding: 20, gap: spacing.sm }}>
-      <Text variant="label" tone="muted">
-        Pregunta del día
-      </Text>
+    <Card accent={done ? 'pair' : undefined} style={{ padding: 20, gap: spacing.sm }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+        <Text variant="label" tone="muted" style={{ flex: 1 }}>
+          Pregunta del día
+        </Text>
+        {done ? <PairDoneChip label="Listo" /> : null}
+      </View>
       <Text variant="h3" numberOfLines={4}>
         {card.question.text}
       </Text>
