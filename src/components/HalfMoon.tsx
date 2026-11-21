@@ -8,7 +8,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
 
-import { MOON, TONAL_OFFSET, clampProgress, fillTop, shade } from '@/widgets/components/svg';
+import {
+  MOON,
+  MOON_BASE,
+  MOON_RADIUS,
+  TONAL_OFFSET,
+  clampProgress,
+  fillTop,
+  shade,
+} from '@/widgets/components/svg';
 import { useTheme } from '@/theme';
 
 import { bezierOf } from './motion';
@@ -53,8 +61,10 @@ export function HalfMoon({ progress, me, partner, width = 64, animated = false }
     }
   }, [animate, t, motion]);
   const target = clampProgress(progress);
+  // Ojo: este callback corre en el hilo de UI (worklet). No puede llamar funciones normales de JS
+  // como `fillTop` (en el APK eso cierra la app al instante); solo números y operaciones.
   const fillProps = useAnimatedProps(() => {
-    const y = fillTop(target * t.value);
+    const y = MOON_BASE - MOON_RADIUS * target * t.value;
     return { y, height: 100 - y };
   });
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
