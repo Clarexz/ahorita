@@ -26,6 +26,8 @@ import {
   ListGroup,
   ListRow,
   LoadingSymbol,
+  HalfMoon,
+  WaitPath,
   MoodBubble,
   Notice,
   PermissionNote,
@@ -48,6 +50,8 @@ import {
   Wordmark,
 } from '@/components';
 import { FRUITS, FRUIT_KEYS, type FruitKey } from '@/lib/fruits';
+import { waitPath } from '@/lib/waitPath';
+import type { WaitProgress } from '@/lib/waitProgress';
 import { ThemeProvider, useTheme, type Colors, type TypeVariant } from '@/theme';
 
 // Catálogo de diseño (DISENO §7): ruta oculta, solo para revisar el sistema en claro y oscuro y
@@ -99,6 +103,25 @@ const EMPTY_ARTS: { art: EmptyArt; title: string; body: string }[] = [
   { art: 'spark', title: 'Hoy empieza la racha', body: 'Contesten la pregunta de hoy.' },
   { art: 'circles', title: 'Esperando a que llegue', body: 'En cuanto use el código, aparece.' },
 ];
+
+/** Avances de ejemplo de "el camino" (total de días, días que van). */
+const WAIT_STATES: { total: number; elapsed: number; since: string; target: string }[] = [
+  { total: 7, elapsed: 0, since: '2026-11-12', target: '2026-11-19' },
+  { total: 7, elapsed: 3, since: '2026-11-12', target: '2026-11-19' },
+  { total: 7, elapsed: 6, since: '2026-11-12', target: '2026-11-19' },
+  { total: 7, elapsed: 7, since: '2026-11-12', target: '2026-11-19' },
+  { total: 40, elapsed: 22, since: '2026-10-12', target: '2026-11-21' },
+];
+
+function waitOf(s: (typeof WAIT_STATES)[number]): WaitProgress {
+  return {
+    progress: s.elapsed / s.total,
+    since: s.since,
+    totalDays: s.total,
+    elapsedDays: s.elapsed,
+    source: 'visit',
+  };
+}
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   const { spacing } = useTheme();
@@ -359,6 +382,29 @@ function Catalog({ pair, onPair }: { pair: PairKey; onPair: (p: PairKey) => void
               onPress={() => toast.show({ message: 'Ficha tocada' })}
             />
           </View>
+        </Section>
+
+        <Section title="El camino">
+          {WAIT_STATES.map((w) => {
+            const path = waitPath(waitOf(w), w.target);
+            return (
+              <Card key={`${w.total}-${w.elapsed}`} style={{ gap: spacing.md }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                  <HalfMoon
+                    animated
+                    width={56}
+                    progress={w.elapsed / w.total}
+                    me={PAIRS[pair].me}
+                    partner={partnerFruit}
+                  />
+                  <Text variant="note" muted>
+                    {w.elapsed} de {w.total} días
+                  </Text>
+                </View>
+                {path ? <WaitPath path={path} me={PAIRS[pair].me} partner={partnerFruit} /> : null}
+              </Card>
+            );
+          })}
         </Section>
 
         <Section title="Personas y moods">

@@ -1,14 +1,15 @@
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
-import { Button, Card, HalfMoon, LoadingSymbol, Text } from '@/components';
+import { Button, Card, HalfMoon, LoadingSymbol, Text, WaitPath } from '@/components';
 import { useFruits } from '@/features/couple';
 import { useCountdowns } from '@/features/events';
 import { formatNumber } from '@/lib/dates';
 import type { Countdown } from '@/lib/events';
 import { countdownSpoken } from '@/lib/eventsView';
 import { FRUITS } from '@/lib/fruits';
-import { waitCaption, type WaitProgress } from '@/lib/waitProgress';
+import { waitPath } from '@/lib/waitPath';
+import type { WaitProgress } from '@/lib/waitProgress';
 import { useTheme } from '@/theme';
 
 import { shortDate } from '../format';
@@ -62,6 +63,7 @@ export function NextTimeCardView({
     );
   }
 
+  const path = wait ? waitPath(wait, countdown.date) : null;
   const today0 = countdown.daysUntil <= 0;
   const value = today0
     ? 'Hoy'
@@ -83,6 +85,7 @@ export function NextTimeCardView({
           La próxima vez
         </Text>
         <HalfMoon
+          animated
           width={56}
           progress={wait ? wait.progress : 0}
           me={fruits.me}
@@ -98,10 +101,10 @@ export function NextTimeCardView({
       <Text variant="note" tone="muted" numberOfLines={2}>
         {today0 ? where : `para el ${where}`}
       </Text>
-      {wait ? (
-        <Text variant="note" tone="muted">
-          {waitCaption(wait)}
-        </Text>
+      {path ? (
+        <View style={{ marginTop: spacing.sm }}>
+          <WaitPath path={path} me={fruits.me} partner={partnerFruit} />
+        </View>
       ) : null}
     </Card>
   );

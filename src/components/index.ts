@@ -1,5 +1,6 @@
 // Sistema "ahorita" (docs/DISENO.md §7).
 export { HalfMoon } from './HalfMoon';
+export { WaitPath } from './WaitPath';
 export { Screen } from './Screen';
 export { ScreenHeader } from './ScreenHeader';
 export { Text, type TextTone } from './Text';
