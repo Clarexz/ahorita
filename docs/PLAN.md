@@ -1142,9 +1142,12 @@ Estamos cerca de la v1.0.0, pero antes faltan:
   encima (se confirma con el siguiente release).
 - **v0.12.2** (`v0.12.2.md`): y que el aviso de prueba con el copy nuevo llegó.
 
-**Pendiente del renombre (D138, v0.13.6):** probar "Mandarme una de prueba" en la app nueva de
-los dos celulares y después borrar del VPS
-`secrets/firebase-service-account.app-par-946be.json.bak`.
+**Pendiente del renombre (D138, v0.13.6):** que la novia instale la app nueva (su token sigue
+siendo de la app vieja y Firebase lo rechaza con 403), borrar del VPS
+`secrets/firebase-service-account.app-par-946be.json.bak` y mergear el PR #29 (lo avisa el
+usuario). Verificado el 2026-11-21 con `adb logcat`: en segundo plano los avisos llegan y se
+muestran; con la app abierta el de prueba no sale, igual que los demás (se queda así a pedido del
+usuario).
 
 **Pendiente v0.13.2** (cliente OAuth Android, secreto `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` y APK
 ya hechos el 2026-11-17):
