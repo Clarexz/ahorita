@@ -6,6 +6,8 @@ import { AppState, Platform } from 'react-native';
 
 import type { Database } from '@/types/database';
 
+import { fetchWithTimeout } from './timeout';
+
 export const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 export const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
@@ -23,6 +25,9 @@ export const supabase = createClient<Database>(
       persistSession: true,
       detectSessionInUrl: false,
     },
+    // Toda petición con tiempo límite real: en Android, RN no pone ninguno y una conexión muerta
+    // deja la petición colgada para siempre (D147).
+    global: { fetch: fetchWithTimeout() },
   },
 );
 

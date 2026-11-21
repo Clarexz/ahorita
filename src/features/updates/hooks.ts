@@ -13,11 +13,16 @@ import {
   type GithubRelease,
   type Snooze,
 } from '@/lib/appUpdate';
+import { fetchWithTimeout } from '@/lib/timeout';
+
+const timedFetch = fetchWithTimeout();
 
 const SNOOZE_KEY = 'app-update-snooze';
 
 async function fetchReleases(): Promise<GithubRelease[]> {
-  const res = await fetch(RELEASES_API, { headers: { Accept: 'application/vnd.github+json' } });
+  const res = await timedFetch(RELEASES_API, {
+    headers: { Accept: 'application/vnd.github+json' },
+  });
   if (!res.ok) throw new Error(`GitHub respondió ${res.status}`);
   return (await res.json()) as GithubRelease[];
 }
