@@ -1142,6 +1142,10 @@ Estamos cerca de la v1.0.0, pero antes faltan:
   encima (se confirma con el siguiente release).
 - **v0.12.2** (`v0.12.2.md`): y que el aviso de prueba con el copy nuevo llegó.
 
+**Pendiente del renombre (D138, v0.13.6):** probar "Mandarme una de prueba" en la app nueva de
+los dos celulares y después borrar del VPS
+`secrets/firebase-service-account.app-par-946be.json.bak`.
+
 **Pendiente v0.13.2** (cliente OAuth Android, secreto `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` y APK
 ya hechos el 2026-11-17):
 
@@ -1190,6 +1194,7 @@ celulares antes de la 12A (confirmado el 2026-11-03).
 | 2026-11-17 | Ajustes v0.13.x (micrófono, Google; APK v0.13.2) | `ccr-123c9893-9q9zk2` @ `31dfccc` | No aplica (respaldo del `.env`: `secrets/.env.bak-pre-google`, por borrar) | `deploy.sh ccr-123c9893-9q9zk2`; se aplicó solo `20261113000000_google_signup_hook` (19 registradas). GoTrue `supabase/gotrue:v2.197.0` (soporta el hook) y override copiado al stack; `/auth/v1/settings` con `external.google=true` y `disable_signup=false`. Registro con correo rechazado (403, sin crear usuario; `auth.users` sigue en 3). Smoke test OK sin avisos, 10 contenedores healthy. Variables anotadas en `CREDENCIALES.md`. |
 | 2026-11-18 | Ajustes v0.13.4 (distancia, frutas, widgets) | `ccr-fec3a528-3qrn1l` @ `ccbf21f` | `backups/db/app-parejas-20261118-002615.dump` (1.1 M) + el automático de `deploy.sh` | Se aplicaron solo `20261118000000_more_fruits` y `20261118000001_precise_location` (21 registradas); queda solo `set_my_location` de 4 parámetros. `notify` sincronizada y `functions` reiniciado. Smoke test OK sin avisos, 10 contenedores healthy, 3,530 preguntas activas. |
 | 2026-11-20 | Ajustes v0.13.6 (widgets, stories, mood, toques) | `claude/hopeful-wright-rvnns3` @ `825cfb9` | `pre-deploy-app-parejas-20261120-214655.dump` (1.2 M) | Solo `20261120000000_nudge_burst` (22 registradas). `nudge_status()` con EXECUTE para `authenticated`; `private.my_nudges_today` cerrada. Smoke test OK sin avisos. `backup.sh` borró por retención el pre-deploy más viejo (`…20261030-231635`). |
+| 2026-11-21 | Renombre a ahorita (D138): cuenta de servicio de Firebase | Sin código nuevo | `secrets/firebase-service-account.app-par-946be.json.bak` (600, **borrar** cuando las notificaciones funcionen con la app nueva) | `notify` usa la cuenta de servicio de `ahorita-21675` (`firebase-adminsdk-fbsvc@…`); `set-notify-config.sh` OK, `functions` healthy, smoke test OK sin avisos. `CREDENCIALES.md` actualizado. Los tokens de la app vieja (`com.appparejas.app`) los rechaza Firebase y `notify` los borra. |
 
 ---
 
