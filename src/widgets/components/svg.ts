@@ -1,10 +1,15 @@
-// Formas de los widgets 1×1 en estilo tonal (docs/DISENO.md §9, D128): color de fruta al 100 % y
-// una copia más oscura de la misma fruta desplazada hacia abajo, sin brillos ni transparencias.
+// Formas de los widgets 1×1 (docs/DISENO.md §9, D128). Dos estilos con la misma geometría:
+// - tonal: color de fruta al 100 % y una copia más oscura de la misma fruta desplazada hacia
+//   abajo, sin brillos ni transparencias.
+// - frost ("Escarcha"): monocromático, blanco translúcido plano con un contorno fino. Android no
+//   deja desenfocar lo que hay detrás de un widget, así que es solo transparencia: "tú" y "tu
+//   pareja" se distinguen por la opacidad, no por el color.
 // El widget de mood es la **mascota**: el símbolo de la app con cara, que reacciona al mood.
 // Cadenas SVG puras, sin React. Las dibuja `SvgWidget` (AndroidSVG), así que se evita
 // `paint-order`, `rgba()`, `<text>` y `href` sin espacio de nombres: el dato va aparte, en un
 // `TextWidget` con sombra.
 import { FRUITS, tint, type FruitKey } from '@/lib/fruits';
+import type { WidgetStyle } from '@/lib/widgets';
 
 /** Lienzo de las formas: 100×100 con margen para la sombra tonal. */
 const VIEWBOX = '-2 -2 104 104';
@@ -19,6 +24,8 @@ export type WidgetShapeOptions = {
   size: number;
   /** Sufijo para los ids de degradados y recortes (únicos por SVG). */
   id?: string;
+  /** Estilo de dibujo (tonal si se omite). */
+  style?: WidgetStyle;
 };
 
 const hex = (key: FruitKey): string => FRUITS[key].hex;
@@ -28,6 +35,9 @@ const WHITE = '#FFFFFF';
 const INK = '#1B1B1F';
 /** Gotas (lágrimas, sudor, baba). */
 const DROP = '#9FD3FF';
+/** Brillo de los ojos tiernos y lengua: marcadores que `finishFace` pinta según el estilo. */
+const GLINT = '#FFFFFE';
+const TONGUE = '#FF7A8A';
 
 /** Desplazamiento (en unidades del lienzo) y oscurecimiento de la sombra tonal. */
 export const TONAL_OFFSET = 4;
@@ -42,6 +52,41 @@ export function tonal(d: string, fill: string, clip = ''): string {
     `<path d="${d}" transform="translate(0,${TONAL_OFFSET})" fill="${shade(fill)}"/>` +
     `<path d="${d}" fill="${fill}"/>`;
   return clip ? `<g clip-path="url(#${clip})">${body}</g>` : body;
+}
+
+/** Opacidades y trazo del estilo Escarcha (blanco sobre el fondo de pantalla). */
+export const FROST = {
+  /** Relleno de una pieza que no es ni tuya ni de tu pareja. */
+  fill: 0.22,
+  /** Tu pieza: un poco más cargada. */
+  me: 0.3,
+  /** La pieza de tu pareja: más tenue. */
+  partner: 0.18,
+  /** Contorno fino de toda pieza. */
+  stroke: 0.45,
+  /** Grosor del contorno en el lienzo de 100. */
+  strokeWidth: 1.8,
+  /** Relleno de avance (media luna) sobre la base translúcida. */
+  progress: 0.6,
+  /** Aro de la story. */
+  ring: 0.4,
+  /** Rastro oscuro (lágrima, brillo) que sustituye a los detalles de color. */
+  glint: 0.3,
+} as const;
+
+/** Una pieza Escarcha: blanco translúcido con contorno blanco fino, sin sombra desplazada. */
+export function frostPiece(d: string, alpha: number, clip = ''): string {
+  const body =
+    `<path d="${d}" fill="${WHITE}" fill-opacity="${alpha}" stroke="${WHITE}" ` +
+    `stroke-opacity="${FROST.stroke}" stroke-width="${FROST.strokeWidth}" stroke-linejoin="round"/>`;
+  return clip ? `<g clip-path="url(#${clip})">${body}</g>` : body;
+}
+
+const isFrost = (o: WidgetShapeOptions): boolean => o.style === 'frost';
+
+/** Pieza de "tú" (`me`) o de tu pareja (`partner`) en el estilo de `o`. */
+function piece(o: WidgetShapeOptions, role: 'me' | 'partner', d: string, clip = ''): string {
+  return isFrost(o) ? frostPiece(d, FROST[role], clip) : tonal(d, hex(o[role]), clip);
 }
 
 function wrap(o: WidgetShapeOptions, defs: string, inner: string, viewBox = VIEWBOX): string {
@@ -72,11 +117,7 @@ export function daysShapeSvg(o: WidgetShapeOptions): string {
   const defs =
     `<clipPath id="cl${id}"><rect x="-2" y="-2" width="49.5" height="104"/></clipPath>` +
     `<clipPath id="cr${id}"><rect x="52.5" y="-2" width="49.5" height="104"/></clipPath>`;
-  return wrap(
-    o,
-    defs,
-    tonal(HEART, hex(o.partner), `cl${id}`) + tonal(HEART, hex(o.me), `cr${id}`),
-  );
+  return wrap(o, defs, piece(o, 'partner', HEART, `cl${id}`) + piece(o, 'me', HEART, `cr${id}`));
 }
 
 // ---------------------------------------------------------------------------
@@ -133,6 +174,10 @@ const drop = (x: number, y: number): string =>
 const outlined = (d: string, width = 3.2): string =>
   line(d, '#000000', width + 2.4).replace('<path', '<path stroke-opacity="0.35"') +
   line(d, WHITE, width);
+/** Trazo grueso translúcido (los bracitos en Escarcha). */
+const softLine = (d: string, alpha: number): string =>
+  `<path d="${d}" stroke="${WHITE}" stroke-opacity="${alpha}" stroke-width="8" fill="none" ` +
+  `stroke-linecap="round" stroke-linejoin="round"/>`;
 const zz = (x: number, y: number, s: number): string => `M${x} ${y} h${s} l${-s} ${s} h${s}`;
 
 const HAPPY_EYES = 'M22 48 Q30 37 38 48 M62 48 Q70 37 78 48';
@@ -151,8 +196,8 @@ type Pose = {
   blush?: boolean;
   melt?: boolean;
   face: string;
-  /** Detalles alrededor (recibe las dos frutas: izquierda, derecha). */
-  extra?: (left: string, right: string) => string;
+  /** Detalles alrededor (recibe las dos frutas: izquierda, derecha; `frost` en Escarcha). */
+  extra?: (left: string, right: string, frost: boolean) => string;
 };
 
 export const MASCOT_POSES: Record<MascotMood, Pose> = {
@@ -180,11 +225,14 @@ export const MASCOT_POSES: Record<MascotMood, Pose> = {
     blush: true,
     face: line(HAPPY_EYES) + line('M38 62 Q50 72 62 62'),
     // Bracitos abiertos hacia afuera, pidiendo abrazo.
-    extra: (l, r) =>
-      line('M9 64 Q-2 60 -6 46', shade(l), 8) +
-      line('M9 62 Q-2 58 -6 44', l, 8) +
-      line('M91 64 Q102 60 106 46', shade(r), 8) +
-      line('M91 62 Q102 58 106 44', r, 8),
+    extra: (l, r, frost) =>
+      frost
+        ? softLine('M9 63 Q-2 59 -6 45', FROST.me) +
+          softLine('M91 63 Q102 59 106 45', FROST.partner)
+        : line('M9 64 Q-2 60 -6 46', shade(l), 8) +
+          line('M9 62 Q-2 58 -6 44', l, 8) +
+          line('M91 64 Q102 60 106 46', shade(r), 8) +
+          line('M91 62 Q102 58 106 44', r, 8),
   },
   sleepy: {
     tilt: 12,
@@ -198,7 +246,7 @@ export const MASCOT_POSES: Record<MascotMood, Pose> = {
     face:
       line(HAPPY_EYES) +
       `<path d="M34 58 Q50 80 66 58 Z" fill="${INK}"/>` +
-      `<ellipse cx="54" cy="68" rx="7" ry="4.5" fill="#FF7A8A"/>` +
+      `<ellipse cx="54" cy="68" rx="7" ry="4.5" fill="${TONGUE}"/>` +
       drop(64, 66),
   },
   excited: {
@@ -253,8 +301,8 @@ export const MASCOT_POSES: Record<MascotMood, Pose> = {
     face:
       dot(30, 48, 9) +
       dot(70, 48, 9) +
-      dot(27, 44, 3, WHITE) +
-      dot(67, 44, 3, WHITE) +
+      dot(27, 44, 3, GLINT) +
+      dot(67, 44, 3, GLINT) +
       line('M42 70 Q46 66 50 70 Q54 74 58 70', INK, 4.5),
   },
   teary: {
@@ -272,21 +320,42 @@ export const MASCOT_POSES: Record<MascotMood, Pose> = {
   },
 };
 
+/** Pinta la cara según el estilo: en Escarcha la tinta pasa a blanco y no queda nada de color. */
+function finishFace(face: string, frost: boolean): string {
+  if (!frost) return face.split(GLINT).join(WHITE);
+  const dark = `fill="#000000" fill-opacity="${FROST.glint}"`;
+  return face
+    .split(`fill="${GLINT}"`)
+    .join(dark)
+    .split(`fill="${TONGUE}"`)
+    .join(dark)
+    .split(INK)
+    .join(WHITE)
+    .split(DROP)
+    .join(WHITE);
+}
+
 /** Mitad de la mascota con su pose; `side` -1 es la izquierda (tú), 1 la derecha (tu pareja). */
-function mascotHalf(pose: Pose, fill: string, side: -1 | 1, clipId: string): string {
+function mascotHalf(o: WidgetShapeOptions, pose: Pose, side: -1 | 1, clipId: string): string {
+  const frost = isFrost(o);
   const dx = side * (pose.gap ?? 0);
   const rot = side * -(pose.lean ?? 0) + (pose.tilt ?? 0);
   const pivot = side < 0 ? 46 : 54;
   const d =
     (side < 0 ? HALF_LEFT : HALF_RIGHT) + (pose.melt ? (side < 0 ? DRIPS_LEFT : DRIPS_RIGHT) : '');
+  const role = side < 0 ? 'me' : 'partner';
+  const fill = hex(o[role]);
+  const blushFill = frost
+    ? `fill="${WHITE}" opacity="0.4"`
+    : `fill="${tint(fill, '#FF3D6E', 0.55)}" opacity="0.8"`;
   const blush = pose.blush
     ? `<clipPath id="${clipId}"><path d="${d}"/></clipPath>` +
       `<ellipse cx="${side < 0 ? 20 : 80}" cy="62" rx="7" ry="4.5" ` +
-      `fill="${tint(fill, '#FF3D6E', 0.55)}" opacity="0.8" clip-path="url(#${clipId})"/>`
+      `${blushFill} clip-path="url(#${clipId})"/>`
     : '';
   return (
     `<g transform="translate(${dx},${pose.y ?? 0}) rotate(${rot} ${pivot} 96)">` +
-    tonal(d, fill) +
+    piece(o, role, d) +
     blush +
     `</g>`
   );
@@ -294,16 +363,18 @@ function mascotHalf(pose: Pose, fill: string, side: -1 | 1, clipId: string): str
 
 export function mascotSvg(o: WidgetShapeOptions & { mood?: MascotMood }): string {
   const id = idOf(o, 'm');
+  const frost = isFrost(o);
   const pose = MASCOT_POSES[o.mood ?? 'neutral'];
-  const left = hex(o.me);
-  const right = hex(o.partner);
+  const left = frost ? WHITE : hex(o.me);
+  const right = frost ? WHITE : hex(o.partner);
   return wrap(
     o,
     '',
-    mascotHalf(pose, left, -1, `bl${id}`) +
-      mascotHalf(pose, right, 1, `br${id}`) +
-      `<g transform="translate(0,${pose.y ?? 0}) rotate(${pose.tilt ?? 0} 50 96)">${pose.face}</g>` +
-      (pose.extra ? pose.extra(left, right) : ''),
+    mascotHalf(o, pose, -1, `bl${id}`) +
+      mascotHalf(o, pose, 1, `br${id}`) +
+      `<g transform="translate(0,${pose.y ?? 0}) rotate(${pose.tilt ?? 0} 50 96)">` +
+      `${finishFace(pose.face, frost)}</g>` +
+      (pose.extra ? pose.extra(left, right, frost) : ''),
     MASCOT_VIEWBOX,
   );
 }
@@ -332,8 +403,11 @@ export function nextShapeSvg(o: WidgetShapeOptions & { progress: number }): stri
   return wrap(
     o,
     defs,
-    tonal(MOON, hex(o.me)) +
-      `<rect x="0" y="${top}" width="100" height="${height}" fill="${hex(o.partner)}" ` +
+    piece(o, 'me', MOON) +
+      `<rect x="0" y="${top}" width="100" height="${height}" ` +
+      (isFrost(o)
+        ? `fill="${WHITE}" fill-opacity="${FROST.progress}" `
+        : `fill="${hex(o.partner)}" `) +
       `clip-path="url(#cd${id})"/>` +
       `<path d="M2 82 H98" stroke="${WHITE}" stroke-width="3.5" stroke-linecap="round"/>`,
   );
@@ -363,8 +437,8 @@ export function distShapeSvg(o: WidgetShapeOptions & { km: number | null }): str
   return wrap(
     o,
     '',
-    tonal(circle(ax, cy, DIST_R), hex(o.me)) +
-      tonal(circle(bx, cy, DIST_R), hex(o.partner)) +
+    piece(o, 'me', circle(ax, cy, DIST_R)) +
+      piece(o, 'partner', circle(bx, cy, DIST_R)) +
       `<path d="M${ax} ${cy - 28} Q50 ${cy - 50} ${bx} ${cy - 28}" fill="none" stroke="${WHITE}" ` +
       `stroke-width="3.6" stroke-linecap="round" stroke-dasharray="0.1 7"/>`,
   );
@@ -378,31 +452,31 @@ export function storyShapeSvg(
   o: WidgetShapeOptions & { photo: string | null; dot: boolean },
 ): string {
   const id = idOf(o, 's');
+  const frost = isFrost(o);
   const p = hex(o.partner);
   const m = hex(o.me);
   const gradient = (gid: string, a: string, b: string) =>
     `<linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">` +
     `<stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>`;
   const defs =
-    gradient(`g${id}`, p, m) +
-    gradient(`h${id}`, shade(p), shade(m)) +
+    (frost ? '' : gradient(`g${id}`, p, m) + gradient(`h${id}`, shade(p), shade(m))) +
     `<clipPath id="cs${id}"><circle cx="50" cy="50" r="34"/></clipPath>`;
-  // Sin foto el círculo queda en la fruta de tu pareja.
+  // Sin foto el círculo queda en la fruta de tu pareja. La foto es contenido: siempre en color.
   const inner = o.photo
     ? `<image xlink:href="${o.photo}" x="16" y="16" width="68" height="68" ` +
       `preserveAspectRatio="xMidYMid slice" clip-path="url(#cs${id})"/>`
-    : tonal(circle(50, 50, 30), p);
+    : piece(o, 'partner', circle(50, 50, 30));
   const newDot = o.dot
-    ? `<circle cx="84" cy="16" r="8" fill="${p}" stroke="${WHITE}" stroke-width="2.5"/>`
+    ? frost
+      ? `<circle cx="84" cy="16" r="8" fill="${WHITE}"/>`
+      : `<circle cx="84" cy="16" r="8" fill="${p}" stroke="${WHITE}" stroke-width="2.5"/>`
     : '';
-  return wrap(
-    o,
-    defs,
-    `<circle cx="50" cy="${50 + TONAL_OFFSET}" r="42" fill="none" stroke="url(#h${id})" stroke-width="8"/>` +
-      `<circle cx="50" cy="50" r="42" fill="none" stroke="url(#g${id})" stroke-width="8"/>` +
-      inner +
-      newDot,
-  );
+  const ring = frost
+    ? `<circle cx="50" cy="50" r="42" fill="none" stroke="${WHITE}" stroke-opacity="${FROST.ring}" ` +
+      `stroke-width="8"/>`
+    : `<circle cx="50" cy="${50 + TONAL_OFFSET}" r="42" fill="none" stroke="url(#h${id})" stroke-width="8"/>` +
+      `<circle cx="50" cy="50" r="42" fill="none" stroke="url(#g${id})" stroke-width="8"/>`;
+  return wrap(o, defs, ring + inner + newDot);
 }
 
 // ---------------------------------------------------------------------------
@@ -422,8 +496,8 @@ export function streakShapeSvg(o: WidgetShapeOptions & { active: boolean }): str
   return wrap(
     o,
     '',
-    `${group}<g transform="translate(5,-4) scale(0.9)">${tonal(SPARK_BIG, hex(o.me))}</g>` +
-      `<g transform="translate(2,10)">${tonal(SPARK_SMALL, hex(o.partner))}</g></g>`,
+    `${group}<g transform="translate(5,-4) scale(0.9)">${piece(o, 'me', SPARK_BIG)}</g>` +
+      `<g transform="translate(2,10)">${piece(o, 'partner', SPARK_SMALL)}</g></g>`,
   );
 }
 

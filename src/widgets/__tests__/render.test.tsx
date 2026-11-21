@@ -5,6 +5,7 @@ import {
   emptyWidgetSnapshot,
   WIDGET_NAMES,
   WIDGET_ROUTES,
+  widgetKind,
   widgetModel,
   type WidgetModel,
 } from '@/lib/widgets';
@@ -110,14 +111,22 @@ const treeOf = (name: (typeof WIDGET_NAMES)[number], model: WidgetModel, size = 
 };
 
 describe('renderWidget', () => {
-  it('hay seis widgets', () => {
+  it('hay siete clases de widget, cada una en tonal y Escarcha', () => {
     expect([...WIDGET_NAMES]).toEqual([
       'DaysTogether',
+      'DaysTogetherFrost',
       'PartnerMood',
+      'PartnerMoodFrost',
       'Countdown',
+      'CountdownFrost',
       'PartnerStory',
+      'PartnerStoryFrost',
       'Distance',
+      'DistanceFrost',
       'Streak',
+      'StreakFrost',
+      'PartnerMessage',
+      'PartnerMessageFrost',
     ]);
   });
 
@@ -144,21 +153,47 @@ describe('renderWidget', () => {
       PartnerStory: 'ahorita://stories',
       Distance: 'ahorita://distance',
       Streak: 'ahorita://questions',
+      PartnerMessage: 'ahorita://moods',
     };
     for (const name of WIDGET_NAMES) {
       const tree = treeOf(name, MODELS.ready);
       expect(tree.props.clickAction).toBe('OPEN_URI');
-      expect(tree.props.clickActionData).toEqual({ uri: expected[name] });
+      expect(tree.props.clickActionData).toEqual({ uri: expected[widgetKind(name)] });
       expect(typeof tree.props.accessibilityLabel).toBe('string');
-      expect(WIDGET_ROUTES[name]).toBeDefined();
+      expect(WIDGET_ROUTES[widgetKind(name)]).toBeDefined();
     }
   });
 
   it('el widget no tiene fondo propio', () => {
     for (const name of WIDGET_NAMES) {
-      const tree = treeOf(name, MODELS.ready);
+      const tree = treeOf(name, MODELS.ready, { width: 150, height: 90 });
       expect(JSON.stringify(tree)).not.toContain('backgroundColor');
     }
+  });
+
+  it('el mensaje lleva la nota y la inicial de tu pareja', () => {
+    for (const name of ['PartnerMessage', 'PartnerMessageFrost'] as const) {
+      for (const size of [
+        { width: 250, height: 60 },
+        { width: 320, height: 60 },
+        { width: 320, height: 140 },
+      ]) {
+        const tree = treeOf(name, MODELS.ready, size);
+        const json = JSON.stringify(tree);
+        expect(json).toContain('Con tacos en el camino a casa');
+        expect(json).toContain('"C"');
+        expect(String(tree.props.accessibilityLabel)).toContain('Mensaje de Caleb');
+      }
+    }
+  });
+
+  it('el mensaje limita las líneas según el alto', () => {
+    const lines = (height: number) => {
+      const json = JSON.stringify(treeOf('PartnerMessage', MODELS.ready, { width: 320, height }));
+      return Math.max(...[...json.matchAll(/"maxLines":(\d)/g)].map((m) => Number(m[1])));
+    };
+    expect(lines(60)).toBe(2);
+    expect(lines(140)).toBe(4);
   });
 
   it('la story abre la de tu pareja', () => {

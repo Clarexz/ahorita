@@ -19,7 +19,7 @@ const widgetPreview = (name: string) => {
   return existsSync(path) ? (path as `./${string}`) : undefined;
 };
 
-// Seis widgets 1×1 sin fondo (D103): 40 dp es el mínimo de una celda según Android.
+// Widgets 1×1 sin fondo (D103): 40 dp es el mínimo de una celda según Android.
 const WIDGET_DEFAULTS = {
   minWidth: '40dp',
   minHeight: '40dp',
@@ -29,6 +29,34 @@ const WIDGET_DEFAULTS = {
   updatePeriodMillis: 1800000,
   widgetCategory: 'home_screen',
 } as const;
+
+// Mensaje de tu pareja: burbuja ancha, 4×1 por defecto; se estira de 3 a 4+ celdas y hasta 2 de alto
+// (el plugin no tiene `minResizeWidth`: el mínimo de ancho es `minWidth`, unos 3 cuadros).
+const MESSAGE_WIDGET = {
+  minWidth: '180dp',
+  minHeight: '40dp',
+  targetCellWidth: 4,
+  targetCellHeight: 1,
+  maxResizeHeight: '130dp',
+  resizeMode: 'horizontal|vertical',
+} as const;
+
+// Cada widget se registra dos veces con el mismo `label` y `description`: tonal y Escarcha
+// (`<Nombre>Frost`, D141). Los nombres tonales no cambian: los widgets ya puestos siguen vivos.
+const widgetPair = (
+  name: string,
+  label: string,
+  description: string,
+  overrides: Partial<typeof WIDGET_DEFAULTS> | typeof MESSAGE_WIDGET = {},
+) =>
+  [name, `${name}Frost`].map((widgetName) => ({
+    name: widgetName,
+    label,
+    description,
+    previewImage: widgetPreview(widgetName),
+    ...WIDGET_DEFAULTS,
+    ...overrides,
+  }));
 
 // API key de Google Maps (secreto opcional): sin ella el APK compila igual, pero el mapa de las
 // memorias es el "mapa de papel" propio en lugar de Google Maps.
@@ -120,48 +148,30 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           `${GOOGLE_FONTS}/albert-sans/700Bold/AlbertSans_700Bold.ttf`,
         ],
         widgets: [
-          {
-            name: 'DaysTogether',
-            label: 'Días juntos',
-            description: 'Cuántos días llevan juntos.',
-            previewImage: widgetPreview('DaysTogether'),
-            ...WIDGET_DEFAULTS,
-          },
-          {
-            name: 'PartnerMood',
-            label: 'Mood de mi pareja',
-            description: 'Cómo anda tu pareja ahorita.',
-            previewImage: widgetPreview('PartnerMood'),
-            ...WIDGET_DEFAULTS,
-          },
-          {
-            name: 'Countdown',
-            label: 'La próxima vez',
-            description: 'Cuánto falta para verse o para su próxima fecha.',
-            previewImage: widgetPreview('Countdown'),
-            ...WIDGET_DEFAULTS,
-          },
-          {
-            name: 'PartnerStory',
-            label: 'Story de tu pareja',
-            description: 'Lo último que subió tu pareja, sin abrir la app.',
-            previewImage: widgetPreview('PartnerStory'),
-            ...WIDGET_DEFAULTS,
-          },
-          {
-            name: 'Distance',
-            label: 'Distancia',
-            description: 'A cuántos kilómetros están ahorita, o si están juntos.',
-            previewImage: widgetPreview('Distance'),
-            ...WIDGET_DEFAULTS,
-          },
-          {
-            name: 'Streak',
-            label: 'Racha',
-            description: 'Cuántos días llevan contestando la pregunta del día.',
-            previewImage: widgetPreview('Streak'),
-            ...WIDGET_DEFAULTS,
-          },
+          ...widgetPair('DaysTogether', 'Días juntos', 'Cuántos días llevan juntos.'),
+          ...widgetPair('PartnerMood', 'Mood de mi pareja', 'Cómo anda tu pareja ahorita.'),
+          ...widgetPair(
+            'Countdown',
+            'La próxima vez',
+            'Cuánto falta para verse o para su próxima fecha.',
+          ),
+          ...widgetPair(
+            'PartnerStory',
+            'Story de tu pareja',
+            'Lo último que subió tu pareja, sin abrir la app.',
+          ),
+          ...widgetPair(
+            'Distance',
+            'Distancia',
+            'A cuántos kilómetros están ahorita, o si están juntos.',
+          ),
+          ...widgetPair('Streak', 'Racha', 'Cuántos días llevan contestando la pregunta del día.'),
+          ...widgetPair(
+            'PartnerMessage',
+            'Mensaje de tu pareja',
+            'El mensaje que te dejó tu pareja con su mood.',
+            MESSAGE_WIDGET,
+          ),
         ],
       },
     ],

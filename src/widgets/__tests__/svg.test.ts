@@ -2,6 +2,7 @@ import { FRUITS } from '@/lib/fruits';
 
 import {
   clampProgress,
+  FROST,
   daysShapeSvg,
   distanceSeparation,
   distShapeSvg,
@@ -21,6 +22,7 @@ import {
 } from '../components/svg';
 
 const base: WidgetShapeOptions = { me: 'uva', partner: 'limon', size: 60 };
+const frost: WidgetShapeOptions = { ...base, style: 'frost' };
 
 const ids = (svg: string): string[] => [...svg.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
 
@@ -53,7 +55,7 @@ describe('compatibilidad con AndroidSVG', () => {
 
   it('no usa paint-order, rgba() ni href sin espacio de nombres', () => {
     {
-      for (const svg of all(base)) {
+      for (const svg of [...all(base), ...all(frost)]) {
         expect(svg).not.toContain('paint-order');
         expect(svg).not.toContain('rgba(');
         expect(svg).not.toContain('<text');
@@ -65,7 +67,7 @@ describe('compatibilidad con AndroidSVG', () => {
   });
 
   it('los ids no se repiten dentro de un SVG y llevan el sufijo pedido', () => {
-    for (const svg of all({ ...base, id: 'Z' })) {
+    for (const svg of [...all({ ...base, id: 'Z' }), ...all({ ...frost, id: 'Z' })]) {
       const found = ids(svg);
       expect(new Set(found).size).toBe(found.length);
       for (const id of found) expect(id.endsWith('Z')).toBe(true);
@@ -196,5 +198,52 @@ describe('frutas', () => {
     for (const fruit of Object.values(FRUITS)) {
       expect(daysShapeSvg({ ...base, me: fruit.key, partner: fruit.key })).toContain(fruit.hex);
     }
+  });
+});
+
+describe('estilo Escarcha', () => {
+  const fruitHexes = (): string[] => Object.values(FRUITS).map((f) => f.hex.toUpperCase());
+  const shapes = (o: WidgetShapeOptions) => [
+    daysShapeSvg(o),
+    ...(Object.keys(MASCOT_POSES) as MascotMood[]).map((mood) => mascotSvg({ ...o, mood })),
+    nextShapeSvg({ ...o, progress: 0.4 }),
+    distShapeSvg({ ...o, km: 800 }),
+    storyShapeSvg({ ...o, photo: null, dot: true }),
+    streakShapeSvg({ ...o, active: true }),
+  ];
+
+  it('es monocromático: sin colores de fruta ni sombra tonal, con transparencia', () => {
+    for (const svg of shapes(frost)) {
+      for (const hex of fruitHexes()) expect(svg.toUpperCase()).not.toContain(hex);
+      expect(svg).not.toContain(`translate(0,${TONAL_OFFSET})" fill=`);
+      expect(svg).not.toContain('Gradient');
+      expect(svg).toContain('opacity');
+    }
+  });
+
+  it('la mascota lleva la cara en blanco, sin tinta', () => {
+    const svg = mascotSvg({ ...frost, mood: 'happy' });
+    expect(svg).not.toContain('#1B1B1F');
+    expect(svg).toContain('stroke="#FFFFFF"');
+  });
+
+  it('tú y tu pareja se distinguen por la opacidad', () => {
+    const svg = daysShapeSvg(frost);
+    expect(svg).toContain(`fill-opacity="${FROST.me}"`);
+    expect(svg).toContain(`fill-opacity="${FROST.partner}"`);
+    expect(FROST.me).toBeGreaterThan(FROST.partner);
+  });
+
+  it('el avance de la media luna es blanco más opaco', () => {
+    expect(nextShapeSvg({ ...frost, progress: 0.5 })).toContain(`fill-opacity="${FROST.progress}"`);
+  });
+
+  it('la foto de la story se queda en color', () => {
+    const svg = storyShapeSvg({ ...frost, photo: 'data:image/jpeg;base64,AAAA', dot: false });
+    expect(svg).toContain('<image');
+  });
+
+  it('el tonal no usa transparencia en las formas', () => {
+    expect(daysShapeSvg(base)).not.toContain('fill-opacity');
   });
 });

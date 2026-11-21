@@ -46,14 +46,8 @@ describe('refreshWidgets', () => {
     const names = mockRequestWidgetUpdate.mock.calls.map(
       (c) => (c[0] as { widgetName: string }).widgetName,
     );
-    expect(names.sort()).toEqual([
-      'Countdown',
-      'DaysTogether',
-      'Distance',
-      'PartnerMood',
-      'PartnerStory',
-      'Streak',
-    ]);
+    expect(names.sort()).toEqual([...WIDGET_NAMES].sort());
+    expect(names).toHaveLength(14);
   });
 
   it('nunca lanza', async () => {

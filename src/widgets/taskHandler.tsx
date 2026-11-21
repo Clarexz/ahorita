@@ -2,16 +2,12 @@
 // cerrada, así que solo usa AsyncStorage y fetch (nada de la UI).
 import type { WidgetTaskHandlerProps } from 'react-native-android-widget';
 
-import { WIDGET_NAMES, widgetModel, type WidgetName } from '@/lib/widgets';
+import { isWidgetName, widgetModel } from '@/lib/widgets';
 
 import { fetchSnapshot } from './fetchSnapshot';
 import { renderWidget } from './render';
 import { readSnapshot, writeSnapshot } from './storage';
 import { refreshWidgets } from './update';
-
-function isWidgetName(name: string): name is WidgetName {
-  return (WIDGET_NAMES as readonly string[]).includes(name);
-}
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<void> {
   const { widgetName, width, height } = props.widgetInfo;
