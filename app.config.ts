@@ -30,30 +30,32 @@ const WIDGET_DEFAULTS = {
   widgetCategory: 'home_screen',
 } as const;
 
-// Mensaje de tu pareja: burbuja ancha, 4×1 por defecto; se estira de 3 a 4+ celdas y hasta 2 de alto
-// (el plugin no tiene `minResizeWidth`: el mínimo de ancho es `minWidth`, unos 3 cuadros).
+// Mensaje de tu pareja: burbuja ancha y delgada, 4×1; se estira a lo ancho desde ~3 celdas (el
+// plugin no tiene `minResizeWidth`: el mínimo de ancho es `minWidth`). Una sola fila (v0.14.2).
 const MESSAGE_WIDGET = {
   minWidth: '180dp',
   minHeight: '40dp',
   targetCellWidth: 4,
   targetCellHeight: 1,
-  maxResizeHeight: '130dp',
-  resizeMode: 'horizontal|vertical',
+  resizeMode: 'horizontal',
 } as const;
 
-// Cada widget se registra dos veces con el mismo `label` y `description`: tonal y Escarcha
-// (`<Nombre>Frost`, D141). Los nombres tonales no cambian: los widgets ya puestos siguen vivos.
+// Cada widget se registra dos veces: tonal y Escarcha (`<Nombre>Frost`, D141). Los nombres internos
+// tonales no cambian: los widgets ya puestos siguen vivos. El selector (One UI) ordena por `label`,
+// así que el prefijo de estilo los junta en dos bloques: todos los "Color" y luego los "Escarcha"
+// (D145; con el mismo nombre salían alternados y no se agrupaban en cajitas).
+const STYLE_LABEL = { tonal: 'Color', frost: 'Escarcha' } as const;
 const widgetPair = (
   name: string,
   label: string,
   description: string,
   overrides: Partial<typeof WIDGET_DEFAULTS> | typeof MESSAGE_WIDGET = {},
 ) =>
-  [name, `${name}Frost`].map((widgetName) => ({
-    name: widgetName,
-    label,
+  (['tonal', 'frost'] as const).map((style) => ({
+    name: style === 'frost' ? `${name}Frost` : name,
+    label: `${STYLE_LABEL[style]} · ${label}`,
     description,
-    previewImage: widgetPreview(widgetName),
+    previewImage: widgetPreview(style === 'frost' ? `${name}Frost` : name),
     ...WIDGET_DEFAULTS,
     ...overrides,
   }));
@@ -149,7 +151,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         ],
         widgets: [
           ...widgetPair('DaysTogether', 'Días juntos', 'Cuántos días llevan juntos.'),
-          ...widgetPair('PartnerMood', 'Mood de mi pareja', 'Cómo anda tu pareja ahorita.'),
+          ...widgetPair('PartnerMood', 'Su mood', 'Cómo anda tu pareja ahorita.'),
           ...widgetPair(
             'Countdown',
             'La próxima vez',
@@ -157,7 +159,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           ),
           ...widgetPair(
             'PartnerStory',
-            'Story de tu pareja',
+            'Su story',
             'Lo último que subió tu pareja, sin abrir la app.',
           ),
           ...widgetPair(
@@ -168,7 +170,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           ...widgetPair('Streak', 'Racha', 'Cuántos días llevan contestando la pregunta del día.'),
           ...widgetPair(
             'PartnerMessage',
-            'Mensaje de tu pareja',
+            'Su mensaje',
             'El mensaje que te dejó tu pareja con su mood.',
             MESSAGE_WIDGET,
           ),

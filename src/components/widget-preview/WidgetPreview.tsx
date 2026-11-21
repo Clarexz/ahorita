@@ -63,7 +63,7 @@ function MessagePreview({ name, model, width, height }: WidgetPreviewProps) {
           </Text>
         </View>
       </View>
-      <View style={{ position: 'absolute', left: l.bubbleLeft, top: 2 }}>
+      <View style={{ position: 'absolute', left: l.bubbleLeft, top: l.bubbleTop }}>
         <Image
           source={uri(bubbleSvg(l, view.style, view.fruits.partner))}
           style={{ width: l.bubbleWidth, height: l.bubbleHeight }}

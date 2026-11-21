@@ -37,7 +37,6 @@ export function MessageFrame({ name, size, view }: Props) {
         flexDirection: 'row',
         alignItems: 'flex-start',
         paddingLeft: layout.avatarLeft,
-        paddingTop: 2,
       }}
       {...tapProps(name, view.a11y)}
     >
@@ -45,7 +44,7 @@ export function MessageFrame({ name, size, view }: Props) {
         style={{
           width: layout.avatar,
           height: layout.avatar,
-          marginTop: layout.avatarTop - 2,
+          marginTop: layout.avatarTop,
           marginRight: 1,
         }}
       >
@@ -76,7 +75,13 @@ export function MessageFrame({ name, size, view }: Props) {
         </FlexWidget>
       </OverlapWidget>
 
-      <OverlapWidget style={{ width: layout.bubbleWidth, height: layout.bubbleHeight }}>
+      <OverlapWidget
+        style={{
+          width: layout.bubbleWidth,
+          height: layout.bubbleHeight,
+          marginTop: layout.bubbleTop,
+        }}
+      >
         <SvgWidget
           svg={bubbleSvg(layout, style, fruits.partner)}
           style={{ width: layout.bubbleWidth, height: layout.bubbleHeight }}

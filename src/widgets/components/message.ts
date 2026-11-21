@@ -10,30 +10,29 @@ import { FROST, frostPiece, shade, TONAL_OFFSET } from './svg';
 
 export type MessageSize = { width: number; height: number };
 
-/** Aire alrededor del widget (dp). */
+/** Aire a los lados del widget (dp). */
 const PAD_X = 4;
-const PAD_Y = 2;
 /** Ancho de la colita y alto de su base (dp). */
 const TAIL_W = 7;
-const TAIL_H = 12;
+const TAIL_H = 10;
 /** Sombra tonal de la burbuja (dp): más sutil que la de las formas del lienzo de 100. */
 export const BUBBLE_SHADOW = 3;
 /** Relleno interior de la burbuja (dp). */
-const PAD_IN = 5;
+const PAD_IN = 6;
 const PAD_IN_X = 10;
-const AVATAR_MAX = 44;
-const AVATAR_MIN = 30;
-const RADIUS_MAX = 16;
+const AVATAR = 34;
+const FONT_SIZE = 13;
+const META_SIZE = 10.5;
 const META_HEIGHT = 13;
-const MAX_LINES = 4;
 
 export type MessageLayout = {
-  /** Diámetro del círculo de la inicial y su esquina superior izquierda (dp). */
+  /** Diámetro del círculo de la inicial y su esquina superior izquierda (dp, desde el widget). */
   avatar: number;
   avatarTop: number;
   avatarLeft: number;
   /** Caja de la burbuja (incluye la colita a la izquierda y la sombra tonal abajo). */
   bubbleLeft: number;
+  bubbleTop: number;
   bubbleWidth: number;
   bubbleHeight: number;
   /** Cuerpo de la burbuja sin colita ni sombra. */
@@ -45,65 +44,53 @@ export type MessageLayout = {
   metaSize: number;
   initialSize: number;
   lineHeight: number;
-  /** Líneas máximas del mensaje (2 en una celda de alto, hasta 4 si el widget es más alto). */
+  /** Líneas del mensaje: siempre una, con "…" si no cabe (v0.14.2). */
   lines: number;
-  /** Si cabe la línea del mood debajo del mensaje. */
+  /** Si va la línea del mood debajo del mensaje. */
   showMeta: boolean;
   /** Relleno del texto dentro de la caja de la burbuja. */
   textLeft: number;
   textRight: number;
 };
 
-const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
-
-/** Reparte el espacio de un widget de `size` dp (de 3×1 a 4×2 celdas o más). */
+/**
+ * Burbuja delgadita (v0.14.2): mide lo que su contenido (una línea de mensaje y la del mood) y va
+ * centrada en el alto del widget, sin importar el tamaño de la celda. Sin espacio muerto.
+ */
 export function messageLayout(size: MessageSize, hasMeta: boolean): MessageLayout {
   const height = Math.max(36, Math.floor(size.height));
   const width = Math.max(120, Math.floor(size.width));
-  const bubbleHeight = height - PAD_Y * 2;
-  const bodyHeight = bubbleHeight - BUBBLE_SHADOW;
-  const avatar = Math.round(Math.min(AVATAR_MAX, Math.max(AVATAR_MIN, bodyHeight)));
+  const lineHeight = Math.ceil(FONT_SIZE * 1.25);
+  const withMeta = PAD_IN * 2 + lineHeight + 1 + META_HEIGHT;
+  // Si la celda es muy bajita, se va la línea del mood antes que el mensaje.
+  const showMeta = hasMeta && withMeta + BUBBLE_SHADOW <= height;
+  const bodyHeight = showMeta ? withMeta : PAD_IN * 2 + lineHeight;
+  const bubbleHeight = bodyHeight + BUBBLE_SHADOW;
+  const avatar = Math.min(AVATAR, height - 2);
   const avatarLeft = PAD_X;
   const bubbleLeft = avatarLeft + avatar + 1;
   const bubbleWidth = Math.max(60, width - bubbleLeft - PAD_X);
-  // En una celda el círculo va centrado con la burbuja; más alto, arriba junto a la colita.
-  const avatarTop =
-    PAD_Y + (bodyHeight <= avatar + 24 ? Math.max(0, Math.round((bodyHeight - avatar) / 2)) : 0);
-  const radius = Math.min(RADIUS_MAX, Math.floor(bodyHeight / 2));
-  const tailY = clamp(
-    avatarTop - PAD_Y + avatar / 2,
-    radius + TAIL_H / 2,
-    Math.max(radius + TAIL_H / 2, bodyHeight - radius - TAIL_H / 2),
-  );
-
-  const tall = height >= 90;
-  const fontSize = tall ? 14 : 12.5;
-  const lineHeight = Math.ceil(fontSize * 1.2);
-  const available = bodyHeight - PAD_IN * 2;
-  let showMeta = hasMeta;
-  let lines = Math.floor((available - (showMeta ? META_HEIGHT : 0)) / lineHeight);
-  if (showMeta && lines < 2 && Math.floor(available / lineHeight) >= 2) {
-    // Con el mood no caben dos líneas de mensaje: gana el mensaje.
-    showMeta = false;
-    lines = Math.floor(available / lineHeight);
-  }
-  lines = clamp(lines, 1, MAX_LINES);
+  const bubbleTop = Math.max(0, Math.round((height - bubbleHeight) / 2));
+  const avatarTop = Math.max(0, bubbleTop + Math.round((bodyHeight - avatar) / 2));
+  // Deja recto el tramo del costado donde sale la colita.
+  const radius = Math.min(14, Math.max(4, Math.floor(bodyHeight / 2) - TAIL_H / 2 - 1));
 
   return {
     avatar,
     avatarTop,
     avatarLeft,
     bubbleLeft,
+    bubbleTop,
     bubbleWidth,
     bubbleHeight,
     bodyHeight,
     radius,
-    tailY: Math.round(tailY * 10) / 10,
-    fontSize,
-    metaSize: 10.5,
+    tailY: Math.round((bodyHeight / 2) * 10) / 10,
+    fontSize: FONT_SIZE,
+    metaSize: META_SIZE,
     initialSize: Math.round(avatar * 0.46),
     lineHeight,
-    lines,
+    lines: 1,
     showMeta,
     textLeft: TAIL_W + PAD_IN_X,
     textRight: PAD_IN_X,

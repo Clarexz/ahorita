@@ -9,36 +9,49 @@ import {
 import { FRUITS } from '@/lib/fruits';
 
 describe('messageLayout', () => {
-  it('en una celda de alto: dos líneas con el mood debajo', () => {
+  it('una sola línea de mensaje con el mood debajo', () => {
     const l = messageLayout({ width: 320, height: 60 }, true);
-    expect(l.lines).toBe(2);
+    expect(l.lines).toBe(1);
     expect(l.showMeta).toBe(true);
-    expect(l.avatar).toBeLessThanOrEqual(44);
   });
 
-  it('si no caben las dos líneas con el mood, gana el mensaje', () => {
-    const l = messageLayout({ width: 250, height: 52 }, true);
+  it('la burbuja es delgadita: no crece con el alto de la celda', () => {
+    const short = messageLayout({ width: 320, height: 60 }, true);
+    const tall = messageLayout({ width: 320, height: 110 }, true);
+    expect(tall.bubbleHeight).toBe(short.bubbleHeight);
+    expect(short.bubbleHeight).toBeLessThanOrEqual(48);
+    // Centrada en el alto del widget.
+    expect(tall.bubbleTop).toBe(Math.round((110 - tall.bubbleHeight) / 2));
+  });
+
+  it('en una celda muy bajita se va el mood, no el mensaje', () => {
+    const l = messageLayout({ width: 250, height: 40 }, true);
     expect(l.showMeta).toBe(false);
-    expect(l.lines).toBeGreaterThanOrEqual(2);
+    expect(l.lines).toBe(1);
   });
 
-  it('más alto, hasta cuatro líneas', () => {
-    expect(messageLayout({ width: 320, height: 140 }, true).lines).toBe(4);
-    expect(messageLayout({ width: 250, height: 100 }, false).lines).toBeLessThanOrEqual(4);
+  it('sin mood, la burbuja es todavía más delgada', () => {
+    const a = messageLayout({ width: 320, height: 80 }, true);
+    const b = messageLayout({ width: 320, height: 80 }, false);
+    expect(b.bubbleHeight).toBeLessThan(a.bubbleHeight);
   });
 
-  it('la burbuja cabe en el widget y la colita queda dentro', () => {
+  it('la burbuja cabe en el widget y la colita queda en el tramo recto', () => {
     for (const size of [
+      { width: 250, height: 40 },
       { width: 250, height: 60 },
       { width: 320, height: 60 },
-      { width: 320, height: 140 },
+      { width: 320, height: 110 },
     ]) {
-      const l = messageLayout(size, true);
-      expect(l.bubbleLeft + l.bubbleWidth).toBeLessThanOrEqual(size.width);
-      expect(l.bubbleHeight).toBeLessThanOrEqual(size.height);
-      expect(l.tailY).toBeGreaterThan(0);
-      expect(l.tailY).toBeLessThan(l.bodyHeight);
-      expect(l.bodyHeight + BUBBLE_SHADOW).toBe(l.bubbleHeight);
+      for (const meta of [true, false]) {
+        const l = messageLayout(size, meta);
+        expect(l.bubbleLeft + l.bubbleWidth).toBeLessThanOrEqual(size.width);
+        expect(l.bubbleTop + l.bubbleHeight).toBeLessThanOrEqual(size.height);
+        expect(l.avatarTop + l.avatar).toBeLessThanOrEqual(size.height);
+        expect(l.tailY - 5).toBeGreaterThanOrEqual(l.radius);
+        expect(l.tailY + 5).toBeLessThanOrEqual(l.bodyHeight - l.radius);
+        expect(l.bodyHeight + BUBBLE_SHADOW).toBe(l.bubbleHeight);
+      }
     }
   });
 });

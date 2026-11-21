@@ -79,7 +79,7 @@ function messageHtml(name) {
       : '';
   const bubble = abs(
     l.bubbleLeft,
-    2,
+    l.bubbleTop,
     l.bubbleWidth,
     l.bubbleHeight,
     bubbleSvg(l, view.style, view.fruits.partner) +
