@@ -121,7 +121,7 @@ export function avatarSvg(l: MessageLayout, style: WidgetStyle, partner: FruitKe
   const fill = FRUITS[partner].hex;
   const inner =
     style === 'frost'
-      ? frostPiece(d, FROST.me)
+      ? frostPiece(d, FROST.fill)
       : `<path d="${d}" transform="translate(0,${TONAL_OFFSET})" fill="${shade(fill)}"/>` +
         `<path d="${d}" fill="${fill}"/>`;
   return `${svgOpen(l.avatar, l.avatar, '-2 -2 104 104')}${inner}</svg>`;

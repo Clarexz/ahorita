@@ -56,20 +56,22 @@ export function tonal(d: string, fill: string, clip = ''): string {
 
 /** Opacidades y trazo del estilo Escarcha (blanco sobre el fondo de pantalla). */
 export const FROST = {
+  /** Gris neutro del relleno: se lee sobre fondos claros y oscuros. */
+  base: '#8A8A90',
   /** Relleno de una pieza que no es ni tuya ni de tu pareja. */
-  fill: 0.22,
+  fill: 0.38,
   /** Tu pieza: un poco más cargada. */
-  me: 0.3,
+  me: 0.45,
   /** La pieza de tu pareja: más tenue. */
-  partner: 0.18,
+  partner: 0.32,
   /** Contorno fino de toda pieza. */
-  stroke: 0.45,
+  stroke: 0.5,
   /** Grosor del contorno en el lienzo de 100. */
   strokeWidth: 1.8,
   /** Relleno de avance (media luna) sobre la base translúcida. */
-  progress: 0.6,
+  progress: 0.75,
   /** Aro de la story. */
-  ring: 0.4,
+  ring: 0.38,
   /** Rastro oscuro (lágrima, brillo) que sustituye a los detalles de color. */
   glint: 0.3,
 } as const;
@@ -77,7 +79,7 @@ export const FROST = {
 /** Una pieza Escarcha: blanco translúcido con contorno blanco fino, sin sombra desplazada. */
 export function frostPiece(d: string, alpha: number, clip = ''): string {
   const body =
-    `<path d="${d}" fill="${WHITE}" fill-opacity="${alpha}" stroke="${WHITE}" ` +
+    `<path d="${d}" fill="${FROST.base}" fill-opacity="${alpha}" stroke="${WHITE}" ` +
     `stroke-opacity="${FROST.stroke}" stroke-width="${FROST.strokeWidth}" stroke-linejoin="round"/>`;
   return clip ? `<g clip-path="url(#${clip})">${body}</g>` : body;
 }
@@ -176,7 +178,7 @@ const outlined = (d: string, width = 3.2): string =>
   line(d, WHITE, width);
 /** Trazo grueso translúcido (los bracitos en Escarcha). */
 const softLine = (d: string, alpha: number): string =>
-  `<path d="${d}" stroke="${WHITE}" stroke-opacity="${alpha}" stroke-width="8" fill="none" ` +
+  `<path d="${d}" stroke="${FROST.base}" stroke-opacity="${alpha}" stroke-width="8" fill="none" ` +
   `stroke-linecap="round" stroke-linejoin="round"/>`;
 const zz = (x: number, y: number, s: number): string => `M${x} ${y} h${s} l${-s} ${s} h${s}`;
 
@@ -472,7 +474,7 @@ export function storyShapeSvg(
       : `<circle cx="84" cy="16" r="8" fill="${p}" stroke="${WHITE}" stroke-width="2.5"/>`
     : '';
   const ring = frost
-    ? `<circle cx="50" cy="50" r="42" fill="none" stroke="${WHITE}" stroke-opacity="${FROST.ring}" ` +
+    ? `<circle cx="50" cy="50" r="42" fill="none" stroke="${FROST.base}" stroke-opacity="${FROST.ring}" ` +
       `stroke-width="8"/>`
     : `<circle cx="50" cy="${50 + TONAL_OFFSET}" r="42" fill="none" stroke="url(#h${id})" stroke-width="8"/>` +
       `<circle cx="50" cy="50" r="42" fill="none" stroke="url(#g${id})" stroke-width="8"/>`;
