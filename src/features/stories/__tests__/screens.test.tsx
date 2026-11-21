@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler/jestSetup';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -265,9 +265,39 @@ describe('visor de stories', () => {
     await fireEvent(find(), 'error', {});
     expect(mockRefresh).toHaveBeenCalledTimes(1);
     await fireEvent(find(), 'error', {});
-    expect(screen.getByText('La foto no cargó.')).toBeTruthy();
+    expect(screen.getByText('La foto no bajó.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Reintentar' }));
     expect(mockRefresh).toHaveBeenCalledTimes(2);
+  });
+
+  it('si la foto no aparece en 12 s deja de girar y dice que tardó', async () => {
+    jest.useFakeTimers();
+    try {
+      mockStories = [
+        row('p4', 'u2', {
+          kind: 'photo',
+          media_path: 'c1/u2/d.jpg',
+          thumb_path: 'c1/u2/d_thumb.jpg',
+        }),
+      ];
+      await wrap(<StoryViewer userId="u2" />);
+      expect(screen.getByLabelText('Cargando la foto')).toBeTruthy();
+      await act(async () => {
+        jest.advanceTimersByTime(12_000);
+      });
+      expect(screen.queryByLabelText('Cargando la foto')).toBeNull();
+      expect(screen.getByText('La foto tardó demasiado en bajar.')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Siguiente' })).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('una story de foto sin archivo lo dice en vez de girar', async () => {
+    mockStories = [row('p5', 'u2', { kind: 'photo', media_path: null, thumb_path: null })];
+    await wrap(<StoryViewer userId="u2" />);
+    expect(screen.getByText('Esta story no tiene foto guardada en el servidor.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).toBeNull();
   });
 
   it('sin stories dice que ya se borró', async () => {

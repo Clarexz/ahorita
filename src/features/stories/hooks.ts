@@ -135,6 +135,7 @@ export function useStoryMediaUrl(path: string | null | undefined) {
     url: query.data ?? null,
     isLoading: !!path && query.isLoading,
     isError: query.isError,
+    error: query.error,
     refresh,
   };
 }
