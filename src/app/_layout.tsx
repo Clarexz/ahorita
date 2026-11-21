@@ -118,6 +118,7 @@ function ThemedStack({ fontsReady }: { fontsReady: boolean }) {
             <Stack.Screen name="moods" />
             <Stack.Screen name="question" />
             <Stack.Screen name="history" />
+            <Stack.Screen name="pending" />
             <Stack.Screen name="widgets" />
             <Stack.Screen name="category/[slug]" />
             <Stack.Screen name="pack/[slug]" />

@@ -133,6 +133,7 @@ export default function HistoryScreen() {
   return (
     <Screen>
       <FlashList
+        showsVerticalScrollIndicator={false}
         data={rows}
         keyExtractor={(row) => row.key}
         getItemType={(row) => row.kind}

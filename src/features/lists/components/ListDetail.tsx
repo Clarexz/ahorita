@@ -194,6 +194,7 @@ export function ListDetail({ id }: { id: string }) {
     <Screen>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
         <ScrollView
+          showsVerticalScrollIndicator={false}
           style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: spacing.lg }}

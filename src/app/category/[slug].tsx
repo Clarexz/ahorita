@@ -56,6 +56,7 @@ export default function CategoryScreen() {
   return (
     <Screen>
       <FlashList
+        showsVerticalScrollIndicator={false}
         data={questions}
         keyExtractor={(q) => q.id}
         ListHeaderComponent={header}
