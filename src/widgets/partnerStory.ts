@@ -6,9 +6,6 @@ import { isValidStrokes } from '@/lib/drawing';
 import type { StoryBg, StoryFont, StoryKind } from '@/lib/stories';
 import { supabase } from '@/lib/supabase';
 import { latestActiveStory, type SnapshotInput, type WidgetSnapshot } from '@/lib/widgets';
-import { fetchWithTimeout } from '@/lib/timeout';
-
-const timedFetch = fetchWithTimeout();
 
 const STORIES_BUCKET = 'stories';
 const SIGNED_URL_SECONDS = 600;
@@ -40,7 +37,7 @@ export async function downloadThumb(path: string): Promise<string | null> {
       .from(STORIES_BUCKET)
       .createSignedUrl(path, SIGNED_URL_SECONDS);
     if (error || !data?.signedUrl) return null;
-    const res = await timedFetch(data.signedUrl);
+    const res = await fetch(data.signedUrl);
     if (!res.ok) return null;
     const buffer = await res.arrayBuffer();
     if (buffer.byteLength === 0 || buffer.byteLength > MAX_THUMB_BYTES) return null;
