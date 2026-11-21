@@ -32,7 +32,7 @@ sigue en el VPS. Se hace una vez:
 
 1. Entra a <https://console.firebase.google.com> con tu cuenta de Google → **Agregar proyecto**
    (p. ej. `app-parejas`). Google Analytics no hace falta (desactívalo).
-2. En el proyecto: **Agregar app → Android**. *Nombre del paquete*: **`com.appparejas.app`** (el `ANDROID_PACKAGE`
+2. En el proyecto: **Agregar app → Android**. *Nombre del paquete*: **`mx.ahorita.app`** (el `ANDROID_PACKAGE`
    de `src/constants/app.ts`; tiene que coincidir exacto). El apodo y el SHA-1 son opcionales.
 3. Descarga **`google-services.json`** (no lo subas al repo; está en `.gitignore`).
    - En tu computadora: `base64 -i google-services.json | tr -d '\n'` (Mac) o
@@ -70,7 +70,7 @@ app (sin calles). Para tener el mapa de Google, una sola vez:
 3. **APIs y servicios → Credenciales → Crear credenciales → Clave de API**. Copia la key.
 4. Ábrela para **restringirla** (así, aunque alguien la extraiga del APK, no la puede usar):
    - *Restricciones de la aplicación*: **Apps de Android** → **Agregar un elemento**:
-     - Nombre del paquete: **`com.appparejas.app`** (el `ANDROID_PACKAGE` de `src/constants/app.ts`).
+     - Nombre del paquete: **`mx.ahorita.app`** (el `ANDROID_PACKAGE` de `src/constants/app.ts`).
      - Huella digital del certificado SHA-1: la del **keystore de release** (ver abajo).
    - *Restricciones de API*: **Restringir clave** → solo **Maps SDK for Android**.
 5. Crea el secreto de GitHub **`GOOGLE_MAPS_API_KEY`** con la key. `release-apk.yml` lo exporta
@@ -126,7 +126,7 @@ tarjeta de Inicio).
 
 **Activar "Permitir todo el tiempo"** (modo en segundo plano). La app primero pide el permiso
 normal; después Android 11+ te manda a Ajustes: **Permisos → Ubicación → Permitir todo el tiempo**
-(y deja "Usar ubicación precisa" prendido para que la app sepa cuándo están juntos). Si ya lo habías negado: Ajustes → Apps → App Parejas →
+(y deja "Usar ubicación precisa" prendido para que la app sepa cuándo están juntos). Si ya lo habías negado: Ajustes → Apps → ahorita →
 Permisos → Ubicación. Si lo niegas, la app se queda en *Al abrir la app* y lo avisa.
 
 **Consumo esperado.** En primer plano es una sola lectura al abrir la app. En segundo plano Android
@@ -149,7 +149,7 @@ El botón "Continuar con Google" sirve para entrar y para crear cuenta. Sin el s
    `openid`, `email` y `profile` (no hace falta verificación de Google con esos).
 2. **Cliente OAuth tipo "Aplicación web"** (APIs y servicios → Credenciales → Crear credenciales →
    ID de cliente de OAuth). Copia el **Client ID** y el **Client secret**.
-3. **Cliente OAuth tipo "Android"**: paquete `com.appparejas.app` y la **huella SHA-1** del
+3. **Cliente OAuth tipo "Android"**: paquete `mx.ahorita.app` y la **huella SHA-1** del
    certificado de firma. La SHA-1 sale en el resumen de la corrida de *Release APK* ("Huellas del
    certificado de firma"); si instalas APKs de debug, agrega también la SHA-1 de ese keystore. Sin
    este cliente (o con otra SHA-1) Google responde `DEVELOPER_ERROR` y la app dice que no pudo

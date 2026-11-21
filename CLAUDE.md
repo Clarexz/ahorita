@@ -1,4 +1,4 @@
-# App Parejas — guía para sesiones de Claude Code
+# ahorita — guía para sesiones de Claude Code
 
 App privada de pareja (2 usuarios, Android) inspirada en Couple Joy. **Lee primero** `docs/PLAN.md`
 (plan por fases y estado en §10), `docs/DECISIONS.md`, `docs/SERVIDOR.md` y, desde la Fase 0.5,

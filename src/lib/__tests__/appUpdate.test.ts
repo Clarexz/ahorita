@@ -16,8 +16,8 @@ const release = (tag: string, extra: Partial<GithubRelease> = {}): GithubRelease
   body: '',
   assets: [
     {
-      name: `app-parejas-${tag}.apk`,
-      browser_download_url: `https://github.com/x/y/releases/download/${tag}/app-parejas-${tag}.apk`,
+      name: `ahorita-${tag}.apk`,
+      browser_download_url: `https://github.com/x/y/releases/download/${tag}/ahorita-${tag}.apk`,
       size: 111445124,
     },
   ],
@@ -50,7 +50,7 @@ describe('pickUpdate', () => {
   it('ofrece el release más nuevo', () => {
     expect(pickUpdate('0.12.2', releases)).toEqual({
       version: '0.13.0',
-      apkUrl: 'https://github.com/x/y/releases/download/v0.13.0/app-parejas-v0.13.0.apk',
+      apkUrl: 'https://github.com/x/y/releases/download/v0.13.0/ahorita-v0.13.0.apk',
       releaseUrl: 'https://github.com/x/y/releases/tag/v0.13.0',
       sizeBytes: 111445124,
     });

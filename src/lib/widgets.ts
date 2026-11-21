@@ -41,7 +41,7 @@ export const WIDGET_NAMES = [
 ] as const;
 export type WidgetName = (typeof WIDGET_NAMES)[number];
 
-/** A dónde lleva tocar cada widget (deep link `appparejas://<ruta>`). */
+/** A dónde lleva tocar cada widget (deep link `ahorita://<ruta>`). */
 export const WIDGET_ROUTES: Record<WidgetName, string> = {
   DaysTogether: '/',
   PartnerMood: '/moods',

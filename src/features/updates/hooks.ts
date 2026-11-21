@@ -4,6 +4,7 @@ import * as Application from 'expo-application';
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform } from 'react-native';
 
+import { SELF_UPDATES_ENABLED } from '@/constants/app';
 import {
   isSnoozed,
   pickUpdate,
@@ -22,7 +23,8 @@ async function fetchReleases(): Promise<GithubRelease[]> {
 }
 
 /**
- * ¿Hay un APK más nuevo en GitHub Releases? Solo en Android (en web no hay qué instalar). Se
+ * ¿Hay un APK más nuevo en GitHub Releases? Solo en Android (en web no hay qué instalar) y en
+ * builds de GitHub (en los de Play Store se apaga: ahí actualiza Play, ver `DISTRIBUTION`). Se
  * consulta al abrir la app y como mucho cada 6 h mientras siga abierta; la API pública permite 60
  * consultas por hora por IP, de sobra para dos celulares.
  */
@@ -31,7 +33,7 @@ export function useAppUpdate() {
   const query = useQuery({
     queryKey: ['app-update', installed],
     queryFn: fetchReleases,
-    enabled: Platform.OS === 'android',
+    enabled: Platform.OS === 'android' && SELF_UPDATES_ENABLED,
     staleTime: 6 * 60 * 60 * 1000,
     retry: false,
     select: (releases) => pickUpdate(installed, releases),
