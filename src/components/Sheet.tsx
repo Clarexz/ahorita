@@ -1,5 +1,13 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { Modal, Pressable, View, useWindowDimensions } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  View,
+  useWindowDimensions,
+  type HostInstance,
+  type ScrollViewInstance,
+} from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import Animated, {
   runOnJS,
@@ -10,8 +18,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { revealScrollOffset } from '@/lib/keyboardReveal';
 import { useTheme } from '@/theme';
 
+import { KeyboardRevealContext, type KeyboardReveal } from './keyboardRevealContext';
 import { bezierOf } from './motion';
 import { Text } from './Text';
 
@@ -57,12 +67,55 @@ export function Sheet({ visible, onClose, title, children }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
+  // El contenido hace scroll dentro de la hoja: con el teclado abierto la hoja se encoge y lo de
+  // abajo (la nota del mood, por ejemplo) quedaba recortado sin forma de alcanzarlo. Dentro del
+  // Modal nadie más sabe qué campo tiene el foco, así que la hoja lo lleva a la vista ella misma:
+  // al enfocarlo y cada vez que cambia su altura (el teclado la encoge mientras sube).
+  const scroll = useRef<ScrollViewInstance>(null);
+  const content = useRef<HostInstance>(null);
+  const field = useRef<HostInstance | null>(null);
+  const scrollY = useRef(0);
+  const viewport = useRef(0);
+
+  const revealField = useCallback(
+    (animated: boolean) => {
+      const target = field.current;
+      const container = content.current;
+      if (!target || !container) return;
+      target.measureLayout(container, (_x, top, _w, h) => {
+        const next = revealScrollOffset({
+          top,
+          bottom: top + h,
+          scrollY: scrollY.current,
+          viewport: viewport.current,
+          margin: spacing.lg,
+        });
+        if (next !== null) scroll.current?.scrollTo({ y: next, animated });
+      });
+    },
+    [spacing.lg],
+  );
+
+  const reveal = useMemo<KeyboardReveal>(
+    () => ({
+      focus: (view) => {
+        field.current = view;
+        // Si el teclado ya estaba abierto (se pasó de un campo a otro) no habrá cambio de altura.
+        requestAnimationFrame(() => revealField(true));
+      },
+      blur: (view) => {
+        if (field.current === view) field.current = null;
+      },
+    }),
+    [revealField],
+  );
+
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
   const veilStyle = useAnimatedStyle(() => ({ opacity: veil.value }));
 
   return (
     <Modal transparent visible={mounted} animationType="none" onRequestClose={onClose}>
-      {/* Con el teclado abierto la hoja sube y se encoge (maxHeight en %) para no tapar el input. */}
+      {/* Con el teclado abierto la hoja sube y se encoge (maxHeight en %); su contenido hace scroll. */}
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1, justifyContent: 'flex-end' }}>
         <Animated.View
           style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }, veilStyle]}
@@ -104,7 +157,27 @@ export function Sheet({ visible, onClose, title, children }: Props) {
               {title}
             </Text>
           ) : null}
-          {children}
+          <ScrollView
+            ref={scroll}
+            style={{ flexGrow: 0, flexShrink: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            scrollEventThrottle={16}
+            onScroll={(e) => {
+              scrollY.current = e.nativeEvent.contentOffset.y;
+            }}
+            onLayout={(e) => {
+              viewport.current = e.nativeEvent.layout.height;
+              // Sin animación: acompaña cuadro a cuadro a la hoja que se encoge.
+              revealField(false);
+            }}
+          >
+            <View ref={content}>
+              <KeyboardRevealContext.Provider value={reveal}>
+                {children}
+              </KeyboardRevealContext.Provider>
+            </View>
+          </ScrollView>
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>

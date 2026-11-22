@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { RefreshControl, ScrollView, View } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { RefreshControl, View } from 'react-native';
+import { KeyboardAvoidingView, KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import {
   Button,
@@ -193,8 +193,10 @@ export function ListDetail({ id }: { id: string }) {
   return (
     <Screen>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-        <ScrollView
+        {/* Al editar un renglón de en medio, el scroll lo lleva arriba del teclado. */}
+        <KeyboardAwareScrollView
           style={{ flex: 1 }}
+          bottomOffset={spacing.lg}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: spacing.lg }}
           refreshControl={
@@ -300,7 +302,7 @@ export function ListDetail({ id }: { id: string }) {
               </View>
             )}
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
 
         {!arranging ? (
           <View

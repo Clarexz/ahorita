@@ -84,7 +84,11 @@ function Replies({
           Nadie ha dicho nada todavía.
         </Text>
       ) : (
-        <ScrollView style={{ maxHeight: 320 }} contentContainerStyle={{ gap: spacing.md }}>
+        <ScrollView
+          style={{ maxHeight: 320 }}
+          nestedScrollEnabled
+          contentContainerStyle={{ gap: spacing.md }}
+        >
           {story.replies.map((r) => {
             const mine = r.user_id === myId;
             const time = formatTimeIn(timeZone, new Date(r.created_at));

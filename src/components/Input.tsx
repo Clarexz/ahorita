@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Platform, TextInput, View, type TextInputProps } from 'react-native';
+import { useRef, useState } from 'react';
+import { Platform, TextInput, View, type HostInstance, type TextInputProps } from 'react-native';
 
 import { useTheme } from '@/theme';
 
 import { FieldError } from './FieldError';
 import { Icon, type IconName } from './Icon';
+import { useKeyboardReveal } from './keyboardRevealContext';
 import { Text } from './Text';
 
 type Props = Omit<TextInputProps, 'style'> & {
@@ -35,11 +36,13 @@ export function Input({
 }: Props) {
   const { colors, spacing, radius, type, fruit } = useTheme();
   const [focused, setFocused] = useState(false);
+  const reveal = useKeyboardReveal();
+  const root = useRef<HostInstance>(null);
   const multiline = variant === 'multiline';
   const outline = error ? colors.danger : focused ? fruit.me.hex : 'transparent';
 
   return (
-    <View style={{ gap: spacing.xs + 2 }}>
+    <View ref={root} style={{ gap: spacing.xs + 2 }}>
       {label ? (
         <Text variant="ui" tone="muted" style={{ fontSize: 14, lineHeight: 20 }}>
           {label}
@@ -72,10 +75,12 @@ export function Input({
           selectionColor={fruit.me.hex}
           onFocus={(e) => {
             setFocused(true);
+            if (root.current) reveal?.focus(root.current);
             onFocus?.(e);
           }}
           onBlur={(e) => {
             setFocused(false);
+            if (root.current) reveal?.blur(root.current);
             onBlur?.(e);
           }}
           style={[

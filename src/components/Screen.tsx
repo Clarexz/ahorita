@@ -36,6 +36,8 @@ export function Screen({
           <KeyboardAwareScrollView
             contentContainerStyle={padding}
             keyboardShouldPersistTaps="handled"
+            // Aire entre el campo y el teclado (el contador o el error de abajo también se ven).
+            bottomOffset={spacing.xxl}
             refreshControl={
               onRefresh ? (
                 <RefreshControl

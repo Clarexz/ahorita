@@ -1107,6 +1107,7 @@ de publicar el APK sin `<!-- sin-aviso -->`).
 | Ajustes v0.13.4 (distancia, frutas, widgets) | ✅ Desplegada y mergeada (v0.13.4) | #26 | Distancia precisa con "juntos" (D130), 40 frutas por color (D129) y vistas previas del selector de widgets (D131). Migraciones `20261118000000_more_fruits` y `20261118000001_precise_location` + `notify`, desplegadas el 2026-11-18 (`ccbf21f`). Vistas previas regeneradas con el estilo tonal de la v0.13.3. Notas en `docs/releases/v0.13.4.md`. |
 | Ajustes v0.13.5 (preguntas visibles, teclado) | ✅ Mergeada (v0.13.5) | #27 | Distintivo de "contestaron los dos" (franja con las dos frutas y píldora), pendientes de la pareja en Inicio y Preguntas con número por categoría y orden "te toca" primero en la categoría (D132), y teclado que ya no tapa inputs en el editor de stories, de memorias y en las hojas. Sin cambios de servidor. APK v0.13.5 publicado y probado por el usuario; PR mergeado a `main` a pedido del usuario (2026-11-20). |
 | Ajustes v0.13.6 (widgets, stories, mood, toques) | ✅ Desplegada y mergeada (v0.13.6) | #28 | D134–D138. Sale junto con el renombre a `mx.ahorita.app` (D138, rama `claude/friendly-rubin-9dga9t`): app nueva, no se instala encima. Release con solo ABIs arm y timeout de 90 min (el primer intento se pasó de 60). APK **v0.13.6** publicado el 2026-11-21 (21 min); PR #29 con el renombre, mergeado a `main` a pedido del usuario (2026-11-21). Servidor desplegado el 2026-11-20 (`825cfb9`, migración `20261120000000_nudge_burst`, 22 registradas). Notas en `docs/releases/v0.13.6.md`; PR mergeado a `main` a pedido del usuario (2026-11-20); falta probar en los celulares. Media luna con una sola regla (desde la última visita), atrás desde widgets a Inicio, widget de story con "ya la viste", mood sin mensaje pegado, nombres en Distancia, stories de hoy, visor sin pantalla negra, foto sin recorte, un solo pie de foto y 10 toques al día con 5 s entre uno y otro (migración de `send_nudge`). |
+| Ajustes v0.14.5 (teclado en hojas) | 🟡 En revisión (v0.14.5) | | El teclado ya no tapa los campos de las hojas (nota del mood, respuestas a stories, listas): la hoja hace scroll y lleva el campo enfocado a la vista (D139); además renglones de listas y aire sobre el teclado en formularios. Sin cambios de servidor. Notas en `docs/releases/v0.14.5.md`. |
 
 ### 10.1 Camino a la v1.0.0
 
@@ -1121,6 +1122,9 @@ Estamos cerca de la v1.0.0, pero antes faltan:
    - El usuario dice que hay más cosas por corregir: preguntarle la lista al empezar.
 
 **Pruebas en el celular pendientes** (una línea por release, con su lista en `docs/releases/`):
+
+- **v0.14.5** (`v0.14.5.md`): nota del mood con el teclado abierto, respuestas a stories, crear y
+  editar listas, editar un renglón de en medio y el último campo de los formularios.
 
 - **v0.13.6** (`v0.13.6.md`): media luna igual en widget/Inicio/Cuentas regresivas, atrás desde
   widgets, widget de story "ya la viste", mood, nombres en Distancia, stories de hoy/ayer, visor,
