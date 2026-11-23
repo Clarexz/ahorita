@@ -15,7 +15,7 @@ on:
         default: main
         type: string
       titulo:
-        description: 'Título del release (p. ej. "v0.16.0 — Ajustes"). Si se deja vacío se toma del encabezado de las notas'
+        description: 'Título del release (p. ej. "v0.15.1 — Ajustes"). Si se deja vacío se toma del encabezado de las notas'
         required: false
         type: string
       version:
@@ -84,7 +84,7 @@ jobs:
 
           titulo="$INPUT_TITULO"
           if [ -z "$titulo" ]; then
-            # Primera línea de las notas: "# v0.16.0 — Nombre" (desde la v0.16) o "# Fase 0 — Cimientos"
+            # Primera línea de las notas: "# v0.15.1 — Nombre" (desde la v0.15.1) o "# Fase 0 — Cimientos"
             # (releases viejos, cuyo título era "Fase N — vX.Y.Z").
             primera="$(head -n 1 "$notes" | tr -d '\r')"
             if [[ "$primera" == "# ${version} — "* ]]; then

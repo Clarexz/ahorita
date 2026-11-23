@@ -44,7 +44,7 @@ que `src/types/database.ts` coincida con lo generado.
   notificaciones y contenido** en **español de México** (tuteo, "ustedes", "celular").
 - Commits: mensaje corto en español en imperativo/descriptivo (`v0.N: ...` para el trabajo de una
   versión).
-- **Desde la v0.16 el trabajo se nombra por la versión de la app que sale de la sesión**, ya no por
+- **Desde la v0.15.1 el trabajo se nombra por la versión de la app que sale de la sesión**, ya no por
   "Fase N" (D152): sección `### v0.N — ...` en §9 del plan, fila `v0.N` en §10, notas
   `docs/releases/v0.N.P.md` con encabezado `# v0.N.P — Nombre`. Las fases 0–12A quedan como
   historia.

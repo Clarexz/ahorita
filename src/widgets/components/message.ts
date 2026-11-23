@@ -21,7 +21,7 @@ export const BUBBLE_SHADOW = 3;
 const PAD_IN = 7;
 const PAD_IN_X = 10;
 const AVATAR = 36;
-/** Letra del mensaje (v0.16: de 13 a 15, sin la línea del mood debajo). */
+/** Letra del mensaje (v0.15.1: de 13 a 15, sin la línea del mood debajo). */
 const FONT_SIZE = 15;
 /** Renglones del mensaje cuando la celda da para ellos. */
 const MAX_LINES = 2;
@@ -52,7 +52,7 @@ export type MessageLayout = {
 };
 
 /**
- * Burbuja (v0.16): solo el mensaje, a la izquierda y en hasta dos renglones; mide lo que su contenido y
+ * Burbuja (v0.15.1): solo el mensaje, a la izquierda y en hasta dos renglones; mide lo que su contenido y
  * va centrada en el alto del widget, sin importar el tamaño de la celda. Si la celda no da para
  * dos renglones, se queda en uno.
  */

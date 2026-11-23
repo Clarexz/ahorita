@@ -6,7 +6,7 @@ Cada versión termina con un APK firmado publicado como _pre-release_ en GitHub 
 
 - Formato `v0.N.P`: **N** = versión de la sesión de trabajo (cada sesión con cambios nuevos sube N),
   **P** = parche dentro de esa versión (empieza en 0).
-- Hasta la v0.15, N salía del número de fase y las notas decían `# Fase N — …`; desde la v0.16 el
+- Hasta la v0.15.0, N salía del número de fase y las notas decían `# Fase N — …`; desde la v0.15.1 el
   trabajo se nombra solo por versión (D152).
 - **Una versión = un release:** antes de lanzar, revisa los releases existentes y usa el siguiente
   número libre. Si dos sesiones usan el mismo, el APK de una pisa al de la otra (D32).
@@ -19,7 +19,7 @@ Cada versión necesita `docs/releases/<version>.md`. **La primera línea es el t
 con la misma versión y este formato exacto (el workflow lo lee si no se le pasa `titulo`):
 
 ```
-# v0.16.0 — Nombre corto de lo que trae
+# v0.15.1 — Nombre corto de lo que trae
 ```
 
 Las notas viejas con `# Fase N — Nombre` siguen funcionando (título `Fase N — Nombre — vX.Y.Z`).
@@ -54,8 +54,8 @@ siempre crece y no choca entre los APK de GitHub y los AAB de Play.
 ## Cómo lanzar
 
 - **Desde GitHub:** Actions → _Release APK_ → _Run workflow_; llena `ref` (rama o commit),
-  `titulo` (opcional si las notas tienen el encabezado) y `version` (p. ej. `v0.16.0`).
-- **Con CLI:** `gh workflow run release-apk.yml -f ref=<rama> -f version=v0.16.0`.
+  `titulo` (opcional si las notas tienen el encabezado) y `version` (p. ej. `v0.15.1`).
+- **Con CLI:** `gh workflow run release-apk.yml -f ref=<rama> -f version=v0.15.1`.
 - **Con tag:** `git tag v0.0.1 && git push origin v0.0.1` (el título sale de las notas).
 
 Si el release ya existe, se reemplaza el APK y las notas (útil para reintentos).
