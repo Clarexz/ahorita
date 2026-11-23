@@ -5,7 +5,14 @@ import { APP_NAME } from '@/constants/app';
 import { formatNumber } from '@/lib/dates';
 import { distanceLabel, spokenKm } from '@/lib/distance';
 import { FRUITS, type FruitKey } from '@/lib/fruits';
-import type { WidgetModel, WidgetName } from '@/lib/widgets';
+import {
+  widgetKind,
+  widgetStyle,
+  type WidgetKind,
+  type WidgetModel,
+  type WidgetName,
+  type WidgetStyle,
+} from '@/lib/widgets';
 
 import {
   daysShapeSvg,
@@ -28,7 +35,18 @@ export type WidgetFace =
   | { shape: 'streak'; active: boolean }
   | { shape: 'empty' };
 
+/** Widgets con forma 1×1 (todos menos el mensaje, que es una burbuja ancha). */
+export type ShapeKind = Exclude<WidgetKind, 'PartnerMessage'>;
+export type ShapeName = ShapeKind | `${ShapeKind}Frost`;
+
+/** ¿Es un widget de forma 1×1 (y no el mensaje de tu pareja)? */
+export function isShapeName(name: WidgetName): name is ShapeName {
+  return widgetKind(name) !== 'PartnerMessage';
+}
+
 export type WidgetView = {
+  /** Estilo de dibujo: tonal o Escarcha. */
+  style: WidgetStyle;
   face: WidgetFace;
   /** El dato de una línea, en minúsculas ("412 días", "feliz", "faltan 12"). */
   text: string;
@@ -69,12 +87,17 @@ const plural = (n: number, one: string, many: string): string =>
 
 const brand = (): string => APP_NAME.toLowerCase();
 
-export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
+const fruitsOf = (model: WidgetModel): { me: FruitKey; partner: FruitKey } => {
   const me = model.fruits.me;
-  const partner = model.fruits.partner ?? FRUITS[me].suggested;
-  const fruits = { me, partner };
+  return { me, partner: model.fruits.partner ?? FRUITS[me].suggested };
+};
+
+export function widgetView(name: ShapeName, model: WidgetModel): WidgetView {
+  const style = widgetStyle(name);
+  const fruits = fruitsOf(model);
   const who = model.partnerName;
   const empty = (text: string, a11y: string): WidgetView => ({
+    style,
     face: { shape: 'empty' },
     text,
     a11y,
@@ -88,7 +111,7 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
     return empty('sin pareja', `Todavía no tienes pareja en ${APP_NAME}. Toca para vincularla.`);
   }
 
-  switch (name) {
+  switch (widgetKind(name) as ShapeKind) {
     case 'DaysTogether': {
       const count = model.daysTogether ?? model.daysUntilStart;
       if (count === null) {
@@ -96,6 +119,7 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
       }
       const upcoming = model.daysTogether === null;
       return {
+        style,
         face: { shape: 'days' },
         text: upcoming ? `faltan ${formatNumber(count)}` : plural(count, 'día', 'días'),
         a11y: upcoming
@@ -110,6 +134,7 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
         return empty('sin mood', `${who} aún no comparte su mood. Toca para ver los moods.`);
       }
       return {
+        style,
         face: { shape: 'mood', mood: mascotMood(mood.emoji) },
         text: mood.label ? mood.label.toLowerCase() : 'su mood',
         a11y: `${who} se siente ${mood.label ?? 'así'} ${mood.emoji}${
@@ -123,6 +148,7 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
       if (!ev) return empty('sin planes', 'No hay una fecha próxima. Toca para agregar una.');
       const n = ev.daysUntil;
       return {
+        style,
         face: { shape: 'next', progress: n === 0 ? 1 : ev.progress },
         text: n === 0 ? 'hoy' : n === 1 ? 'mañana' : `faltan ${formatNumber(n)}`,
         a11y:
@@ -145,6 +171,7 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
         return empty('sin distancia', a11y);
       }
       return {
+        style,
         face: { shape: 'dist', km: d.together ? 0 : d.km },
         text: distanceLabel(d.km, d.together),
         a11y: d.together ? `Están juntos.` : `Están a ${spokenKm(d.km)}.`,
@@ -154,6 +181,7 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
     case 'PartnerStory': {
       const story = model.partnerStory;
       return {
+        style,
         face: {
           shape: 'story',
           photo: story?.kind === 'photo' ? story.thumb : null,
@@ -173,6 +201,7 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
       if (!s) return empty(`abre ${brand()}`, 'Abre la app para ver su racha de preguntas.');
       const active = s.current > 0;
       return {
+        style,
         face: { shape: 'streak', active },
         text: active ? plural(s.current, 'día', 'días') : 'a contestar',
         a11y: active
@@ -188,7 +217,7 @@ export function widgetView(name: WidgetName, model: WidgetModel): WidgetView {
 
 /** SVG de la forma de un widget; `size` es el lado en dp. */
 export function widgetShapeSvg(view: WidgetView, opts: { size: number; id?: string }): string {
-  const o: WidgetShapeOptions = { ...view.fruits, ...opts };
+  const o: WidgetShapeOptions = { ...view.fruits, ...opts, style: view.style };
   const face = view.face;
   switch (face.shape) {
     case 'days':
@@ -206,4 +235,74 @@ export function widgetShapeSvg(view: WidgetView, opts: { size: number; id?: stri
     case 'empty':
       return emptyShapeSvg(o);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Mensaje de tu pareja: la nota de su mood en una burbuja (widget ancho, no cuadrado).
+// ---------------------------------------------------------------------------
+
+export type MessageView = {
+  style: WidgetStyle;
+  /** Primera letra del nombre de tu pareja, en mayúscula. */
+  initial: string;
+  /** Lo que dice la burbuja. */
+  message: string;
+  /** "🥰 enamorado · hace 25 min", solo si hay mood y nota. */
+  meta: string | null;
+  a11y: string;
+  fruits: { me: FruitKey; partner: FruitKey };
+};
+
+/** Primera letra (en mayúscula) de un nombre; "·" si no hay nombre. */
+export function initialOf(name: string): string {
+  const first = [...name.trim()][0];
+  return first ? first.toUpperCase() : '·';
+}
+
+export function messageView(name: WidgetName, model: WidgetModel): MessageView {
+  const style = widgetStyle(name);
+  const fruits = fruitsOf(model);
+  const who = model.partnerName;
+  const base = { style, initial: initialOf(who), fruits, meta: null };
+
+  if (model.status === 'signed_out') {
+    return {
+      ...base,
+      message: `Abre ${APP_NAME} para empezar`,
+      a11y: `Abre ${APP_NAME} para empezar. Toca para abrirla.`,
+    };
+  }
+  if (model.status === 'no_couple') {
+    return {
+      ...base,
+      message: 'Todavía no tienes pareja',
+      a11y: `Todavía no tienes pareja en ${APP_NAME}. Toca para vincularla.`,
+    };
+  }
+
+  const mood = model.partnerMood;
+  if (!mood) {
+    return {
+      ...base,
+      message: 'Todavía no te deja mensaje',
+      a11y: `${who} todavía no te deja mensaje. Toca para ver los moods.`,
+    };
+  }
+  const label = mood.label ? mood.label.toLowerCase() : null;
+  const note = mood.note?.trim() ?? '';
+  const feeling = label ?? 'su mood';
+  const ago = mood.ago ? `, ${mood.ago}` : '';
+  if (!note) {
+    return {
+      ...base,
+      message: label ? `Anda ${label} ${mood.emoji}` : `Su mood: ${mood.emoji}`,
+      a11y: `${who} se siente ${feeling} ${mood.emoji}${ago}. No te dejó mensaje.`,
+    };
+  }
+  return {
+    ...base,
+    message: note,
+    meta: `${mood.emoji} ${feeling}${mood.ago ? ` · ${mood.ago}` : ''}`,
+    a11y: `Mensaje de ${who}: ${note}. Se siente ${feeling} ${mood.emoji}${ago}.`,
+  };
 }

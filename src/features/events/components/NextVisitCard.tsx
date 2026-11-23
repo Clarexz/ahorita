@@ -1,12 +1,13 @@
 import { View } from 'react-native';
 
-import { Card, HalfMoon, Text } from '@/components';
+import { Card, HalfMoon, Text, WaitPath } from '@/components';
 import { useFruits } from '@/features/couple';
 import { formatLongDate } from '@/lib/dateParts';
 import type { Countdown } from '@/lib/events';
 import { countdownHeadline, countdownSpoken } from '@/lib/eventsView';
 import { FRUITS } from '@/lib/fruits';
-import { waitCaption, type WaitProgress } from '@/lib/waitProgress';
+import { waitPath } from '@/lib/waitPath';
+import type { WaitProgress } from '@/lib/waitProgress';
 import { useTheme } from '@/theme';
 
 type Props = {
@@ -28,6 +29,7 @@ export function NextVisitCard({ countdown, heading, wait = null, onPress }: Prop
   const partnerFruit = fruits.partner ?? FRUITS[fruits.me.suggested];
   const { value, unit } = countdownHeadline(countdown.daysUntil);
   const title = countdown.emoji ? `${countdown.emoji} ${countdown.title}` : countdown.title;
+  const path = wait ? waitPath(wait, countdown.date) : null;
   const lead = heading ?? (countdown.daysUntil > 0 ? 'Faltan' : null);
   return (
     <Card
@@ -48,14 +50,20 @@ export function NextVisitCard({ countdown, heading, wait = null, onPress }: Prop
           </Text>
         </View>
         {wait ? (
-          <View style={{ alignItems: 'center', gap: spacing.xxs }}>
-            <HalfMoon progress={wait.progress} me={fruits.me} partner={partnerFruit} width={72} />
-            <Text variant="note" tone="muted" style={{ textAlign: 'center', maxWidth: 96 }}>
-              {waitCaption(wait)}
-            </Text>
-          </View>
+          <HalfMoon
+            animated
+            progress={wait.progress}
+            me={fruits.me}
+            partner={partnerFruit}
+            width={72}
+          />
         ) : null}
       </View>
+      {path ? (
+        <View style={{ marginTop: spacing.md }}>
+          <WaitPath path={path} me={fruits.me} partner={partnerFruit} />
+        </View>
+      ) : null}
     </Card>
   );
 }

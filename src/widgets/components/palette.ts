@@ -1,10 +1,11 @@
 // Utilidades compartidas de los widgets. Los widgets se dibujan fuera de React / ThemeProvider;
-// las formas tonales se ven igual en claro y en oscuro; la paleta solo distingue el modo del sistema.
+// las formas (tonales y Escarcha) se ven igual en claro y en oscuro; la paleta solo distingue el modo
+// del sistema.
 import type { ColorProp } from 'react-native-android-widget';
 
 import { APP_SCHEME } from '@/constants/app';
 import type { WidgetName } from '@/lib/widgets';
-import { WIDGET_ROUTES } from '@/lib/widgets';
+import { WIDGET_ROUTES, widgetKind } from '@/lib/widgets';
 import { fonts } from '@/theme/tokens';
 
 export type WidgetSize = { width: number; height: number };
@@ -20,12 +21,14 @@ export const palettes: { light: WidgetPalette; dark: WidgetPalette } = {
 export const col = (value: string): ColorProp => value as ColorProp;
 
 export const FONT = {
+  display: fonts.display,
+  medium: fonts.textMedium,
   semiBold: fonts.textSemi,
 } as const;
 
-/** Deep link de un widget: `ahorita://moods`, o `ahorita://` para el inicio. */
+/** Deep link de un widget (por su clase): `ahorita://moods`, o `ahorita://` para el inicio. */
 export function widgetUri(name: WidgetName, routeOverride?: string): string {
-  const route = (routeOverride ?? WIDGET_ROUTES[name]).replace(/^\/+/, '');
+  const route = (routeOverride ?? WIDGET_ROUTES[widgetKind(name)]).replace(/^\/+/, '');
   return `${APP_SCHEME}://${route}`;
 }
 

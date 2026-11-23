@@ -25,6 +25,7 @@ function Content({ error, onRetry, onGoHome }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: 'center',

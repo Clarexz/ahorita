@@ -1,4 +1,4 @@
-import { latestBefore, waitCaption, waitProgress } from '../waitProgress';
+import { latestBefore, waitProgress } from '../waitProgress';
 
 describe('latestBefore', () => {
   it('toma la más reciente que ya pasó y es anterior al objetivo', () => {
@@ -37,7 +37,6 @@ describe('waitProgress', () => {
     expect(w.elapsedDays).toBe(1);
     expect(w.totalDays).toBe(7);
     expect(w.progress).toBeCloseTo(1 / 7);
-    expect(waitCaption(w)).toBe('1 de 7 días desde que se vieron');
   });
 
   it('visits gana sobre events y sobre la fecha de alta', () => {
@@ -69,7 +68,6 @@ describe('waitProgress', () => {
       elapsedDays: 3,
       source: 'created',
     });
-    expect(waitCaption(w)).toBe('3 de 13 días desde que la apuntaron');
   });
 
   it('crearla ayer no la deja vacía: ya cuenta un día', () => {
@@ -88,7 +86,6 @@ describe('waitProgress', () => {
     expect(w.totalDays).toBe(30);
     expect(w.elapsedDays).toBe(20);
     expect(w.progress).toBeCloseTo(20 / 30);
-    expect(waitCaption(w)).toBe('últimos 30 días');
     expect(waitProgress({ ...base, target: '2026-09-25' }).progress).toBe(0);
   });
 

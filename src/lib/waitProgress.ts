@@ -85,10 +85,3 @@ export function waitProgress(input: WaitInput): WaitProgress {
     source: 'window',
   };
 }
-
-/** Con qué se compara el avance: "1 de 7 días desde que se vieron" (o "últimos 30 días"). */
-export function waitCaption(w: Pick<WaitProgress, 'source' | 'elapsedDays' | 'totalDays'>): string {
-  if (w.source === 'window') return 'últimos 30 días';
-  const base = `${w.elapsedDays} de ${w.totalDays} días`;
-  return w.source === 'visit' ? `${base} desde que se vieron` : `${base} desde que la apuntaron`;
-}

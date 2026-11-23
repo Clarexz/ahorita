@@ -13,6 +13,11 @@ type Props = {
   /** Con `scroll`: activa el "jalar para refrescar" (DISENO §7). */
   refreshing?: boolean;
   onRefresh?: () => void;
+  /**
+   * Solo con `scroll`: el contenido ocupa al menos el alto de la pantalla (para repartirlo con
+   * `justifyContent`) y se quita el rebote, así lo que cabe no se desplaza.
+   */
+  fill?: boolean;
 };
 
 /** Contenedor de pantalla: fondo `bg`, safe area y gutter de 20 dp (DISENO §7). */
@@ -22,6 +27,7 @@ export function Screen({
   padded = true,
   refreshing = false,
   onRefresh,
+  fill = false,
 }: Props) {
   const { colors, page, spacing, fruit } = useTheme();
   const padding = {
@@ -34,7 +40,10 @@ export function Screen({
       <SafeAreaView style={styles.root}>
         {scroll ? (
           <KeyboardAwareScrollView
-            contentContainerStyle={padding}
+            contentContainerStyle={fill ? [padding, styles.fill] : padding}
+            showsVerticalScrollIndicator={false}
+            bounces={!fill}
+            overScrollMode={fill ? 'never' : 'auto'}
             keyboardShouldPersistTaps="handled"
             // Aire entre el campo y el teclado (el contador o el error de abajo también se ven).
             bottomOffset={spacing.xxl}
@@ -60,4 +69,4 @@ export function Screen({
   );
 }
 
-const styles = StyleSheet.create({ root: { flex: 1 } });
+const styles = StyleSheet.create({ root: { flex: 1 }, fill: { flexGrow: 1 } });

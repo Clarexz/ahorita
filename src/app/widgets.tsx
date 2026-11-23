@@ -1,25 +1,39 @@
 import { useState } from 'react';
 import { Platform, View } from 'react-native';
 
-import { Button, Card, Notice, Screen, ScreenHeader, Text, useToast } from '@/components';
-import { PREVIEW_SIZE, WidgetPreview } from '@/components/widget-preview';
+import {
+  Button,
+  Card,
+  Notice,
+  Screen,
+  ScreenHeader,
+  Segmented,
+  Text,
+  useToast,
+} from '@/components';
+import {
+  MESSAGE_PREVIEW_SIZE,
+  PREVIEW_SIZE,
+  Wallpaper,
+  WidgetPreview,
+} from '@/components/widget-preview';
 import { pinWidget } from '@/components/widget-preview/requestPin';
 import { APP_NAME } from '@/constants/app';
 import { useCouple } from '@/features/couple';
 import { coupleDayZone } from '@/lib/coupleDay';
 import { detectTimeZone } from '@/lib/timezone';
 import { previewModel } from '@/lib/widgetPreview';
-import { WIDGET_NAMES, type WidgetName } from '@/lib/widgets';
+import { WIDGET_KINDS, widgetNameFor, type WidgetKind, type WidgetStyle } from '@/lib/widgets';
 import { useTheme } from '@/theme';
 
 const STEPS = [
   'Mantén presionado un espacio vacío de tu pantalla de inicio.',
   `Elige “Widgets” y busca ${APP_NAME}.`,
   'Arrastra el widget que quieras a tu pantalla.',
-  'Cada widget ocupa un solo cuadro: acomoda los que quieras sobre tu fondo de pantalla.',
+  'Casi todos ocupan un solo cuadro; el mensaje de tu pareja es más ancho. Acomoda los que quieras sobre tu fondo de pantalla.',
 ];
 
-const INFO: Record<WidgetName, { title: string; text: string }> = {
+const INFO: Record<WidgetKind, { title: string; text: string }> = {
   DaysTogether: {
     title: 'Días juntos',
     text: 'El conteo de su historia. Toca para abrir el inicio.',
@@ -44,13 +58,28 @@ const INFO: Record<WidgetName, { title: string; text: string }> = {
     title: 'Racha',
     text: 'Cuántos días seguidos llevan contestando la pregunta del día. Toca para contestar.',
   },
+  PartnerMessage: {
+    title: 'Mensaje de tu pareja',
+    text: 'La nota que te dejó con su mood, en una burbuja. Mide de 3×1 a 4×2 cuadros. Toca para ver los moods.',
+  },
 };
 
-function WidgetCard({ name, model }: { name: WidgetName; model: ReturnType<typeof previewModel> }) {
+const STYLE_OPTIONS = [
+  { value: 'tonal', label: 'Tonal' },
+  { value: 'frost', label: 'Escarcha' },
+] as const;
+
+const FROST_NOTE =
+  'Escarcha es blanco translúcido: deja ver tu fondo de pantalla a través del widget.';
+
+function WidgetCard({ kind, model }: { kind: WidgetKind; model: ReturnType<typeof previewModel> }) {
   const { spacing } = useTheme();
   const toast = useToast();
   const [pinning, setPinning] = useState(false);
-  const info = INFO[name];
+  const [style, setStyle] = useState<WidgetStyle>('tonal');
+  const info = INFO[kind];
+  const name = widgetNameFor(kind, style);
+  const size = kind === 'PartnerMessage' ? MESSAGE_PREVIEW_SIZE : PREVIEW_SIZE;
 
   const add = async () => {
     setPinning(true);
@@ -76,14 +105,20 @@ function WidgetCard({ name, model }: { name: WidgetName; model: ReturnType<typeo
           {info.text}
         </Text>
       </View>
-      <View style={{ alignItems: 'center' }}>
-        <WidgetPreview
-          name={name}
-          model={model}
-          width={PREVIEW_SIZE.width}
-          height={PREVIEW_SIZE.height}
-        />
-      </View>
+      <Segmented
+        options={STYLE_OPTIONS}
+        value={style}
+        onChange={setStyle}
+        accessibilityLabel={`Estilo del widget ${info.title}`}
+      />
+      <Wallpaper height={size.height + spacing.xl * 2}>
+        <WidgetPreview name={name} model={model} width={size.width} height={size.height} />
+      </Wallpaper>
+      {style === 'frost' ? (
+        <Text variant="note" tone="muted">
+          {FROST_NOTE}
+        </Text>
+      ) : null}
       {Platform.OS === 'android' ? (
         <Button
           title="Agregar a mi pantalla"
@@ -152,8 +187,8 @@ export default function WidgetsScreen() {
         </Notice>
 
         <View style={{ gap: spacing.lg }}>
-          {WIDGET_NAMES.map((name) => (
-            <WidgetCard key={name} name={name} model={model} />
+          {WIDGET_KINDS.map((kind) => (
+            <WidgetCard key={kind} kind={kind} model={model} />
           ))}
         </View>
       </View>

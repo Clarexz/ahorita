@@ -29,10 +29,10 @@ export default function SignInScreen() {
   };
 
   return (
-    <Screen scroll>
-      <View style={{ gap: spacing.xl }}>
-        <AuthBrand />
-        <View style={{ gap: spacing.lg }}>
+    <Screen scroll fill>
+      <View style={{ flex: 1, justifyContent: 'space-between', gap: spacing.md }}>
+        <AuthBrand compact />
+        <View style={{ gap: spacing.md }}>
           <Text variant="h2" accessibilityRole="header">
             Entrar
           </Text>
@@ -62,7 +62,7 @@ export default function SignInScreen() {
           <Button title="Entrar" onPress={submit} loading={signIn.isPending} fullWidth />
         </View>
         <GoogleSignInSection busy={signIn.isPending} />
-        <View style={{ gap: spacing.sm, alignItems: 'center' }}>
+        <View style={{ gap: spacing.xs, alignItems: 'center' }}>
           <Button
             title="Crear una cuenta"
             variant="secondary"

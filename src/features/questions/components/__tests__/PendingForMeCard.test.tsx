@@ -39,16 +39,18 @@ describe('PendingForMeCard', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Contestar' }));
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/question', params: { id: 'q1' } });
     await fireEvent.press(screen.getByRole('button', { name: 'Ver todas' }));
-    expect(mockPush).toHaveBeenCalledWith('/questions');
+    expect(mockPush).toHaveBeenCalledWith('/pending');
   });
 
-  it('en Preguntas lista hasta 3 y cuenta las demás', async () => {
+  it('en Preguntas es una sola fila que lleva a la lista completa', async () => {
     mockPending = [p('a', 'A'), p('b', 'B'), p('c', 'C'), p('d', 'D'), p('e', 'E')];
     await renderCard('list');
-    expect(screen.getByRole('button', { name: 'Contestar: A' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Contestar: D' })).toBeNull();
-    expect(screen.getByText('Y 2 más en sus categorías.')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Contestar: C' }));
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/question', params: { id: 'c' } });
+    expect(screen.queryByText('A')).toBeNull();
+    await fireEvent.press(
+      screen.getByRole('button', {
+        name: 'Chu contestó 5 preguntas que te faltan. Toca para verlas.',
+      }),
+    );
+    expect(mockPush).toHaveBeenCalledWith('/pending');
   });
 });

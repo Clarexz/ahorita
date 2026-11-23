@@ -19,7 +19,7 @@ const widgetPreview = (name: string) => {
   return existsSync(path) ? (path as `./${string}`) : undefined;
 };
 
-// Seis widgets 1×1 sin fondo (D103): 40 dp es el mínimo de una celda según Android.
+// Widgets 1×1 sin fondo (D103): 40 dp es el mínimo de una celda según Android.
 const WIDGET_DEFAULTS = {
   minWidth: '40dp',
   minHeight: '40dp',
@@ -29,6 +29,36 @@ const WIDGET_DEFAULTS = {
   updatePeriodMillis: 1800000,
   widgetCategory: 'home_screen',
 } as const;
+
+// Mensaje de tu pareja: burbuja ancha y delgada, 4×1; se estira a lo ancho desde ~3 celdas (el
+// plugin no tiene `minResizeWidth`: el mínimo de ancho es `minWidth`). Una sola fila (v0.14.2).
+const MESSAGE_WIDGET = {
+  minWidth: '180dp',
+  minHeight: '40dp',
+  targetCellWidth: 4,
+  targetCellHeight: 1,
+  resizeMode: 'horizontal',
+} as const;
+
+// Cada widget se registra dos veces: tonal y Escarcha (`<Nombre>Frost`, D141). Los nombres internos
+// tonales no cambian: los widgets ya puestos siguen vivos. El selector (One UI) ordena por `label`,
+// así que el prefijo de estilo los junta en dos bloques: todos los "Color" y luego los "Escarcha"
+// (D145; con el mismo nombre salían alternados y no se agrupaban en cajitas).
+const STYLE_LABEL = { tonal: 'Color', frost: 'Escarcha' } as const;
+const widgetPair = (
+  name: string,
+  label: string,
+  description: string,
+  overrides: Partial<typeof WIDGET_DEFAULTS> | typeof MESSAGE_WIDGET = {},
+) =>
+  (['tonal', 'frost'] as const).map((style) => ({
+    name: style === 'frost' ? `${name}Frost` : name,
+    label: `${STYLE_LABEL[style]} · ${label}`,
+    description,
+    previewImage: widgetPreview(style === 'frost' ? `${name}Frost` : name),
+    ...WIDGET_DEFAULTS,
+    ...overrides,
+  }));
 
 // API key de Google Maps (secreto opcional): sin ella el APK compila igual, pero el mapa de las
 // memorias es el "mapa de papel" propio en lugar de Google Maps.
@@ -120,48 +150,30 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           `${GOOGLE_FONTS}/albert-sans/700Bold/AlbertSans_700Bold.ttf`,
         ],
         widgets: [
-          {
-            name: 'DaysTogether',
-            label: 'Días juntos',
-            description: 'Cuántos días llevan juntos.',
-            previewImage: widgetPreview('DaysTogether'),
-            ...WIDGET_DEFAULTS,
-          },
-          {
-            name: 'PartnerMood',
-            label: 'Mood de mi pareja',
-            description: 'Cómo anda tu pareja ahorita.',
-            previewImage: widgetPreview('PartnerMood'),
-            ...WIDGET_DEFAULTS,
-          },
-          {
-            name: 'Countdown',
-            label: 'La próxima vez',
-            description: 'Cuánto falta para verse o para su próxima fecha.',
-            previewImage: widgetPreview('Countdown'),
-            ...WIDGET_DEFAULTS,
-          },
-          {
-            name: 'PartnerStory',
-            label: 'Story de tu pareja',
-            description: 'Lo último que subió tu pareja, sin abrir la app.',
-            previewImage: widgetPreview('PartnerStory'),
-            ...WIDGET_DEFAULTS,
-          },
-          {
-            name: 'Distance',
-            label: 'Distancia',
-            description: 'A cuántos kilómetros están ahorita, o si están juntos.',
-            previewImage: widgetPreview('Distance'),
-            ...WIDGET_DEFAULTS,
-          },
-          {
-            name: 'Streak',
-            label: 'Racha',
-            description: 'Cuántos días llevan contestando la pregunta del día.',
-            previewImage: widgetPreview('Streak'),
-            ...WIDGET_DEFAULTS,
-          },
+          ...widgetPair('DaysTogether', 'Días juntos', 'Cuántos días llevan juntos.'),
+          ...widgetPair('PartnerMood', 'Su mood', 'Cómo anda tu pareja ahorita.'),
+          ...widgetPair(
+            'Countdown',
+            'La próxima vez',
+            'Cuánto falta para verse o para su próxima fecha.',
+          ),
+          ...widgetPair(
+            'PartnerStory',
+            'Su story',
+            'Lo último que subió tu pareja, sin abrir la app.',
+          ),
+          ...widgetPair(
+            'Distance',
+            'Distancia',
+            'A cuántos kilómetros están ahorita, o si están juntos.',
+          ),
+          ...widgetPair('Streak', 'Racha', 'Cuántos días llevan contestando la pregunta del día.'),
+          ...widgetPair(
+            'PartnerMessage',
+            'Su mensaje',
+            'El mensaje que te dejó tu pareja con su mood.',
+            MESSAGE_WIDGET,
+          ),
         ],
       },
     ],

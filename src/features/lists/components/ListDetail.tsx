@@ -195,6 +195,7 @@ export function ListDetail({ id }: { id: string }) {
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
         {/* Al editar un renglón de en medio, el scroll lo lleva arriba del teclado. */}
         <KeyboardAwareScrollView
+          showsVerticalScrollIndicator={false}
           style={{ flex: 1 }}
           bottomOffset={spacing.lg}
           keyboardShouldPersistTaps="handled"

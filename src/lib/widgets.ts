@@ -30,25 +30,67 @@ const COMPATIBLE_VERSIONS: readonly number[] = [4, WIDGET_SNAPSHOT_VERSION];
 /** Cuántos `end_date` de visitas pasadas se guardan para "desde que se vieron". */
 export const MAX_VISIT_ENDS = 5;
 
-/** Nombres con los que se registran los widgets (app.config.ts y el task handler). */
-export const WIDGET_NAMES = [
+/** Clases de widget: qué dato muestra cada uno (el orden es el del selector de Android). */
+export const WIDGET_KINDS = [
   'DaysTogether',
   'PartnerMood',
   'Countdown',
   'PartnerStory',
   'Distance',
   'Streak',
+  'PartnerMessage',
 ] as const;
-export type WidgetName = (typeof WIDGET_NAMES)[number];
+export type WidgetKind = (typeof WIDGET_KINDS)[number];
 
-/** A dónde lleva tocar cada widget (deep link `ahorita://<ruta>`). */
-export const WIDGET_ROUTES: Record<WidgetName, string> = {
+/** Estilos de dibujo: formas de fruta (`tonal`) o blanco translúcido (`frost`, "Escarcha"). */
+export const WIDGET_STYLES = ['tonal', 'frost'] as const;
+export type WidgetStyle = (typeof WIDGET_STYLES)[number];
+
+/** Sufijo del nombre registrado de la variante Escarcha (`DaysTogetherFrost`). */
+export const FROST_SUFFIX = 'Frost';
+
+/** Nombre con el que se registra un widget (app.config.ts y el task handler). */
+export type WidgetName = WidgetKind | `${WidgetKind}${typeof FROST_SUFFIX}`;
+
+/**
+ * Todos los widgets registrados: cada clase en tonal y, justo después, en Escarcha. Los nombres
+ * tonales no cambian nunca (los widgets ya puestos en la pantalla de inicio siguen funcionando).
+ */
+export const WIDGET_NAMES: readonly WidgetName[] = WIDGET_KINDS.flatMap((kind): WidgetName[] => [
+  kind,
+  `${kind}${FROST_SUFFIX}`,
+]);
+
+export function isWidgetName(name: string): name is WidgetName {
+  return (WIDGET_NAMES as readonly string[]).includes(name);
+}
+
+/** Clase de un widget registrado (`PartnerMoodFrost` → `PartnerMood`). */
+export function widgetKind(name: WidgetName): WidgetKind {
+  return isKind(name) ? name : (name.slice(0, -FROST_SUFFIX.length) as WidgetKind);
+}
+
+function isKind(name: string): name is WidgetKind {
+  return (WIDGET_KINDS as readonly string[]).includes(name);
+}
+
+export function widgetStyle(name: WidgetName): WidgetStyle {
+  return isKind(name) ? 'tonal' : 'frost';
+}
+
+export function widgetNameFor(kind: WidgetKind, style: WidgetStyle): WidgetName {
+  return style === 'frost' ? `${kind}${FROST_SUFFIX}` : kind;
+}
+
+/** A dónde lleva tocar cada clase de widget (deep link `ahorita://<ruta>`). */
+export const WIDGET_ROUTES: Record<WidgetKind, string> = {
   DaysTogether: '/',
   PartnerMood: '/moods',
   Countdown: '/events',
   PartnerStory: '/stories',
   Distance: '/distance',
   Streak: '/questions',
+  PartnerMessage: '/moods',
 };
 
 /** Pasado este tiempo el snapshot se considera viejo y el widget intenta refrescar del servidor. */
