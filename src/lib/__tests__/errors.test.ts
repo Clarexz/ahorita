@@ -84,9 +84,6 @@ describe('errorMessage', () => {
     expect(errorMessage({ code: 'P0001', message: 'fruit_taken' })).toBe(
       'Esa es la fruta de tu pareja.',
     );
-    expect(errorMessage({ code: 'P0001', message: 'fruit_too_similar' })).toBe(
-      'Se parece mucho a la de tu pareja; elige otra.',
-    );
     expect(errorMessage({ code: 'P0001', message: 'invalid_fruit' })).not.toMatch(/Algo no salió/);
   });
 

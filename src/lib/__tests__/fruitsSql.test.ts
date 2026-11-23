@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { FRUIT_HEX } from '../../../supabase/functions/notify/logic';
-import { BLOCKED_PAIRS, FRUIT_KEYS, FRUITS } from '../fruits';
+import { FRUIT_KEYS, FRUITS } from '../fruits';
 
 const ROOT = join(__dirname, '..', '..', '..');
 const sql = readFileSync(
@@ -34,12 +34,15 @@ describe('frutas en SQL', () => {
     );
   });
 
-  it('los pares del manual coinciden con BLOCKED_PAIRS', () => {
-    const start = sql.indexOf('function private.fruit_clash(');
-    const body = sql.slice(start, sql.indexOf('$$;', start));
-    const pairs = [...body.matchAll(/\('([a-z_]+)', '([a-z_]+)'\)/g)].map((m) => [m[1], m[2]]);
-    const expected = BLOCKED_PAIRS.map(([a, b]) => (a < b ? [a, b] : [b, a]));
-    expect(pairs).toEqual(expected);
+  it('fruit_clash vigente solo choca la misma fruta', () => {
+    const latest = readFileSync(
+      join(ROOT, 'supabase', 'migrations', '20261123000000_fruit_clash_same_only.sql'),
+      'utf8',
+    );
+    const start = latest.indexOf('function private.fruit_clash(');
+    const body = latest.slice(start, latest.indexOf('$$;', start));
+    expect(body).toContain("when a = b then 'same'");
+    expect(body).not.toContain('similar');
   });
 
   it('los CHECK de profiles.fruit y stories.bg aceptan todas las llaves', () => {

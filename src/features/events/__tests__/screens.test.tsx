@@ -112,14 +112,14 @@ beforeEach(() => {
 });
 
 describe('Cuentas regresivas', () => {
-  it('con visita: la destaca y lista lo que viene con su nota', async () => {
+  it('con visita: la destaca y lista lo que viene sin notas de relleno', async () => {
     mockData.visit = visit;
     mockData.countdowns = [visit, countdown({})];
     await wrap(<CountdownsScreen />);
     expect(screen.getByText('Faltan')).toBeTruthy();
     expect(screen.getByText('10 días')).toBeTruthy();
     expect(screen.getAllByText('✈️ Nos vemos en Guadalajara').length).toBeGreaterThan(0);
-    expect(screen.getByText(/Sale de su aniversario/)).toBeTruthy();
+    expect(screen.queryByText(/Sale de su aniversario/)).toBeNull();
     await fireEvent.press(screen.getByLabelText(/^✈️ Nos vemos en Guadalajara, faltan 10 días$/));
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/events/edit', params: { id: 'v' } });
   });

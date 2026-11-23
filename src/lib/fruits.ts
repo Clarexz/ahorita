@@ -3,7 +3,7 @@
 // la misma regla vive en SQL (`private.fruit_group`, `private.effective_fruit`, `public.set_fruit`;
 // la prueba `fruitsSql.test.ts` revisa que la migración coincida) y en los widgets.
 
-/** Grupos de color, en el orden del selector. Dos frutas del mismo grupo no pueden convivir. */
+/** Grupos de color, en el orden del selector (solo para agrupar; ya no bloquean nada). */
 export const FRUIT_GROUPS = [
   'rojo',
   'rosa',
@@ -26,7 +26,7 @@ export const FRUIT_GROUP_LABELS: Record<FruitGroup, string> = {
   cafe: 'Cafés',
 };
 
-/** Fruta sugerida para la pareja según el grupo (siempre de otro grupo). */
+/** Fruta sugerida para la pareja según el grupo (siempre de otro grupo, para que se distingan). */
 const GROUP_SUGGESTION: Record<FruitGroup, string> = {
   rojo: 'mango',
   rosa: 'limon',
@@ -151,18 +151,6 @@ export const FRUITS = Object.fromEntries(
   ]),
 ) as Record<FruitKey, Fruit>;
 
-/**
- * Pares de grupos distintos que el manual bloqueó por parecerse (§06). Además de estos, chocan
- * todas las frutas del mismo grupo de color. El orden no importa.
- */
-export const BLOCKED_PAIRS: readonly (readonly [FruitKey, FruitKey])[] = [
-  ['sandia', 'pitaya'],
-  ['sandia', 'mandarina'],
-  ['mango', 'limon'],
-  ['mango', 'mandarina'],
-  ['uva', 'pitaya'],
-];
-
 /** Pareja por defecto: Sandía para quien tenga el id menor, Mango para el otro. */
 export const DEFAULT_FRUITS: readonly [FruitKey, FruitKey] = ['sandia', 'mango'];
 
@@ -170,18 +158,11 @@ export function isFruitKey(value: unknown): value is FruitKey {
   return typeof value === 'string' && (FRUIT_KEYS as readonly string[]).includes(value);
 }
 
-export type FruitClash = 'same' | 'similar';
+export type FruitClash = 'same';
 
-/**
- * Si dos frutas no pueden convivir en una pareja: la misma, una del mismo grupo de color o un par
- * del manual que se parece.
- */
+/** Si dos frutas no pueden convivir en una pareja: solo choca la misma. */
 export function fruitClash(a: FruitKey, b: FruitKey): FruitClash | null {
-  if (a === b) return 'same';
-  if (FRUITS[a].group === FRUITS[b].group) return 'similar';
-  return BLOCKED_PAIRS.some(([x, y]) => (x === a && y === b) || (x === b && y === a))
-    ? 'similar'
-    : null;
+  return a === b ? 'same' : null;
 }
 
 export type FruitPerson = { id: string; fruit: string | null | undefined };
@@ -191,8 +172,8 @@ export type FruitPerson = { id: string; fruit: string | null | undefined };
  * 1. Sin pareja: tu fruta, o Sandía si no has elegido.
  * 2. Ninguno eligió: Sandía para el id menor, Mango para el mayor.
  * 3. Solo uno eligió: el otro toma la sugerida de esa fruta.
- * 4. Los dos eligieron y chocan (pasa al volver a emparejarse): el id menor se queda con la suya
- *    y el mayor toma la sugerida.
+ * 4. Los dos eligieron la misma (pasa al volver a emparejarse): el id menor se queda con la suya
+ *    y el mayor toma la sugerida (solo pasa si eligieron la misma fruta).
  */
 export function resolveFruits(
   me: FruitPerson,
@@ -221,7 +202,7 @@ export function resolveFruits(
 
 export type FruitOption = {
   fruit: Fruit;
-  /** Por qué no se puede elegir: es la de tu pareja o se le parece. */
+  /** Por qué no se puede elegir: es la de tu pareja. */
   blocked: FruitClash | null;
   suggested: boolean;
 };

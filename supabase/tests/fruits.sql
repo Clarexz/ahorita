@@ -112,27 +112,21 @@ grant select on t_keys to authenticated, service_role;
 -- 1) Reglas puras
 -- =============================================================================
 select pg_temp.assert(private.fruit_clash('mango', 'mango') = 'same', 'misma fruta: same');
-select pg_temp.assert(private.fruit_clash('sandia', 'pitaya') = 'similar', 'sandia-pitaya');
-select pg_temp.assert(private.fruit_clash('pitaya', 'sandia') = 'similar', 'pitaya-sandia');
-select pg_temp.assert(private.fruit_clash('sandia', 'mandarina') = 'similar', 'sandia-mandarina');
-select pg_temp.assert(private.fruit_clash('mandarina', 'sandia') = 'similar', 'mandarina-sandia');
-select pg_temp.assert(private.fruit_clash('mango', 'limon') = 'similar', 'mango-limon');
-select pg_temp.assert(private.fruit_clash('limon', 'mango') = 'similar', 'limon-mango');
-select pg_temp.assert(private.fruit_clash('mango', 'mandarina') = 'similar', 'mango-mandarina');
-select pg_temp.assert(private.fruit_clash('mandarina', 'mango') = 'similar', 'mandarina-mango');
-select pg_temp.assert(private.fruit_clash('uva', 'arandano') = 'similar', 'uva-arandano');
-select pg_temp.assert(private.fruit_clash('arandano', 'uva') = 'similar', 'arandano-uva');
-select pg_temp.assert(private.fruit_clash('uva', 'pitaya') = 'similar', 'uva-pitaya');
-select pg_temp.assert(private.fruit_clash('pitaya', 'uva') = 'similar', 'pitaya-uva');
+-- Solo choca la misma (20261123000000_fruit_clash_same_only): ya no hay "parecidas" ni mismo color.
+select pg_temp.assert(private.fruit_clash('sandia', 'pitaya') is null, 'sandia-pitaya conviven');
+select pg_temp.assert(private.fruit_clash('mandarina', 'sandia') is null, 'mandarina-sandia conviven');
+select pg_temp.assert(private.fruit_clash('mango', 'limon') is null, 'mango-limon conviven');
+select pg_temp.assert(private.fruit_clash('uva', 'arandano') is null, 'uva-arandano conviven');
+select pg_temp.assert(private.fruit_clash('uva', 'pitaya') is null, 'uva-pitaya conviven');
 select pg_temp.assert(private.fruit_clash('sandia', 'mango') is null, 'sandia-mango conviven');
 select pg_temp.assert(private.fruit_clash('limon', 'uva') is null, 'limon-uva conviven');
 select pg_temp.assert(private.fruit_clash('arandano', 'mandarina') is null, 'arandano-mandarina conviven');
 select pg_temp.assert(private.fruit_clash(null, 'mango') is null, 'null no choca');
 
--- Exactamente 6 pares parecidos (de las 21 combinaciones distintas).
+-- Ningún par distinto de las 7 originales choca (solo las 7 iguales consigo mismas).
 select pg_temp.assert(
-  (select count(*) from t_keys a, t_keys b where a.k < b.k and private.fruit_clash(a.k, b.k) = 'similar') = 6,
-  'hay 6 pares parecidos');
+  (select count(*) from t_keys a, t_keys b where a.k < b.k and private.fruit_clash(a.k, b.k) is not null) = 0,
+  'ningun par distinto choca');
 
 select pg_temp.assert(private.suggested_fruit('sandia') = 'mango', 'sugerida de sandia');
 select pg_temp.assert(private.suggested_fruit('mango') = 'sandia', 'sugerida de mango');
@@ -146,11 +140,11 @@ select pg_temp.assert(
   not exists (select 1 from t_keys where private.fruit_clash(k, private.suggested_fruit(k)) is not null),
   'las sugeridas siempre conviven');
 
--- Frutas nuevas (20261118000000_more_fruits): el mismo grupo de color choca.
+-- Frutas nuevas (20261118000000_more_fruits): el mismo grupo de color ya no choca.
 select pg_temp.assert(private.fruit_group('fresa') = 'rojo', 'fresa es roja');
 select pg_temp.assert(private.fruit_group('kiwano') is null, 'llave inválida sin grupo');
-select pg_temp.assert(private.fruit_clash('fresa', 'sandia') = 'similar', 'fresa-sandia: mismo color');
-select pg_temp.assert(private.fruit_clash('manzana_verde', 'limon') = 'similar', 'manzana verde-limon');
+select pg_temp.assert(private.fruit_clash('fresa', 'sandia') is null, 'fresa-sandia conviven');
+select pg_temp.assert(private.fruit_clash('manzana_verde', 'limon') is null, 'manzana verde-limon conviven');
 select pg_temp.assert(private.fruit_clash('manzana_roja', 'manzana_verde') is null, 'manzana roja y verde conviven');
 select pg_temp.assert(private.fruit_clash('coco', 'zarzamora') is null, 'coco-zarzamora conviven');
 select pg_temp.assert(private.suggested_fruit('tamarindo') = 'mango', 'sugerida de tamarindo');
@@ -246,9 +240,9 @@ select pg_temp.assert(pg_temp.eff('A') = 'uva' and pg_temp.eff('B') = 'mango', '
 select pg_temp.raw('A', 'mango'); select pg_temp.raw('B', 'mango');
 select pg_temp.assert(pg_temp.eff('A') = 'mango' and pg_temp.eff('B') = 'sandia', 'misma fruta: Ana conserva, Beto toma la sugerida');
 select pg_temp.raw('A', 'uva'); select pg_temp.raw('B', 'arandano');
-select pg_temp.assert(pg_temp.eff('A') = 'uva' and pg_temp.eff('B') = 'limon', 'parecidas (uva/arandano): Ana conserva, Beto toma la sugerida de uva');
-select pg_temp.raw('A', 'arandano'); select pg_temp.raw('B', 'uva');
-select pg_temp.assert(pg_temp.eff('A') = 'arandano' and pg_temp.eff('B') = 'mandarina', 'parecidas (arandano/uva): Ana conserva, Beto toma la sugerida de arandano');
+select pg_temp.assert(pg_temp.eff('A') = 'uva' and pg_temp.eff('B') = 'arandano', 'parecidas (uva/arandano) ya no chocan: cada quien la suya (D150)');
+select pg_temp.raw('A', 'arandano'); select pg_temp.raw('B', 'arandano');
+select pg_temp.assert(pg_temp.eff('A') = 'arandano' and pg_temp.eff('B') = 'mandarina', 'misma fruta (arandano): Ana conserva, Beto toma la sugerida de arandano');
 
 -- Con cualquier combinación de 49, lo que se ve nunca choca.
 create temp table t_resolve (x text, y text, ea text, eb text);
@@ -293,7 +287,6 @@ begin
     update t_matrix set got = v_got,
       want = case private.fruit_clash(r.x, r.y)
         when 'same' then 'ERR:fruit_taken'
-        when 'similar' then 'ERR:fruit_too_similar'
         else r.x end
     where t_matrix.x = r.x and t_matrix.y = r.y;
   end loop;
@@ -305,10 +298,10 @@ select pg_temp.assert(not exists (select 1 from t_matrix where got is distinct f
 -- Casos nombrados.
 select pg_temp.raw('A', null); select pg_temp.raw('B', 'mango');
 select pg_temp.assert(pg_temp.try_set('A', 'mango') = 'ERR:fruit_taken', 'misma que la de la pareja');
-select pg_temp.assert(pg_temp.try_set('A', 'limon') = 'ERR:fruit_too_similar', 'limón se parece a mango');
-select pg_temp.assert(pg_temp.try_set('A', 'mandarina') = 'ERR:fruit_too_similar', 'mandarina se parece a mango');
 select pg_temp.assert(pg_temp.try_set('A', 'kiwano') = 'ERR:invalid_fruit', 'llave inválida con pareja');
 select pg_temp.assert((select fruit from public.profiles where id = pg_temp.u('A')) is null, 'los rechazos no guardan nada');
+select pg_temp.assert(pg_temp.try_set('A', 'limon') = 'limon', 'limón sí convive con mango');
+select pg_temp.assert(pg_temp.try_set('A', 'mandarina') = 'mandarina', 'mandarina sí convive con mango');
 select pg_temp.assert(pg_temp.try_set('A', 'uva') = 'uva', 'uva sí convive con mango');
 select pg_temp.assert((select fruit from public.profiles where id = pg_temp.u('A')) = 'uva', 'se guardó uva');
 
@@ -364,7 +357,7 @@ select pg_temp.assert((select (e -> 'actor' ->> 'id')::uuid from pg_temp.queued(
 
 -- Un rechazo no encola.
 select pg_temp.raw('B', 'pitaya');
-select pg_temp.assert(pg_temp.try_set('A', 'uva') = 'ERR:fruit_too_similar', 'uva se parece a pitaya');
+select pg_temp.assert(pg_temp.try_set('A', 'pitaya') = 'ERR:fruit_taken', 'pitaya es la de la pareja');
 select pg_temp.assert((select count(*) from pg_temp.queued()) = 1, 'un rechazo no encola');
 
 -- =============================================================================

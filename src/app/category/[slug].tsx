@@ -1,13 +1,19 @@
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { RefreshControl, View } from 'react-native';
 
-import { EmptyState, LoadingSymbol, Screen, ScreenHeader, Text } from '@/components';
+import { EmptyState, LoadingSymbol, Screen, ScreenHeader, Segmented, Text } from '@/components';
 import { useCouple } from '@/features/couple';
 import { QuestionRow, useCategories, useCategoryQuestions } from '@/features/questions';
-import { sortForMe } from '@/lib/questionsView';
+import { filterByAnswer, sortForMe, type AnswerFilter } from '@/lib/questionsView';
 import { useTheme } from '@/theme';
+
+const FILTER_OPTIONS = [
+  { value: 'all', label: 'Todas' },
+  { value: 'unanswered', label: 'Sin contestar' },
+  { value: 'answered', label: 'Contestadas' },
+] as const;
 
 export default function CategoryScreen() {
   const { spacing, fruit } = useTheme();
@@ -20,7 +26,9 @@ export default function CategoryScreen() {
   const partnerName = partner?.nickname || partner?.display_name || 'Tu pareja';
   const done = list.questions.filter((q) => q.answered_by_me && q.answered_by_partner).length;
   // Primero las que ya contestó tu pareja y te faltan.
-  const questions = useMemo(() => sortForMe(list.questions), [list.questions]);
+  const sorted = useMemo(() => sortForMe(list.questions), [list.questions]);
+  const [filter, setFilter] = useState<AnswerFilter>('all');
+  const questions = useMemo(() => filterByAnswer(sorted, filter), [sorted, filter]);
 
   const header = (
     <View style={{ gap: spacing.xl, paddingBottom: spacing.xl }}>
@@ -38,6 +46,15 @@ export default function CategoryScreen() {
           </Text>
         ) : null}
       </View>
+      {!list.isLoading && !list.isError && list.questions.length > 0 ? (
+        <Segmented
+          fullWidth
+          accessibilityLabel="Filtrar preguntas"
+          options={FILTER_OPTIONS}
+          value={filter}
+          onChange={setFilter}
+        />
+      ) : null}
       {list.isLoading ? (
         <View style={{ alignItems: 'center', paddingVertical: spacing.xxl }}>
           <LoadingSymbol accessibilityLabel="Cargando las preguntas" />
@@ -61,7 +78,19 @@ export default function CategoryScreen() {
         keyExtractor={(q) => q.id}
         ListHeaderComponent={header}
         ListEmptyComponent={
-          list.isLoading || list.isError ? null : (
+          list.isLoading || list.isError ? null : list.questions.length > 0 ? (
+            <EmptyState
+              art="bubble"
+              title={
+                filter === 'unanswered' ? 'Ya contestaste todas' : 'Todavía no contestas ninguna'
+              }
+              body={
+                filter === 'unanswered'
+                  ? 'No te falta ninguna de esta categoría.'
+                  : 'Las que contestes van a aparecer aquí.'
+              }
+            />
+          ) : (
             <EmptyState
               art="bubble"
               title="Aquí todavía no hay preguntas"

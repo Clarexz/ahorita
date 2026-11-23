@@ -3,6 +3,7 @@ import {
   answerDisplay,
   answerExcerpt,
   categoryRowState,
+  filterByAnswer,
   historyPartnerLine,
   pendingByCategory,
   pendingForMe,
@@ -128,5 +129,17 @@ describe('questionsView', () => {
       r('f', false, false),
     ]);
     expect(sorted.map((x) => x.id)).toEqual(['c', 'e', 'b', 'f', 'd', 'a']);
+  });
+
+  it('filterByAnswer filtra por lo que contesté yo y conserva el orden', () => {
+    const qs = [
+      { id: 'a', answered_by_me: true },
+      { id: 'b', answered_by_me: false },
+      { id: 'c', answered_by_me: true },
+      { id: 'd', answered_by_me: false },
+    ];
+    expect(filterByAnswer(qs, 'all')).toEqual(qs);
+    expect(filterByAnswer(qs, 'unanswered').map((x) => x.id)).toEqual(['b', 'd']);
+    expect(filterByAnswer(qs, 'answered').map((x) => x.id)).toEqual(['a', 'c']);
   });
 });
