@@ -56,6 +56,8 @@ type Props = { userId?: string | null; storyId?: string | null };
 
 const CHROME_TOP = 96;
 const CHROME_BOTTOM = 150;
+/** Cuánto se espera una foto antes de dejar de girar y ofrecer reintentar (ms). */
+const STALL_MS = 12_000;
 
 /** Hilo de respuestas de una story: las mías a la derecha, las de tu pareja a la izquierda. */
 function Replies({
@@ -84,7 +86,11 @@ function Replies({
           Nadie ha dicho nada todavía.
         </Text>
       ) : (
-        <ScrollView style={{ maxHeight: 320 }} contentContainerStyle={{ gap: spacing.md }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={{ maxHeight: 320 }}
+          contentContainerStyle={{ gap: spacing.md }}
+        >
           {story.replies.map((r) => {
             const mine = r.user_id === myId;
             const time = formatTimeIn(timeZone, new Date(r.created_at));
@@ -215,6 +221,7 @@ function ViewerBody({ userId, storyId }: Props) {
   const {
     url: mediaUrl,
     isError: urlFailed,
+    error: urlError,
     refresh: refreshMedia,
   } = useStoryMediaUrl(story?.kind === 'photo' ? story.media_path : null);
   // La miniatura (casi siempre ya en caché por la cuadrícula) se ve mientras baja la foto grande.
@@ -231,8 +238,23 @@ function ViewerBody({ userId, storyId }: Props) {
   const [imageFailedId, setImageFailedId] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const autoRetried = useRef<string | null>(null);
+  const [stalledId, setStalledId] = useState<string | null>(null);
   const loaded = !!story && loadedId === story.id;
-  const mediaFailed = urlFailed || (!!story && imageFailedId === story.id);
+  // Una story de foto sin archivo no tiene nada que esperar.
+  const missingMedia = story?.kind === 'photo' && !story.media_path;
+  const stalled = !!story && stalledId === story.id;
+  const mediaFailed =
+    urlFailed || missingMedia || stalled || (!!story && imageFailedId === story.id);
+  // Qué falló, para saber dónde buscar (v0.14.3: antes se quedaba girando sin decir nada).
+  const failReason = missingMedia
+    ? 'Esta story no tiene foto guardada en el servidor.'
+    : urlFailed
+      ? `No pudimos pedirle la foto al servidor (${errorMessage(urlError)}).`
+      : stalled && !mediaUrl
+        ? 'El servidor no respondió con la foto.'
+        : stalled
+          ? 'La foto tardó demasiado en bajar.'
+          : 'La foto no bajó.';
   const onMediaError = () => {
     if (!story) return;
     if (autoRetried.current !== story.id) {
@@ -244,6 +266,7 @@ function ViewerBody({ userId, storyId }: Props) {
   };
   const retryMedia = () => {
     setImageFailedId(null);
+    setStalledId(null);
     void refreshMedia().then(() => setReload((n) => n + 1));
   };
 
@@ -264,6 +287,13 @@ function ViewerBody({ userId, storyId }: Props) {
   const [repliesOpen, setRepliesOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const photoPending = story?.kind === 'photo' && !loaded && !mediaFailed;
+  // Vigilante: si la foto no aparece en STALL_MS, se deja de esperar y se ofrece reintentar.
+  const pendingId = photoPending && story ? story.id : null;
+  useEffect(() => {
+    if (!pendingId) return;
+    const timer = setTimeout(() => setStalledId(pendingId), STALL_MS);
+    return () => clearTimeout(timer);
+  }, [pendingId, reload]);
   const paused = holding || typing || repliesOpen || confirmDelete || photoPending || !story;
 
   // Marca visto al mostrar una story de tu pareja.
@@ -524,9 +554,19 @@ function ViewerBody({ userId, storyId }: Props) {
                   }}
                 >
                   <Text variant="body" tone="muted" style={{ textAlign: 'center' }}>
-                    La foto no cargó.
+                    {failReason}
                   </Text>
-                  <Button title="Reintentar" variant="secondary" size="sm" onPress={retryMedia} />
+                  <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                    {missingMedia ? null : (
+                      <Button
+                        title="Reintentar"
+                        variant="secondary"
+                        size="sm"
+                        onPress={retryMedia}
+                      />
+                    )}
+                    <Button title="Siguiente" variant="ghost" size="sm" onPress={next} />
+                  </View>
                 </View>
               ) : null}
             </View>

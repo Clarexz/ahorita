@@ -263,6 +263,7 @@ export function QuestionView({ card, pack }: { card: QuestionCard; pack?: string
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <KeyboardAwareScrollView
+        showsVerticalScrollIndicator={false}
         ref={scrollRef}
         style={{ flex: 1 }}
         contentContainerStyle={{ gap: spacing.xl, paddingBottom: spacing.xl }}

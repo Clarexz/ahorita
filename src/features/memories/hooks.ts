@@ -9,6 +9,7 @@ import { useEffect, useMemo } from 'react';
 
 import { useCouple, useToday } from '@/features/couple';
 import { onThisDay } from '@/lib/memories';
+import { dataQueries } from '@/lib/queryPolicy';
 import { supabase } from '@/lib/supabase';
 
 import {
@@ -151,7 +152,7 @@ export function useDeleteMemory() {
   return useMutation({
     mutationFn: (id: string) => deleteMemory(id),
     onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: memoryKeys.all });
+      await qc.cancelQueries(dataQueries(memoryKeys.all));
       const snapshot: Snapshot = [];
       for (const [key, data] of qc.getQueriesData<Memory[]>({
         queryKey: [...memoryKeys.all, 'list'],

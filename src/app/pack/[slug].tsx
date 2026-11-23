@@ -96,6 +96,7 @@ export default function PackScreen() {
   return (
     <Screen>
       <FlashList
+        showsVerticalScrollIndicator={false}
         data={showList ? list.questions : []}
         keyExtractor={(q) => q.id}
         ListHeaderComponent={header}

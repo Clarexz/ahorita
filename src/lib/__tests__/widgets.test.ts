@@ -1,6 +1,11 @@
 import {
   SNAPSHOT_STALE_MS,
+  isWidgetName,
+  WIDGET_KINDS,
   WIDGET_NAMES,
+  widgetKind,
+  widgetNameFor,
+  widgetStyle,
   WIDGET_ROUTES,
   WIDGET_SNAPSHOT_VERSION,
   buildWidgetSnapshot,
@@ -37,8 +42,30 @@ const snap = (over: Partial<WidgetSnapshot> = {}): WidgetSnapshot => ({
 });
 
 describe('constantes', () => {
-  it('cada widget tiene ruta', () => {
-    for (const n of WIDGET_NAMES) expect(WIDGET_ROUTES[n]).toMatch(/^\//);
+  it('cada clase tiene ruta', () => {
+    for (const k of WIDGET_KINDS) expect(WIDGET_ROUTES[k]).toMatch(/^\//);
+  });
+
+  it('cada clase se registra en tonal y Escarcha, juntas y sin cambiar los nombres de siempre', () => {
+    expect(WIDGET_NAMES).toHaveLength(WIDGET_KINDS.length * 2);
+    expect(WIDGET_NAMES.slice(0, 4)).toEqual([
+      'DaysTogether',
+      'DaysTogetherFrost',
+      'PartnerMood',
+      'PartnerMoodFrost',
+    ]);
+    expect(WIDGET_NAMES).toContain('PartnerMessageFrost');
+  });
+
+  it('widgetKind, widgetStyle y widgetNameFor son inversos', () => {
+    for (const name of WIDGET_NAMES) {
+      expect(widgetNameFor(widgetKind(name), widgetStyle(name))).toBe(name);
+      expect(isWidgetName(name)).toBe(true);
+    }
+    expect(widgetKind('StreakFrost')).toBe('Streak');
+    expect(widgetStyle('Streak')).toBe('tonal');
+    expect(widgetStyle('StreakFrost')).toBe('frost');
+    expect(isWidgetName('Nope')).toBe(false);
   });
 });
 

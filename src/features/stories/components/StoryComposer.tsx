@@ -297,6 +297,7 @@ export function StoryComposer({ kind }: { kind: ComposerKind }) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAwareScrollView
+        showsVerticalScrollIndicator={false}
         bottomOffset={24}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{

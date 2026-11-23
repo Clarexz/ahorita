@@ -5,11 +5,20 @@ import {
   widgetModel,
   type SnapshotInput,
   type WidgetModel,
-  type WidgetName,
 } from '@/lib/widgets';
 import { MOOD_OPTIONS } from '@/lib/mood';
 
-import { mascotMood, widgetShapeSvg, widgetView } from '../view';
+import {
+  initialOf,
+  isShapeName,
+  mascotMood,
+  messageView,
+  widgetShapeSvg,
+  widgetView,
+  type ShapeName,
+} from '../view';
+
+const SHAPE_NAMES = WIDGET_NAMES.filter(isShapeName);
 
 const NOW = new Date('2026-10-30T18:00:00Z');
 
@@ -44,7 +53,7 @@ const input = (over: Partial<SnapshotInput> = {}): SnapshotInput => ({
 const model = (over: Partial<SnapshotInput> = {}): WidgetModel =>
   widgetModel(buildWidgetSnapshot(input(over)), NOW);
 
-const text = (name: WidgetName, m: WidgetModel) => widgetView(name, m).text;
+const text = (name: ShapeName, m: WidgetModel) => widgetView(name, m).text;
 
 describe('widgetView', () => {
   it('el dato de cada widget', () => {
@@ -182,7 +191,7 @@ describe('widgetView', () => {
   it('sin sesión o sin pareja, todos los widgets muestran las dos medias lunas', () => {
     const closed = widgetModel(emptyWidgetSnapshot('signed_out', NOW), NOW);
     const noCouple = widgetModel(emptyWidgetSnapshot('no_couple', NOW), NOW);
-    for (const name of WIDGET_NAMES) {
+    for (const name of SHAPE_NAMES) {
       expect(widgetView(name, closed).face.shape).toBe('empty');
       expect(widgetView(name, noCouple).face.shape).toBe('empty');
       expect(widgetView(name, noCouple).text).toBe('sin pareja');
@@ -192,10 +201,69 @@ describe('widgetView', () => {
 
   it('widgetShapeSvg dibuja una forma por widget', () => {
     const m = model();
-    for (const name of WIDGET_NAMES) {
+    for (const name of SHAPE_NAMES) {
       const svg = widgetShapeSvg(widgetView(name, m), { size: 58 });
       expect(svg).toContain('<svg');
       expect(svg).toContain('width="58"');
     }
+  });
+});
+
+describe('estilo Escarcha en la vista', () => {
+  it('la variante Frost lleva el mismo dato y el estilo frost', () => {
+    const m = model();
+    for (const name of SHAPE_NAMES) {
+      const tonal = widgetView(name, m);
+      expect(tonal.style).toBe(name.endsWith('Frost') ? 'frost' : 'tonal');
+    }
+    expect(text('DaysTogetherFrost', m)).toBe(text('DaysTogether', m));
+    const svg = widgetShapeSvg(widgetView('StreakFrost', m), { size: 58 });
+    expect(svg).toContain('fill-opacity');
+  });
+});
+
+describe('messageView', () => {
+  const msg = (
+    over: Partial<SnapshotInput> = {},
+    name: 'PartnerMessage' | 'PartnerMessageFrost' = 'PartnerMessage',
+  ) => messageView(name, model(over));
+
+  it('la nota es el mensaje, con el mood debajo', () => {
+    const v = msg({
+      partnerMood: { emoji: '🥰', note: 'Te quiero', created_at: '2026-10-30T17:35:00Z' },
+    });
+    expect(v.initial).toBe('C');
+    expect(v.message).toBe('Te quiero');
+    expect(v.meta).toMatch(/^🥰 con mariposas · /);
+    expect(v.a11y).toContain('Mensaje de Caleb: Te quiero');
+    expect(v.style).toBe('tonal');
+  });
+
+  it('sin nota pero con mood: "Anda ..."', () => {
+    const v = msg();
+    expect(v.message).toBe('Anda feliz 😄');
+    expect(v.meta).toBeNull();
+    const blank = msg({
+      partnerMood: { emoji: '😄', note: '   ', created_at: '2026-10-30T17:35:00Z' },
+    });
+    expect(blank.message).toBe('Anda feliz 😄');
+  });
+
+  it('sin mood', () => {
+    const v = msg({ partnerMood: null }, 'PartnerMessageFrost');
+    expect(v.message).toBe('Todavía no te deja mensaje');
+    expect(v.style).toBe('frost');
+  });
+
+  it('sin sesión o sin pareja', () => {
+    const closed = widgetModel(emptyWidgetSnapshot('signed_out', NOW), NOW);
+    const noCouple = widgetModel(emptyWidgetSnapshot('no_couple', NOW), NOW);
+    expect(messageView('PartnerMessage', closed).message).toMatch(/^Abre /);
+    expect(messageView('PartnerMessage', noCouple).message).toBe('Todavía no tienes pareja');
+  });
+
+  it('la inicial', () => {
+    expect(initialOf('  ana')).toBe('A');
+    expect(initialOf('')).toBe('·');
   });
 });

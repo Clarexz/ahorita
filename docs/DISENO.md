@@ -296,6 +296,15 @@ solo dato va debajo.
 - Texto blanco 600 con sombra oscura. Estado vacío: la mascota tranquila.
 - Una fruta es tú; la otra, tu pareja.
 
+- **Escarcha** (D141, v0.14.0): cada widget tiene también una variante `<Nombre>Frost` con el mismo
+  nombre visible: gris neutro `#8A8A90` translúcido (tu pieza 0.45, la de tu pareja 0.32, neutro
+  0.38), contorno blanco 0.5, avance en blanco 0.75 y detalles/texto en blanco (`FROST` en
+  `src/widgets/components/svg.ts`). Plano: sin desenfoque (Android no lo permite), brillos ni
+  degradados. Las fotos de story siguen en color.
+- **Mensaje de tu pareja** (D142): el único widget ancho (4×1, de 3×1 a 4×2): su fruta en círculo
+  con la inicial y una burbuja con colita (tonal: Hueso con sombra de su fruta y texto en tinta;
+  Escarcha: gris translúcido y texto blanco) con el mensaje de su mood y, abajo, mood y hace cuánto.
+
 ### 9.1 Mascota (D128)
 
 El símbolo con cara: las dos medias lunas (izquierda tú, derecha tu pareja) en estilo tonal y

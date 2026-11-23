@@ -16,6 +16,33 @@ export const NON_PERSISTED_KEYS: readonly string[] = [
   'distance-permission',
 ];
 
+/** Segmentos de llave de consultas que solo traen URLs firmadas de Storage. */
+export const SIGNED_URL_SEGMENTS: readonly string[] = [
+  'signed-url',
+  'signed-urls',
+  'media',
+  'urls',
+  'audio',
+];
+
+/**
+ * ¿Es una consulta de URL firmada? Las actualizaciones optimistas cancelan las consultas de su
+ * prefijo (`['stories']`, `['memories']`) antes de tocar la caché; si cancelan también estas, la
+ * firma en vuelo se descarta y la consulta queda pendiente para siempre sin volver a pedirse
+ * (D147: la foto de la story de tu pareja giraba sin fin al marcarla como vista).
+ */
+export function isSignedUrlKey(queryKey: readonly unknown[]): boolean {
+  return queryKey.some((part) => typeof part === 'string' && SIGNED_URL_SEGMENTS.includes(part));
+}
+
+/** Filtro para `cancelQueries`: el prefijo dado, sin las consultas de URLs firmadas. */
+export function dataQueries(queryKey: readonly unknown[]) {
+  return {
+    queryKey,
+    predicate: (query: { queryKey: readonly unknown[] }) => !isSignedUrlKey(query.queryKey),
+  };
+}
+
 type QueryLike = {
   queryKey: readonly unknown[];
   state: { status: string };

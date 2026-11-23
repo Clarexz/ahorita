@@ -10,6 +10,7 @@ import { useCallback, useEffect } from 'react';
 import { useSession } from '@/features/auth';
 import { useCouple } from '@/features/couple';
 import { useProfile } from '@/features/profile';
+import { dataQueries } from '@/lib/queryPolicy';
 import { supabase } from '@/lib/supabase';
 import { markStorySeenLocally } from '@/widgets/update';
 
@@ -135,6 +136,7 @@ export function useStoryMediaUrl(path: string | null | undefined) {
     url: query.data ?? null,
     isLoading: !!path && query.isLoading,
     isError: query.isError,
+    error: query.error,
     refresh,
   };
 }
@@ -170,8 +172,9 @@ function restore(qc: QueryClient, snapshot: Snapshot | undefined) {
   for (const [key, data] of snapshot ?? []) qc.setQueryData(key, data);
 }
 
+/** Cancela las lecturas de stories antes de un cambio optimista, nunca las de URLs firmadas. */
 async function cancelStories(qc: QueryClient) {
-  await qc.cancelQueries({ queryKey: storyKeys.all });
+  await qc.cancelQueries(dataQueries(storyKeys.all));
 }
 
 function invalidateStories(qc: QueryClient) {

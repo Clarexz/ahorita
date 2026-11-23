@@ -1079,6 +1079,62 @@ Observaciones del usuario al usar la v0.13.5 (2026-11-20). Rama `claude/hopeful-
 **Entregable APK:** `v0.13.6`. Backend: migración de `send_nudge` (prompt para el servidor antes
 de publicar el APK sin `<!-- sin-aviso -->`).
 
+### Ajustes v0.14.0 — Entrar sin scroll, pendientes, widgets escarcha y el camino
+
+Observaciones del usuario (2026-11-21) al usar la v0.13.6. Rama `claude/determined-galileo-rvli3f`.
+Sin cambios de servidor (todo sale de datos que ya existen), así que no hay prompt para el servidor.
+
+**Tareas:**
+1. **Entrar sin scroll** (D139). La pantalla de Iniciar sesión cabe en el alto del celular:
+   `Screen` gana `fill` (el contenido usa todo el alto y reparte el espacio, marca arriba y acciones
+   abajo) y `AuthBrand` se compacta: wordmark de 40 → 32 y **fuera la frase** "Falta menos de lo que
+   parece." en Entrar (se queda en Crear cuenta, que tiene menos cosas). Sigue siendo una
+   `ScrollView` por seguridad (teclado abierto o celular muy chico), pero sin rebote ni nada que
+   desplazar en un celular normal (QA en 360×640 y 412×915).
+2. **Sin barra de desplazamiento** en toda la app (D139): `showsVerticalScrollIndicator={false}`
+   (y horizontal) en `Screen` y en cada `ScrollView`/`FlashList`/`FlatList`; una prueba revisa que
+   ningún archivo de `src/` agregue una lista nueva sin apagarla.
+3. **Pantalla "Te toca a ti"** (D140, ruta `/pending`): la lista completa de preguntas que tu pareja
+   contestó y a ti te faltan (las mismas de `usePendingForMe`), con emoji de categoría, texto y
+   hace cuánto; tocar abre la pregunta y, al contestarla, sale de la lista. En **Preguntas** la
+   tarjeta se compacta a una sola fila tocable ("Chu contestó 3 preguntas que te faltan" + flecha)
+   que lleva a `/pending`. En **Inicio** se queda como está (una pregunta y "Contestar"), pero
+   "Ver todas" lleva a `/pending` en lugar de a la pestaña.
+4. **Widgets en dos estilos** (D141): cada widget se registra dos veces con el **mismo nombre
+   visible**, en estilo **tonal** (el de hoy) y en estilo **escarcha**: monocromático, gris
+   translúcido y plano, como el vidrio de iOS con la transparencia bajada, que deja ver el fondo de
+   pantalla. Android no deja desenfocar el fondo detrás de un widget, así que la escarcha es una
+   capa blanca translúcida (≈ 22 % de opacidad en la forma, borde fino de ≈ 45 %) con detalles y
+   texto en blanco; nada de brillos ni degradados (lo que no gustó del vidrio de D103). En los
+   Samsung, One UI agrupa los widgets con el mismo nombre en una caja con sus variantes (como en la
+   foto de "Browser"); en otros launchers salen uno tras otro. Nombres internos `<Nombre>Frost`;
+   vistas previas de los dos estilos. **Por confirmar en el APK** que One UI los agrupe; si no,
+   se ajusta el nombre visible.
+5. **Widget nuevo "Mensaje de tu pareja"** (D142, pedido de la novia), en los dos estilos: el
+   mensaje que tu pareja dejó con su mood, solo, en un widget a lo ancho (4×1, se puede achicar a
+   3×1 y agrandar a 4×2). A la izquierda su fruta en círculo con su inicial (en escarcha, círculo
+   translúcido con la inicial en blanco); a la derecha una burbuja con el mensaje (hasta 2 líneas
+   en 4×1, 4 en 4×2) y debajo, pequeño, el mood y hace cuánto ("😄 feliz · hace 2 h"). La burbuja
+   sale de la fruta con una colita, como si hablara. Sin mensaje: la burbuja dice su mood
+   ("Anda feliz 😄"); sin mood: "Todavía no te deja mensaje". Tocar abre los moods. Usa el
+   `partnerMood.note` que ya está en el snapshot: sin snapshot ni servidor nuevos.
+6. **"El camino" en La próxima vez** (D143): fuera la leyenda "1 de 7 días desde que la
+   apuntaron". La media luna se queda (y ahora se llena animada al aparecer, de 0 a su avance), y
+   debajo va **el camino**: una línea con un punto por día (si la espera es de 21 días o menos;
+   si no, una línea continua) y las dos frutas en los extremos que **se acercan** conforme pasan
+   los días; el día de verse se juntan en el centro y forman el símbolo (las dos medias lunas con
+   su rendija). Los puntos que ya pasaron se pintan con las dos frutas. Debajo del camino, solo
+   las dos fechas cortas en los extremos ("12 nov" … "19 nov"); el lector de pantalla dice la
+   frase completa. Al aparecer, las frutas caminan desde los extremos hasta su lugar (600 ms,
+   sin animación si el sistema pide menos movimiento). Va en la tarjeta de Inicio y en la de
+   Cuentas regresivas. Sin desde cuándo medir (ventana de 30 días), no se dibuja el camino.
+
+**Reparto (§8.4):** `implementador` 1–3, `disenador-ui` 6, `implementador` 4–5 (worktrees
+separados); el orquestador revisa, integra, hace la crítica de diseño y el cierre.
+
+**Entregable APK:** `v0.14.0` (sin cambios de servidor; widgets nuevos: hay que agregarlos desde
+el selector para ver la escarcha y el de mensaje).
+
 ---
 
 ## 10. Estado del proyecto
@@ -1107,6 +1163,7 @@ de publicar el APK sin `<!-- sin-aviso -->`).
 | Ajustes v0.13.4 (distancia, frutas, widgets) | ✅ Desplegada y mergeada (v0.13.4) | #26 | Distancia precisa con "juntos" (D130), 40 frutas por color (D129) y vistas previas del selector de widgets (D131). Migraciones `20261118000000_more_fruits` y `20261118000001_precise_location` + `notify`, desplegadas el 2026-11-18 (`ccbf21f`). Vistas previas regeneradas con el estilo tonal de la v0.13.3. Notas en `docs/releases/v0.13.4.md`. |
 | Ajustes v0.13.5 (preguntas visibles, teclado) | ✅ Mergeada (v0.13.5) | #27 | Distintivo de "contestaron los dos" (franja con las dos frutas y píldora), pendientes de la pareja en Inicio y Preguntas con número por categoría y orden "te toca" primero en la categoría (D132), y teclado que ya no tapa inputs en el editor de stories, de memorias y en las hojas. Sin cambios de servidor. APK v0.13.5 publicado y probado por el usuario; PR mergeado a `main` a pedido del usuario (2026-11-20). |
 | Ajustes v0.13.6 (widgets, stories, mood, toques) | ✅ Desplegada y mergeada (v0.13.6) | #28 | D134–D138. Sale junto con el renombre a `mx.ahorita.app` (D138, rama `claude/friendly-rubin-9dga9t`): app nueva, no se instala encima. Release con solo ABIs arm y timeout de 90 min (el primer intento se pasó de 60). APK **v0.13.6** publicado el 2026-11-21 (21 min); PR #29 con el renombre, mergeado a `main` a pedido del usuario (2026-11-21). Servidor desplegado el 2026-11-20 (`825cfb9`, migración `20261120000000_nudge_burst`, 22 registradas). Notas en `docs/releases/v0.13.6.md`; PR mergeado a `main` a pedido del usuario (2026-11-20); falta probar en los celulares. Media luna con una sola regla (desde la última visita), atrás desde widgets a Inicio, widget de story con "ya la viste", mood sin mensaje pegado, nombres en Distancia, stories de hoy, visor sin pantalla negra, foto sin recorte, un solo pie de foto y 10 toques al día con 5 s entre uno y otro (migración de `send_nudge`). |
+| Ajustes v0.14.x (entrar, pendientes, widgets escarcha, camino, stories) | ✅ Mergeada (v0.14.4) | #30 | D139–D143. APK **v0.14.0** publicado el 2026-11-21, pero se cerraba al llegar a Inicio (worklet de `HalfMoon` llamando a `fillTop`, D144); **v0.14.1** con el arreglo y una prueba que lo vigila, publicado el 2026-11-21 (CI verde). **v0.14.4** (D147, publicado el 2026-11-21, CI verde): causa raíz de las stories colgadas (marcar como vista cancelaba la firma de la foto en vuelo). **v0.14.3** (D146, publicado el 2026-11-21, CI verde): visor de stories con vigilante de 12 s y motivo del fallo (las de foto de la novia se quedaban girando). **v0.14.2** (D145, publicado el 2026-11-21, CI verde): burbuja de "Su mensaje" delgadita con "…" y nombres "Color · …"/"Escarcha · …" porque One UI no los agrupó. PR #30 mergeado a `main` a pedido del usuario (2026-11-23). Falta probar la v0.14.4 con una story de foto nueva. Rama `claude/determined-galileo-rvli3f`. Sin cambios de servidor. Entrar sin scroll y sin barras (implementador), `/pending` (implementador), el camino `WaitPath` + media luna animada (disenador-ui), 14 widgets: tonal + Escarcha gris translúcida y el nuevo Mensaje de tu pareja (implementador). Notas en `docs/releases/v0.14.0.md`. |
 
 ### 10.1 Camino a la v1.0.0
 
@@ -1114,6 +1171,7 @@ Estamos cerca de la v1.0.0, pero antes faltan:
 
 1. ~~Fase 11A~~ (cancelada, D133).
 2. ~~Ajustes v0.13.6~~ (hechos, PR #28).
+2b. ~~Ajustes v0.14.x~~ (PR #30, mergeado a `main` a pedido del usuario el 2026-11-23): entrar sin scroll, pendientes, widgets escarcha y mensaje, el camino.
 3. **Correcciones pendientes**, por definir con el usuario. En las dos, **pedirle el detalle al
    usuario antes de corregir**:
    - Detalles de la tarjeta compartible (racha / tiempo juntos; D113).
@@ -1121,6 +1179,9 @@ Estamos cerca de la v1.0.0, pero antes faltan:
    - El usuario dice que hay más cosas por corregir: preguntarle la lista al empezar.
 
 **Pruebas en el celular pendientes** (una línea por release, con su lista en `docs/releases/`):
+
+- **v0.14.2** (`v0.14.2.md`, `v0.14.1.md` y `v0.14.0.md`): burbuja delgadita y selector en dos bloques; que Inicio ya no se cierre; Entrar sin scroll, sin barras, "Te toca a ti", el camino animado,
+  widgets Escarcha (¿One UI los agrupa por nombre?) y Mensaje de tu pareja de 3×1 a 4×2.
 
 - **v0.13.6** (`v0.13.6.md`): media luna igual en widget/Inicio/Cuentas regresivas, atrás desde
   widgets, widget de story "ya la viste", mood, nombres en Distancia, stories de hoy/ayer, visor,
