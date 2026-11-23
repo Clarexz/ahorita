@@ -29,23 +29,20 @@ describe('FruitPicker', () => {
 
   it('una fruta bloqueada no dispara onChange y queda deshabilitada', async () => {
     const onChange = jest.fn();
-    // Pareja con Mango: Mango es la misma, Limón se le parece (manual) y Plátano es del mismo color.
+    // Pareja con Mango: solo Mango (la misma) se bloquea; Limón y Plátano siguen libres.
     await wrap(
       <FruitPicker value="sandia" partnerFruit="mango" partnerName="Ximena" onChange={onChange} />,
     );
     const same = screen.getByRole('radio', { name: /^Mango/ });
-    const similar = screen.getByRole('radio', { name: /^Limón/ });
+    const free = screen.getByRole('radio', { name: /^Limón/ });
     expect(same.props.accessibilityState.disabled).toBe(true);
-    expect(similar.props.accessibilityState.disabled).toBe(true);
+    expect(free.props.accessibilityState.disabled).toBe(false);
     await fireEvent.press(same);
-    await fireEvent.press(similar);
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.getByText('es de Ximena')).toBeTruthy();
-    // Limón y Mandarina (manual).
-    expect(screen.getAllByText('se parece a la suya')).toHaveLength(2);
-    expect(screen.getAllByText('mismo color')).toHaveLength(5);
+    expect(screen.getAllByText(/^es de /)).toHaveLength(1);
     expect(screen.getByRole('radio', { name: /^Plátano/ }).props.accessibilityState.disabled).toBe(
-      true,
+      false,
     );
   });
 
@@ -56,16 +53,12 @@ describe('FruitPicker', () => {
     expect(screen.getByText('sugerida')).toBeTruthy();
   });
 
-  it('el motivo depende del tipo de choque', () => {
+  it('el motivo es de quién es la fruta', () => {
     const options = fruitOptions('sandia');
     const same = options.find((o) => o.fruit.key === 'sandia');
-    const similar = options.find((o) => o.fruit.key === 'pitaya');
     const free = options.find((o) => o.fruit.key === 'uva');
     expect(blockedReason(same!, 'Ale')).toBe('es de Ale');
     expect(blockedReason(same!)).toBe('es de tu pareja');
-    expect(blockedReason(similar!, undefined, 'sandia')).toBe('se parece a la suya');
-    const sameColor = options.find((o) => o.fruit.key === 'fresa');
-    expect(blockedReason(sameColor!, undefined, 'sandia')).toBe('mismo color');
     expect(blockedReason(free!)).toBeNull();
   });
 });

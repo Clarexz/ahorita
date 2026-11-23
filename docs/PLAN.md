@@ -1135,6 +1135,30 @@ separados); el orquestador revisa, integra, hace la crítica de diseño y el cie
 **Entregable APK:** `v0.14.0` (sin cambios de servidor; widgets nuevos: hay que agregarlos desde
 el selector para ver la escarcha y el de mensaje).
 
+### Ajustes v0.15 — Frutas, filtros por categoría y Lo que viene
+
+Observaciones del usuario (2026-11-23) al usar la v0.14.6. Rama `ajustes-v0.15`.
+
+**Tareas:**
+1. **Guardar fruta con botón flotante** (D149): en "Tu fruta", el botón "Quedarme con …" aparece
+   solo al elegir una fruta distinta de la tuya y flota sobre la parte inferior de la pantalla
+   (no al final del scroll).
+2. **Solo se bloquea la fruta que eligió tu pareja** (D150): fuera el bloqueo por mismo color y por
+   pares parecidos. `fruitClash` y `private.fruit_clash` solo devuelven `same`; migración
+   `20261123000000_fruit_clash_same_only` (prompt para el servidor).
+3. **Nombres de fruta de dos renglones centrados** en el selector (antes quedaban a la izquierda).
+4. **Filtros en cada categoría de preguntas** (D151): `Segmented` bajo el nombre con Todas / Sin
+   contestar / Contestadas (desde tu lado: `answered_by_me`). Todas es la vista de siempre (las
+   contestadas al fondo).
+5. **Lo que viene sin notas de relleno**: fuera "Sale de su aniversario" y "Sale del cumpleaños en
+   el perfil"; solo queda "Se repite cada año" en las fechas propias.
+
+**Reparto (§8.4):** `programador` 1–3 y `programador` 4 en paralelo; el orquestador hizo la 5,
+revisa, integra y cierra.
+
+**Entregable APK:** `v0.15.0`. Backend: migración de `fruit_clash` (prompt para el servidor antes
+de publicar el APK).
+
 ---
 
 ## 10. Estado del proyecto
@@ -1165,6 +1189,7 @@ el selector para ver la escarcha y el de mensaje).
 | Ajustes v0.13.6 (widgets, stories, mood, toques) | ✅ Desplegada y mergeada (v0.13.6) | #28 | D134–D138. Sale junto con el renombre a `mx.ahorita.app` (D138, rama `claude/friendly-rubin-9dga9t`): app nueva, no se instala encima. Release con solo ABIs arm y timeout de 90 min (el primer intento se pasó de 60). APK **v0.13.6** publicado el 2026-11-21 (21 min); PR #29 con el renombre, mergeado a `main` a pedido del usuario (2026-11-21). Servidor desplegado el 2026-11-20 (`825cfb9`, migración `20261120000000_nudge_burst`, 22 registradas). Notas en `docs/releases/v0.13.6.md`; PR mergeado a `main` a pedido del usuario (2026-11-20); falta probar en los celulares. Media luna con una sola regla (desde la última visita), atrás desde widgets a Inicio, widget de story con "ya la viste", mood sin mensaje pegado, nombres en Distancia, stories de hoy, visor sin pantalla negra, foto sin recorte, un solo pie de foto y 10 toques al día con 5 s entre uno y otro (migración de `send_nudge`). |
 | Ajustes v0.14.x (entrar, pendientes, widgets escarcha, camino, stories) | ✅ Mergeada (v0.14.4) | #30 | D139–D143. APK **v0.14.0** publicado el 2026-11-21, pero se cerraba al llegar a Inicio (worklet de `HalfMoon` llamando a `fillTop`, D144); **v0.14.1** con el arreglo y una prueba que lo vigila, publicado el 2026-11-21 (CI verde). **v0.14.4** (D147, publicado el 2026-11-21, CI verde): causa raíz de las stories colgadas (marcar como vista cancelaba la firma de la foto en vuelo). **v0.14.3** (D146, publicado el 2026-11-21, CI verde): visor de stories con vigilante de 12 s y motivo del fallo (las de foto de la novia se quedaban girando). **v0.14.2** (D145, publicado el 2026-11-21, CI verde): burbuja de "Su mensaje" delgadita con "…" y nombres "Color · …"/"Escarcha · …" porque One UI no los agrupó. PR #30 mergeado a `main` a pedido del usuario (2026-11-23). Falta probar la v0.14.4 con una story de foto nueva. Rama `claude/determined-galileo-rvli3f`. Sin cambios de servidor. Entrar sin scroll y sin barras (implementador), `/pending` (implementador), el camino `WaitPath` + media luna animada (disenador-ui), 14 widgets: tonal + Escarcha gris translúcida y el nuevo Mensaje de tu pareja (implementador). Notas en `docs/releases/v0.14.0.md`. |
 | Ajustes v0.14.5 (teclado en hojas) | 🟡 APK publicado (v0.14.6), por probar | | El teclado ya no tapa los campos de las hojas (nota del mood, respuestas a stories, listas): la hoja hace scroll y lleva el campo enfocado a la vista (D148); además renglones de listas y aire sobre el teclado en formularios. Sin cambios de servidor. Notas en `docs/releases/v0.14.5.md`. El APK v0.14.5 (2026-11-22) salió sin la v0.14.x de `main` (la rama nació antes); se mezcló `main` y se relanzó como **v0.14.6** (notas en `v0.14.6.md`; APK publicado el 2026-11-23). Pendiente de probar en el celular y de PR. |
+| Ajustes v0.15 (frutas, filtros, Lo que viene) | 🟡 En curso | | D149–D151. Botón flotante al cambiar de fruta, solo se bloquea la fruta elegida (migración `20261123000000_fruit_clash_same_only`), nombres centrados, Todas/Sin contestar/Contestadas en cada categoría y fuera las notas de relleno en Lo que viene. Rama `ajustes-v0.15`. |
 
 ### 10.1 Camino a la v1.0.0
 

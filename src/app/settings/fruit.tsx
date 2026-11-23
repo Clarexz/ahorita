@@ -12,13 +12,15 @@ import { useTheme } from '@/theme';
 
 /** Elegir tu fruta (D100). El servidor solo bloquea la que tu pareja ELIGIÓ, no la que se ve. */
 export default function FruitSettingsScreen() {
-  const { spacing } = useTheme();
+  const { spacing, radius, shadows } = useTheme();
   const router = useRouter();
   const { partner } = useCouple();
   const fruits = useFruits();
   const setFruit = useSetFruit();
   const [picked, setPicked] = useState<FruitKey | null>(null);
   const value = picked ?? fruits.me.key;
+  // Solo se ofrece guardar cuando eligió una fruta distinta a la actual.
+  const changed = value !== fruits.me.key;
   const partnerChosen = isFruitKey(partner?.fruit) ? partner.fruit : null;
   const partnerName = partner?.nickname || partner?.display_name;
 
@@ -31,7 +33,26 @@ export default function FruitSettingsScreen() {
     });
 
   return (
-    <Screen scroll>
+    <Screen
+      scroll
+      floating={
+        changed ? (
+          <View style={{ gap: spacing.sm }}>
+            {setFruit.isError ? (
+              <Notice tone="danger">{errorMessage(setFruit.error)}</Notice>
+            ) : null}
+            <View style={{ borderRadius: radius.pill, boxShadow: shadows.float }}>
+              <Button
+                title={`Quedarme con ${FRUITS[value].name}`}
+                onPress={save}
+                loading={setFruit.isPending}
+                fullWidth
+              />
+            </View>
+          </View>
+        ) : null
+      }
+    >
       <View style={{ gap: spacing.xl }}>
         <View style={{ gap: spacing.sm }}>
           <ScreenHeader title="Tu fruta" back="Más" />
@@ -44,13 +65,6 @@ export default function FruitSettingsScreen() {
           partnerFruit={partnerChosen}
           partnerName={partnerName ?? undefined}
           onChange={setPicked}
-        />
-        {setFruit.isError ? <Notice tone="danger">{errorMessage(setFruit.error)}</Notice> : null}
-        <Button
-          title={`Quedarme con ${FRUITS[value].name}`}
-          onPress={save}
-          loading={setFruit.isPending}
-          fullWidth
         />
       </View>
     </Screen>

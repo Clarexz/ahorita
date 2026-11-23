@@ -52,9 +52,9 @@ describe('FruitSettingsScreen', () => {
     mockBack.mockClear();
   });
 
-  it('parte de tu fruta y guarda la elegida', async () => {
+  it('parte de tu fruta sin botón y guarda la elegida', async () => {
     await renderScreen();
-    expect(screen.getByText('Quedarme con Mango')).toBeTruthy();
+    expect(screen.queryByText(/^Quedarme con/)).toBeNull();
     await fireEvent.press(screen.getByRole('radio', { name: 'Uva' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Quedarme con Uva' }));
     expect(mockMutate).toHaveBeenCalledWith('uva', expect.any(Object));
@@ -65,9 +65,18 @@ describe('FruitSettingsScreen', () => {
     expect(screen.getByRole('radio', { name: 'Sandía, bloqueada: es de Caleb' })).toBeTruthy();
   });
 
+  it('el botón solo sale con una fruta distinta a la actual', async () => {
+    await renderScreen();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Uva' }));
+    expect(screen.getByText('Quedarme con Uva')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('radio', { name: /^Mango/ }));
+    expect(screen.queryByText(/^Quedarme con/)).toBeNull();
+  });
+
   it('regresa al guardar', async () => {
     await renderScreen();
-    await fireEvent.press(screen.getByRole('button', { name: 'Quedarme con Mango' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Uva' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Quedarme con Uva' }));
     const opts = mockMutate.mock.calls[0][1] as { onSuccess: () => void };
     opts.onSuccess();
     expect(mockBack).toHaveBeenCalled();

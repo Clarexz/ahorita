@@ -3,7 +3,7 @@
  * La lógica de fechas vive en `events.ts`.
  */
 import { formatNumber } from './dates';
-import type { Countdown, CountdownKind } from './events';
+import type { Countdown } from './events';
 
 export const EVENT_TITLE_MAX = 60;
 export const EVENT_NOTE_MAX = 280;
@@ -69,16 +69,12 @@ export function countdownSpoken(daysUntil: number): string {
   return `faltan ${formatNumber(daysUntil)} días`;
 }
 
-const AUTO_NOTE: Partial<Record<CountdownKind, string>> = {
-  anniversary: 'Sale de su aniversario',
-  monthiversary: 'Sale de su aniversario',
-  days: 'Sale de su aniversario',
-  birthday: 'Sale del cumpleaños en el perfil',
-};
-
-/** Línea sutil bajo cada cuenta regresiva: por qué no se edita o que se repite. */
-export function countdownNote(c: Pick<Countdown, 'kind' | 'eventId' | 'recurring'>): string | null {
-  if (!c.eventId) return AUTO_NOTE[c.kind] ?? null;
+/**
+ * Línea sutil bajo cada cuenta regresiva: solo "Se repite cada año" en los eventos propios. Las
+ * automáticas (aniversario, cumpleaños…) no llevan nota (v0.15: era texto de relleno).
+ */
+export function countdownNote(c: Pick<Countdown, 'eventId' | 'recurring'>): string | null {
+  if (!c.eventId) return null;
   return c.recurring ? 'Se repite cada año' : null;
 }
 

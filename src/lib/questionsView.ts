@@ -150,3 +150,14 @@ export function sortForMe<T extends { answered_by_me: boolean; answered_by_partn
     .sort((a, b) => a.rank - b.rank || a.i - b.i)
     .map((x) => x.q);
 }
+
+export type AnswerFilter = 'all' | 'unanswered' | 'answered';
+
+/** Filtro de una categoría por lo que tú contestaste (`answered_by_me`); conserva el orden. */
+export function filterByAnswer<T extends { answered_by_me: boolean }>(
+  questions: T[],
+  filter: AnswerFilter,
+): T[] {
+  if (filter === 'all') return questions;
+  return questions.filter((q) => (filter === 'answered' ? q.answered_by_me : !q.answered_by_me));
+}

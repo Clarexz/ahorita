@@ -39,8 +39,7 @@ export async function updateProfile(userId: string, patch: ProfilePatch): Promis
 }
 
 /**
- * Elige tu fruta. Solo se cambia por RPC: el servidor rechaza la de tu pareja (`fruit_taken`) y las
- * que se le parecen (`fruit_too_similar`).
+ * Elige tu fruta. Solo se cambia por RPC: el servidor rechaza la de tu pareja (`fruit_taken`).
  */
 export async function setFruit(fruit: FruitKey): Promise<FruitKey> {
   const { data, error } = await supabase.rpc('set_fruit', { p_fruit: fruit });

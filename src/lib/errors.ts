@@ -94,7 +94,6 @@ const BY_CODE: Record<string, string> = {
   // RPC de frutas (Fase 12A)
   invalid_fruit: 'Esa fruta no existe. Elige una de la lista.',
   fruit_taken: 'Esa es la fruta de tu pareja.',
-  fruit_too_similar: 'Se parece mucho a la de tu pareja; elige otra.',
   // RPC de notificaciones
   invalid_token: 'No pudimos activar los avisos en este celular. Intenta otra vez.',
 };

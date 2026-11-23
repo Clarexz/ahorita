@@ -1,5 +1,4 @@
 import {
-  BLOCKED_PAIRS,
   CLASSIC_FRUIT_KEYS,
   FRUIT_GROUPS,
   FRUIT_KEYS,
@@ -51,10 +50,10 @@ describe('frutas', () => {
     expect(onColor('#000000')).toBe('#FFFDF8');
   });
 
-  it('las del mismo color chocan; manzana roja y verde conviven', () => {
-    expect(fruitClash('fresa', 'sandia')).toBe('similar');
-    expect(fruitClash('kiwi', 'aguacate')).toBe('similar');
-    expect(fruitClash('arandano', 'zarzamora')).toBe('similar');
+  it('las del mismo color conviven; solo choca la misma', () => {
+    expect(fruitClash('fresa', 'sandia')).toBeNull();
+    expect(fruitClash('kiwi', 'aguacate')).toBeNull();
+    expect(fruitClash('arandano', 'zarzamora')).toBeNull();
     expect(fruitClash('manzana_roja', 'manzana_verde')).toBeNull();
     expect(fruitClash('coco', 'platano')).toBeNull();
   });
@@ -65,15 +64,13 @@ describe('frutas', () => {
     expect(sections.flatMap((s) => s.options.map((o) => o.fruit.key))).toEqual([...FRUIT_KEYS]);
     const yellow = sections.find((s) => s.group === 'amarillo')!;
     expect(yellow.label).toBe('Amarillas');
-    expect(yellow.options.every((o) => o.blocked)).toBe(true);
+    expect(yellow.options.filter((o) => o.blocked).map((o) => o.fruit.key)).toEqual(['mango']);
   });
 
-  it('bloquea la misma fruta y los pares que se parecen, en cualquier orden', () => {
+  it('bloquea solo la misma fruta', () => {
     expect(fruitClash('uva', 'uva')).toBe('same');
-    for (const [a, b] of BLOCKED_PAIRS) {
-      expect(fruitClash(a, b)).toBe('similar');
-      expect(fruitClash(b, a)).toBe('similar');
-    }
+    expect(fruitClash('sandia', 'pitaya')).toBeNull();
+    expect(fruitClash('mango', 'limon')).toBeNull();
     expect(fruitClash('sandia', 'mango')).toBeNull();
     expect(fruitClash('uva', 'limon')).toBeNull();
   });
@@ -105,11 +102,17 @@ describe('resolveFruits', () => {
     expect(resolveFruits(B, { ...A, fruit: 'uva' })).toEqual({ me: 'limon', partner: 'uva' });
   });
 
-  it('si chocan, el id menor se queda con la suya', () => {
+  it('si eligieron la misma, el id menor se queda con la suya', () => {
     const a = { id: 'aaa', fruit: 'sandia' };
-    const b = { id: 'bbb', fruit: 'pitaya' };
+    const b = { id: 'bbb', fruit: 'sandia' };
     expect(resolveFruits(a, b)).toEqual({ me: 'sandia', partner: 'mango' });
     expect(resolveFruits(b, a)).toEqual({ me: 'mango', partner: 'sandia' });
+  });
+
+  it('si son del mismo color pero distintas, conserva cada quien la suya', () => {
+    const a = { id: 'aaa', fruit: 'sandia' };
+    const b = { id: 'bbb', fruit: 'fresa' };
+    expect(resolveFruits(a, b)).toEqual({ me: 'sandia', partner: 'fresa' });
   });
 
   it('ignora valores desconocidos', () => {
@@ -125,8 +128,8 @@ describe('fruitOptions', () => {
     const opts = fruitOptions('sandia');
     const by = Object.fromEntries(opts.map((o) => [o.fruit.key, o]));
     expect(by.sandia.blocked).toBe('same');
-    expect(by.pitaya.blocked).toBe('similar');
-    expect(by.mandarina.blocked).toBe('similar');
+    expect(by.pitaya.blocked).toBeNull();
+    expect(by.fresa.blocked).toBeNull();
     expect(by.mango.suggested).toBe(true);
     expect(by.uva.blocked).toBeNull();
   });

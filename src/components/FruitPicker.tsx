@@ -16,16 +16,8 @@ type Props = {
 };
 
 /** Por qué una fruta no se puede elegir (DISENO §7). */
-export function blockedReason(
-  option: FruitOption,
-  partnerName?: string,
-  partnerFruit?: FruitKey | null,
-): string | null {
-  if (!option.blocked) return null;
-  if (option.blocked === 'same') return `es de ${partnerName?.trim() || 'tu pareja'}`;
-  return partnerFruit && FRUITS[partnerFruit].group === option.fruit.group
-    ? 'mismo color'
-    : 'se parece a la suya';
+export function blockedReason(option: FruitOption, partnerName?: string): string | null {
+  return option.blocked ? `es de ${partnerName?.trim() || 'tu pareja'}` : null;
 }
 
 const COLUMNS = 4;
@@ -33,8 +25,7 @@ const SWATCH = 48;
 
 /**
  * Las frutas agrupadas por color, cada grupo en una rejilla de 4 columnas (DISENO §7). Las
- * bloqueadas (la de tu pareja y las de su mismo color) llevan candado y motivo y no se pueden
- * tocar; la sugerida para la pareja se marca; abajo, vista previa con el símbolo.
+ * bloqueada (solo la de tu pareja) lleva candado y motivo y no se puede tocar; la sugerida para la pareja se marca; abajo, vista previa con el símbolo.
  */
 export function FruitPicker({ value, partnerFruit, partnerName, onChange }: Props) {
   const { colors, spacing, radius } = useTheme();
@@ -56,7 +47,7 @@ export function FruitPicker({ value, partnerFruit, partnerName, onChange }: Prop
             {section.options.map((option) => {
               const { fruit, blocked, suggested } = option;
               const selected = fruit.key === value;
-              const reason = blockedReason(option, partnerName, partnerFruit);
+              const reason = blockedReason(option, partnerName);
               const caption = reason ?? (suggested ? 'sugerida' : null);
               return (
                 <Pressable
@@ -104,7 +95,14 @@ export function FruitPicker({ value, partnerFruit, partnerName, onChange }: Prop
                   </View>
                   <Text
                     variant="ui"
-                    style={{ fontSize: 14, lineHeight: 20, opacity: blocked ? 0.5 : 1 }}
+                    style={{
+                      fontSize: 14,
+                      lineHeight: 20,
+                      opacity: blocked ? 0.5 : 1,
+                      textAlign: 'center',
+                      alignSelf: 'stretch',
+                      paddingHorizontal: 4,
+                    }}
                   >
                     {fruit.name}
                   </Text>

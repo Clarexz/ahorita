@@ -61,17 +61,12 @@ describe('textos de días', () => {
 });
 
 describe('countdownNote', () => {
-  it('automáticas explican de dónde salen', () => {
-    expect(countdownNote({ kind: 'anniversary', eventId: null, recurring: true })).toMatch(
-      /aniversario/,
-    );
-    expect(countdownNote({ kind: 'birthday', eventId: null, recurring: true })).toMatch(/perfil/);
+  it('automáticas: sin nota de relleno', () => {
+    expect(countdownNote({ eventId: null, recurring: true })).toBeNull();
   });
   it('propias: solo avisan si se repiten', () => {
-    expect(countdownNote({ kind: 'custom', eventId: 'a', recurring: true })).toBe(
-      'Se repite cada año',
-    );
-    expect(countdownNote({ kind: 'visit', eventId: 'a', recurring: false })).toBeNull();
+    expect(countdownNote({ eventId: 'a', recurring: true })).toBe('Se repite cada año');
+    expect(countdownNote({ eventId: 'a', recurring: false })).toBeNull();
   });
 });
 

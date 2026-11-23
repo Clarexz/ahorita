@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, FadeOut, useReducedMotion } from 'react-native-reanimated';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -18,6 +19,13 @@ type Props = {
    * `justifyContent`) y se quita el rebote, así lo que cabe no se desplaza.
    */
   fill?: boolean;
+  /**
+   * Contenido flotante sobre la parte baja de la pantalla (p. ej. un botón de guardar que solo
+   * aparece cuando hay cambios), respetando safe area y gutter. Entra y sale con un fundido corto
+   * (DISENO §5: sin subir ni rebotar). Con `scroll` se agrega aire abajo para que no tape lo
+   * último. Pasa `null`/`false` para ocultarlo.
+   */
+  floating?: ReactNode;
 };
 
 /** Contenedor de pantalla: fondo `bg`, safe area y gutter de 20 dp (DISENO §7). */
@@ -28,12 +36,16 @@ export function Screen({
   refreshing = false,
   onRefresh,
   fill = false,
+  floating,
 }: Props) {
-  const { colors, page, spacing, fruit } = useTheme();
+  const { colors, page, spacing, fruit, motion } = useTheme();
+  const reduced = useReducedMotion();
+  const fadeMs = reduced ? motion.reduced : motion.base.duration;
   const padding = {
     paddingHorizontal: padded ? page.gutter : 0,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
+    // Con algo flotando, deja espacio para que no tape el final del contenido.
+    paddingBottom: floating ? spacing.xxxl * 3 : spacing.xl,
   };
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -64,9 +76,22 @@ export function Screen({
         ) : (
           <View style={[styles.root, padding]}>{children}</View>
         )}
+        {floating ? (
+          <Animated.View
+            entering={FadeIn.duration(fadeMs)}
+            exiting={FadeOut.duration(reduced ? motion.reduced : motion.exit.duration)}
+            style={[styles.floating, { left: page.gutter, right: page.gutter, bottom: spacing.lg }]}
+          >
+            {floating}
+          </Animated.View>
+        ) : null}
       </SafeAreaView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({ root: { flex: 1 }, fill: { flexGrow: 1 } });
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  fill: { flexGrow: 1 },
+  floating: { position: 'absolute' },
+});
