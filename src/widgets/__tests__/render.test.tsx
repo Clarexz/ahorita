@@ -187,16 +187,20 @@ describe('renderWidget', () => {
     }
   });
 
-  it('el mensaje va siempre en una línea con "…"', () => {
+  it('el mensaje va en dos renglones a la izquierda con "…" (uno si la celda es muy bajita)', () => {
     const lines = (height: number) => {
       const json = JSON.stringify(treeOf('PartnerMessage', MODELS.ready, { width: 320, height }));
       return Math.max(...[...json.matchAll(/"maxLines":(\d)/g)].map((m) => Number(m[1])));
     };
-    expect(lines(60)).toBe(1);
-    expect(lines(140)).toBe(1);
+    expect(lines(40)).toBe(1);
+    expect(lines(60)).toBe(2);
+    expect(lines(140)).toBe(2);
     expect(
       JSON.stringify(treeOf('PartnerMessage', MODELS.ready, { width: 320, height: 60 })),
     ).toContain('"truncate":"END"');
+    const json = JSON.stringify(treeOf('PartnerMessage', MODELS.ready, { width: 320, height: 60 }));
+    expect(json).toContain('"textAlign":"left"');
+    expect(json).not.toContain('mariposas ·');
   });
 
   it('la story abre la de tu pareja', () => {

@@ -1,6 +1,6 @@
 'use no memo';
 // Widget "Mensaje de tu pareja": a la izquierda un círculo con su inicial y a la derecha una
-// burbuja con colita que lleva la nota de su mood. Sin fondo propio: la burbuja es un SVG
+// burbuja con colita que lleva solo la nota de su mood (a la izquierda y centrada en el alto, hasta dos renglones). Sin fondo propio: la burbuja es un SVG
 // (tonal: Hueso con sombra de su fruta; Escarcha: blanco translúcido con contorno).
 import { FlexWidget, OverlapWidget, SvgWidget, TextWidget } from 'react-native-android-widget';
 
@@ -24,7 +24,7 @@ const TEXT_SHADOW = {
 } as const;
 
 export function MessageFrame({ name, size, view }: Props) {
-  const layout = messageLayout(size, view.meta !== null);
+  const layout = messageLayout(size);
   const { style, fruits } = view;
   const text = bubbleText(style);
   const shadow = text.shadow ? TEXT_SHADOW : {};
@@ -107,26 +107,11 @@ export function MessageFrame({ name, size, view }: Props) {
               width: 'match_parent',
               fontFamily: FONT.medium,
               fontSize: layout.fontSize,
+              textAlign: 'left',
               color: col(text.message),
               ...shadow,
             }}
           />
-          {layout.showMeta && view.meta ? (
-            <TextWidget
-              text={view.meta}
-              maxLines={1}
-              truncate="END"
-              allowFontScaling={false}
-              style={{
-                width: 'match_parent',
-                marginTop: 1,
-                fontFamily: FONT.semiBold,
-                fontSize: layout.metaSize,
-                color: col(text.meta),
-                ...shadow,
-              }}
-            />
-          ) : null}
         </FlexWidget>
       </OverlapWidget>
     </FlexWidget>

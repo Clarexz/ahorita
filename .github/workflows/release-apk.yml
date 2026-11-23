@@ -14,8 +14,8 @@ on:
         required: false
         default: main
         type: string
-      fase:
-        description: 'Fase (p. ej. "0 — Cimientos"). Si se deja vacío se toma del encabezado de las notas'
+      titulo:
+        description: 'Título del release (p. ej. "v0.15.1 — Ajustes"). Si se deja vacío se toma del encabezado de las notas'
         required: false
         type: string
       version:
@@ -55,11 +55,11 @@ jobs:
           # En push de tag, ref_name es el tag; en dispatch, el input (default main).
           ref: ${{ inputs.ref || github.ref_name }}
 
-      - name: Resolver versión y fase
+      - name: Resolver versión y título
         id: meta
         env:
           INPUT_VERSION: ${{ inputs.version }}
-          INPUT_FASE: ${{ inputs.fase }}
+          INPUT_TITULO: ${{ inputs.titulo }}
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
           INPUT_DISTRIBUCION: ${{ inputs.distribucion }}
@@ -78,19 +78,23 @@ jobs:
 
           notes="docs/releases/${version}.md"
           if [ ! -f "$notes" ]; then
-            echo "::error::Faltan las notas del release: $notes. Créalas (primera línea '# Fase N — Nombre') y vuelve a lanzar."
+            echo "::error::Faltan las notas del release: $notes. Créalas (primera línea '# ${version} — Nombre') y vuelve a lanzar."
             exit 1
           fi
 
-          fase="$INPUT_FASE"
-          if [ -z "$fase" ]; then
-            # Primera línea de las notas: "# Fase 0 — Cimientos"
+          titulo="$INPUT_TITULO"
+          if [ -z "$titulo" ]; then
+            # Primera línea de las notas: "# v0.15.1 — Nombre" (desde la v0.15.1) o "# Fase 0 — Cimientos"
+            # (releases viejos, cuyo título era "Fase N — vX.Y.Z").
             primera="$(head -n 1 "$notes" | tr -d '\r')"
-            if [[ "$primera" != "# Fase "* ]]; then
-              echo "::error::No se pudo determinar la fase. Usa el input 'fase' o pon '# Fase N — Nombre' como primera línea de $notes."
+            if [[ "$primera" == "# ${version} — "* ]]; then
+              titulo="${primera#\# }"
+            elif [[ "$primera" == "# Fase "* ]]; then
+              titulo="Fase ${primera#\# Fase } — ${version}"
+            else
+              echo "::error::No se pudo leer el título. Usa el input 'titulo' o pon '# ${version} — Nombre' como primera línea de $notes."
               exit 1
             fi
-            fase="${primera#\# Fase }"
           fi
 
           major="${version#v}"; major="${major%%.*}"
@@ -99,7 +103,7 @@ jobs:
           {
             echo "version=$version"
             echo "version_name=${version#v}"
-            echo "fase=$fase"
+            echo "titulo=$titulo"
             echo "notes=$notes"
             echo "prerelease=$prerelease"
             echo "distribucion=$distribucion"
@@ -113,7 +117,7 @@ jobs:
               echo "gradle_output=android/app/build/outputs/apk/release/app-release.apk"
             fi
           } >> "$GITHUB_OUTPUT"
-          echo "Versión: $version | Fase: $fase | Pre-release: $prerelease | Distribución: $distribucion"
+          echo "Versión: $version | Título: $titulo | Pre-release: $prerelease | Distribución: $distribucion"
 
       - name: Validar secretos requeridos
         env:
@@ -292,23 +296,22 @@ jobs:
         if: steps.meta.outputs.distribucion == 'github'
         env:
           VERSION: ${{ steps.meta.outputs.version }}
-          FASE: ${{ steps.meta.outputs.fase }}
+          TITULO: ${{ steps.meta.outputs.titulo }}
           NOTES: ${{ steps.meta.outputs.notes }}
           PRERELEASE: ${{ steps.meta.outputs.prerelease }}
           APK_PATH: ${{ steps.apk.outputs.path }}
         run: |
           set -euo pipefail
-          titulo="Fase ${FASE} — ${VERSION}"
           sha="$(git rev-parse HEAD)"
 
           if gh release view "$VERSION" >/dev/null 2>&1; then
             # Reintento: se reemplaza el APK y se actualizan título/notas.
             gh release upload "$VERSION" "$APK_PATH" --clobber
-            gh release edit "$VERSION" --title "$titulo" --notes-file "$NOTES" --prerelease="$PRERELEASE"
+            gh release edit "$VERSION" --title "$TITULO" --notes-file "$NOTES" --prerelease="$PRERELEASE"
           else
             # Si el tag no existe, gh lo crea sobre el commit compilado.
             gh release create "$VERSION" "$APK_PATH" \
-              --title "$titulo" \
+              --title "$TITULO" \
               --notes-file "$NOTES" \
               --target "$sha" \
               --prerelease="$PRERELEASE"

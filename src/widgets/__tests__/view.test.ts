@@ -228,13 +228,13 @@ describe('messageView', () => {
     name: 'PartnerMessage' | 'PartnerMessageFrost' = 'PartnerMessage',
   ) => messageView(name, model(over));
 
-  it('la nota es el mensaje, con el mood debajo', () => {
+  it('la nota es el mensaje, sin el mood debajo', () => {
     const v = msg({
       partnerMood: { emoji: '🥰', note: 'Te quiero', created_at: '2026-10-30T17:35:00Z' },
     });
     expect(v.initial).toBe('C');
     expect(v.message).toBe('Te quiero');
-    expect(v.meta).toMatch(/^🥰 con mariposas · /);
+    expect(v).not.toHaveProperty('meta');
     expect(v.a11y).toContain('Mensaje de Caleb: Te quiero');
     expect(v.style).toBe('tonal');
   });
@@ -242,7 +242,6 @@ describe('messageView', () => {
   it('sin nota pero con mood: "Anda ..."', () => {
     const v = msg();
     expect(v.message).toBe('Anda feliz 😄');
-    expect(v.meta).toBeNull();
     const blank = msg({
       partnerMood: { emoji: '😄', note: '   ', created_at: '2026-10-30T17:35:00Z' },
     });

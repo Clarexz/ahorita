@@ -303,7 +303,9 @@ solo dato va debajo.
   degradados. Las fotos de story siguen en color.
 - **Mensaje de tu pareja** (D142): el único widget ancho (4×1, de 3×1 a 4×2): su fruta en círculo
   con la inicial y una burbuja con colita (tonal: Hueso con sombra de su fruta y texto en tinta;
-  Escarcha: gris translúcido y texto blanco) con el mensaje de su mood y, abajo, mood y hace cuánto.
+  Escarcha: gris translúcido y texto blanco) con **solo** el mensaje de su mood (D153): Albert Sans
+  500 a 15, hasta dos renglones con "…", alineado a la izquierda y centrado en el alto; uno solo si
+  la celda es muy bajita.
 
 ### 9.1 Mascota (D128)
 
