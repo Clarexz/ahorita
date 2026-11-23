@@ -27,6 +27,26 @@ Las notas viejas con `# Fase N — Nombre` siguen funcionando (título `Fase N �
 El resto es el cuerpo del release (requisitos previos, cómo instalar, qué probar).
 Si falta el archivo, el workflow falla con un mensaje claro.
 
+## Imagen de novedades (D154)
+
+Cuando el usuario la pida ("hazme la imagen de la actualización"), se genera una imagen para
+compartir con las novedades de la **última versión publicada**, pensada **para el público** (no la
+lista de "Qué probar"):
+
+1. Escribe `docs/releases/novedades/<versión>.md`: una línea `# Subtítulo` opcional (una frase) y
+   de 2 a 5 renglones `- **Título corto**: detalle`. Con la voz de la app (`docs/CONTENT.md`):
+   tuteo, frases cortas, beneficios en lugar de nombres técnicos (nada de "snapshot", "RPC", "D153"
+   ni números de dp), sin emojis (la fuente del render no los dibuja). Si la versión trae un solo
+   cambio, se parte en sus beneficios visibles; nunca se inventa una novedad.
+2. `npm run update-card -- <versión>` → `docs/releases/img/<versión>.png`.
+3. Revisa la imagen (que mida **1080×1350**; si crece, recorta texto) y mándasela al usuario.
+
+La imagen la arma `scripts/gen-update-card.mjs` con el sistema de diseño (DISENO §2–§3): tema claro
+(Hueso, Arena, Tinta, Grafito), símbolo y wordmark con la "o" partida en Sandía y Mango,
+Bricolage 800 para "vX.Y.Z" y Albert Sans para el texto, la etiqueta "Actualización", la caja
+"Lo nuevo" con viñetas de media luna y el pie "Actualiza en Más → Buscar versión nueva". Si cambia
+la marca, se cambia el script, no cada imagen.
+
 ## Aviso dentro de la app (D107)
 
 Desde la v0.12.3, la app revisa GitHub Releases al abrir y avisa en Inicio cuando hay un APK más
