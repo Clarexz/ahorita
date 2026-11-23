@@ -38,8 +38,14 @@ lista de "Qué probar"):
    tuteo, frases cortas, beneficios en lugar de nombres técnicos (nada de "snapshot", "RPC", "D153"
    ni números de dp), sin emojis (la fuente del render no los dibuja). Si la versión trae un solo
    cambio, se parte en sus beneficios visibles; nunca se inventa una novedad.
-2. `npm run update-card -- <versión>` → `docs/releases/img/<versión>.png`.
-3. Revisa la imagen (que mida **1080×1350**; si crece, recorta texto) y mándasela al usuario.
+2. `npm run update-card -- <versión>` → `docs/releases/img/<versión>.png` (1080×1350).
+   **Varias versiones en la misma imagen** (p. ej. "la 0.15 y la 0.15.1"):
+   `npm run update-card -- v0.15.0 v0.15.1` → `docs/releases/img/v0.15.0_v0.15.1.png` en formato
+   historia (1080×1920): la más nueva va en grande, el subtítulo dice "Todo lo nuevo de la … y la …"
+   y cada versión lleva su caja "Lo nuevo en vX.Y.Z", de la más nueva a la más vieja. Cada versión
+   necesita su archivo en `novedades/`.
+3. Revisa la imagen (el script imprime la medida: si crece de 1350/1920, recorta texto; que no
+   queden palabras huérfanas en un renglón) y mándasela al usuario.
 
 La imagen la arma `scripts/gen-update-card.mjs` con el sistema de diseño (DISENO §2–§3): tema claro
 (Hueso, Arena, Tinta, Grafito), símbolo y wordmark con la "o" partida en Sandía y Mango,
