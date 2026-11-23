@@ -240,9 +240,9 @@ select pg_temp.assert(pg_temp.eff('A') = 'uva' and pg_temp.eff('B') = 'mango', '
 select pg_temp.raw('A', 'mango'); select pg_temp.raw('B', 'mango');
 select pg_temp.assert(pg_temp.eff('A') = 'mango' and pg_temp.eff('B') = 'sandia', 'misma fruta: Ana conserva, Beto toma la sugerida');
 select pg_temp.raw('A', 'uva'); select pg_temp.raw('B', 'arandano');
-select pg_temp.assert(pg_temp.eff('A') = 'uva' and pg_temp.eff('B') = 'limon', 'parecidas (uva/arandano): Ana conserva, Beto toma la sugerida de uva');
-select pg_temp.raw('A', 'arandano'); select pg_temp.raw('B', 'uva');
-select pg_temp.assert(pg_temp.eff('A') = 'arandano' and pg_temp.eff('B') = 'mandarina', 'parecidas (arandano/uva): Ana conserva, Beto toma la sugerida de arandano');
+select pg_temp.assert(pg_temp.eff('A') = 'uva' and pg_temp.eff('B') = 'arandano', 'parecidas (uva/arandano) ya no chocan: cada quien la suya (D150)');
+select pg_temp.raw('A', 'arandano'); select pg_temp.raw('B', 'arandano');
+select pg_temp.assert(pg_temp.eff('A') = 'arandano' and pg_temp.eff('B') = 'mandarina', 'misma fruta (arandano): Ana conserva, Beto toma la sugerida de arandano');
 
 -- Con cualquier combinación de 49, lo que se ve nunca choca.
 create temp table t_resolve (x text, y text, ea text, eb text);
