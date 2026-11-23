@@ -89,6 +89,7 @@ function Replies({
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={{ maxHeight: 320 }}
+          nestedScrollEnabled
           contentContainerStyle={{ gap: spacing.md }}
         >
           {story.replies.map((r) => {
