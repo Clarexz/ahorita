@@ -1,7 +1,7 @@
 # ahorita — guía para sesiones de Claude Code
 
 App privada de pareja (2 usuarios, Android) inspirada en Couple Joy. **Lee primero** `docs/PLAN.md`
-(plan por fases y estado en §10), `docs/DECISIONS.md`, `docs/SERVIDOR.md` y, desde la Fase 0.5,
+(plan por versiones y estado en §10), `docs/DECISIONS.md`, `docs/SERVIDOR.md` y, desde la Fase 0.5,
 `docs/DISENO.md`.
 
 ## Stack
@@ -42,8 +42,12 @@ que `src/types/database.ts` coincida con lo generado.
 
 - **Código** (identificadores, nombres de archivo) en **inglés**; **comentarios, docs, commits, UI,
   notificaciones y contenido** en **español de México** (tuteo, "ustedes", "celular").
-- Commits: mensaje corto en español en imperativo/descriptivo (`Fase N: ...` para el trabajo de una
-  fase).
+- Commits: mensaje corto en español en imperativo/descriptivo (`v0.N: ...` para el trabajo de una
+  versión).
+- **Desde la v0.16 el trabajo se nombra por la versión de la app que sale de la sesión**, ya no por
+  "Fase N" (D152): sección `### v0.N — ...` en §9 del plan, fila `v0.N` en §10, notas
+  `docs/releases/v0.N.P.md` con encabezado `# v0.N.P — Nombre`. Las fases 0–12A quedan como
+  historia.
 - Lógica de negocio en **funciones puras** con tests (`src/lib/`), la UI solo las usa.
 - Componentes desde `@/components`; colores/espaciados solo desde el tema (`useTheme()`), nunca
   valores sueltos en pantallas.
@@ -73,7 +77,7 @@ independiente (worktrees si se pisan archivos); los agentes responden con resume
 orquestador revisa con `git diff` enfocado; si algo está mal se devuelve al mismo agente con la
 corrección concreta. Registrar en el PR qué agente hizo qué.
 
-## Cierre de fase
+## Cierre de versión
 
 Protocolo de `docs/PLAN.md` §8.2: checks y CI en verde → prompt para el servidor (si toca backend)
 y esperar su reporte → secretos nuevos → lanzar `release-apk.yml` (notas en `docs/releases/`) →

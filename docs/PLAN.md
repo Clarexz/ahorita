@@ -173,7 +173,8 @@ sin Postgres/RLS/RPC; queda como plan C si el VPS anda muy justo de RAM).
 ## 6. Distribución: un APK probable por fase (GitHub Releases)
 
 - **Cada fase termina con un APK release firmado** publicado en GitHub Releases del repo (privado),
-  como *pre-release* con nombre `Fase N — <nombre>` y tag `v0.N.P` (P = parche dentro de la fase).
+  como *pre-release* con tag `v0.N.P` (P = parche dentro de la versión) y título `v0.N.P — <nombre>`
+  (hasta la v0.15 era `Fase N — <nombre>`; desde la v0.16 el trabajo se nombra por versión, D152).
   Las notas del release dicen **qué probar** y cualquier paso previo (p. ej. "aplicar migraciones
   en el servidor").
 - **Firma:** un único keystore (generado en la Fase 0, guardado en el servidor con las demás
@@ -313,7 +314,7 @@ Hay **dos tipos de sesión**:
 
 ### 8.1 Reglas generales
 
-- Rama por fase (la que asigne el entorno o `fase-N-<nombre>`) y PR contra `main`; tú haces
+- Rama por versión (la que asigne el entorno o `ajustes-v0.N`) y PR contra `main`; tú haces
   *merge* después de probar el APK.
 - Al empezar: leer `CLAUDE.md`, `docs/PLAN.md`, `docs/DECISIONS.md`, `docs/SERVIDOR.md` y `docs/DISENO.md`.
 - **Idioma:** UI, notificaciones y contenido en **español de México**; convención de código y
@@ -347,7 +348,7 @@ Hay **dos tipos de sesión**:
 copiar):
 
 ```
-[Contexto] Proyecto App Parejas, stack en /opt/app-parejas. Fase N.
+[Contexto] Proyecto ahorita, stack en /opt/app-parejas. Versión v0.N.
 [Objetivo] ...
 [Pasos] 1) cd /opt/app-parejas/repo && git fetch && git checkout <rama> && git pull
         2) ./scripts/server/deploy.sh   (o pasos específicos)
@@ -455,7 +456,12 @@ agentes, correr la verificación final y cerrar la fase (§8.2); hablar contigo.
 
 ---
 
-## 9. Fases
+## 9. Fases y versiones
+
+> **Desde la v0.16 (D152) ya no hay "Fase N":** cada sesión de trabajo se nombra por la versión de
+> la app que entrega (`### v0.16 — …` al final de esta sección, fila `v0.16` en §10, notas
+> `docs/releases/v0.16.P.md`). Las fases de abajo quedan como historia; donde el plan dice "fase"
+> para el protocolo (§8), léase "versión".
 
 | Fase | Nombre | Resultado visible | Depende de |
 |---|---|---|---|
