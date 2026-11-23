@@ -247,8 +247,6 @@ export type MessageView = {
   initial: string;
   /** Lo que dice la burbuja. */
   message: string;
-  /** "🥰 enamorado · hace 25 min", solo si hay mood y nota. */
-  meta: string | null;
   a11y: string;
   fruits: { me: FruitKey; partner: FruitKey };
 };
@@ -263,7 +261,7 @@ export function messageView(name: WidgetName, model: WidgetModel): MessageView {
   const style = widgetStyle(name);
   const fruits = fruitsOf(model);
   const who = model.partnerName;
-  const base = { style, initial: initialOf(who), fruits, meta: null };
+  const base = { style, initial: initialOf(who), fruits };
 
   if (model.status === 'signed_out') {
     return {
@@ -302,7 +300,6 @@ export function messageView(name: WidgetName, model: WidgetModel): MessageView {
   return {
     ...base,
     message: note,
-    meta: `${mood.emoji} ${feeling}${mood.ago ? ` · ${mood.ago}` : ''}`,
     a11y: `Mensaje de ${who}: ${note}. Se siente ${feeling} ${mood.emoji}${ago}.`,
   };
 }

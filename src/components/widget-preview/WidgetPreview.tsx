@@ -27,7 +27,7 @@ const SHADOW = {
 
 function MessagePreview({ name, model, width, height }: WidgetPreviewProps) {
   const view = messageView(name, model);
-  const l = messageLayout({ width, height }, view.meta !== null);
+  const l = messageLayout({ width, height });
   const text = bubbleText(view.style);
   const shadow = text.shadow ? SHADOW : {};
   return (
@@ -82,24 +82,16 @@ function MessagePreview({ name, model, width, height }: WidgetPreviewProps) {
         >
           <Text
             numberOfLines={l.lines}
-            style={{ fontWeight: '500', fontSize: l.fontSize, color: text.message, ...shadow }}
+            style={{
+              fontWeight: '500',
+              fontSize: l.fontSize,
+              lineHeight: l.lineHeight,
+              color: text.message,
+              ...shadow,
+            }}
           >
             {view.message}
           </Text>
-          {l.showMeta && view.meta ? (
-            <Text
-              numberOfLines={1}
-              style={{
-                marginTop: 1,
-                fontWeight: '600',
-                fontSize: l.metaSize,
-                color: text.meta,
-                ...shadow,
-              }}
-            >
-              {view.meta}
-            </Text>
-          ) : null}
         </View>
       </View>
     </View>

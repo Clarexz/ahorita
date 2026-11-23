@@ -58,7 +58,7 @@ const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 /** HTML del mensaje de tu pareja con la misma geometría que el widget real. */
 function messageHtml(name) {
   const view = messageView(name, model);
-  const l = messageLayout({ width: MSG.width, height: MSG.height }, view.meta !== null);
+  const l = messageLayout({ width: MSG.width, height: MSG.height });
   const text = bubbleText(view.style);
   const shadow = text.shadow ? 'text-shadow:0 1px 3px rgba(0,0,0,.65);' : '';
   const abs = (left, top, w, h, inner, extra = '') =>
@@ -73,10 +73,6 @@ function messageHtml(name) {
       `font:800 ${l.initialSize}px Bricolage;color:${initialColor(view.style, view.fruits.partner)};${shadow}">` +
       `${escape(view.initial)}</div>`,
   );
-  const meta =
-    l.showMeta && view.meta
-      ? `<div style="margin-top:1px;font:600 ${l.metaSize}px 'Albert Sans';color:${text.meta};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${shadow}">${escape(view.meta)}</div>`
-      : '';
   const bubble = abs(
     l.bubbleLeft,
     l.bubbleTop,
@@ -87,7 +83,7 @@ function messageHtml(name) {
       `padding:0 ${l.textRight}px ${view.style === 'tonal' ? BUBBLE_SHADOW : 0}px ${l.textLeft}px;box-sizing:border-box">` +
       `<div style="font:500 ${l.fontSize}px/${l.lineHeight}px 'Albert Sans';color:${text.message};${shadow}` +
       `display:-webkit-box;-webkit-line-clamp:${l.lines};-webkit-box-orient:vertical;overflow:hidden">` +
-      `${escape(view.message)}</div>${meta}</div>`,
+      `${escape(view.message)}</div></div>`,
   );
   return (
     `<div style="position:relative;width:${MSG.width}px;height:${MSG.height}px;` +

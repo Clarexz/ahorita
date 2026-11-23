@@ -1165,6 +1165,18 @@ revisa, integra y cierra.
 **Entregable APK:** `v0.15.0`. Backend: migración de `fruit_clash` (prompt para el servidor antes
 de publicar el APK).
 
+### v0.16 — Mensaje de tu pareja más legible
+
+Observaciones del usuario (2026-11-23). Rama `claude/siguiente-fase-proyecto-ror21b`. Primera
+versión nombrada por versión y no por fase (D152).
+
+**Tareas:**
+1. **Widget "Mensaje de tu pareja"** (D153): fuera el mood y hace cuánto; solo el mensaje, con letra
+   de 15 (antes 13) en hasta dos renglones, a la izquierda y centrado en el alto, y la burbuja un
+   poco más alta. ✅
+
+**Entregable APK:** `v0.16.0` (sin cambios de servidor).
+
 ---
 
 ## 10. Estado del proyecto
@@ -1196,6 +1208,7 @@ de publicar el APK).
 | Ajustes v0.14.x (entrar, pendientes, widgets escarcha, camino, stories) | ✅ Mergeada (v0.14.4) | #30 | D139–D143. APK **v0.14.0** publicado el 2026-11-21, pero se cerraba al llegar a Inicio (worklet de `HalfMoon` llamando a `fillTop`, D144); **v0.14.1** con el arreglo y una prueba que lo vigila, publicado el 2026-11-21 (CI verde). **v0.14.4** (D147, publicado el 2026-11-21, CI verde): causa raíz de las stories colgadas (marcar como vista cancelaba la firma de la foto en vuelo). **v0.14.3** (D146, publicado el 2026-11-21, CI verde): visor de stories con vigilante de 12 s y motivo del fallo (las de foto de la novia se quedaban girando). **v0.14.2** (D145, publicado el 2026-11-21, CI verde): burbuja de "Su mensaje" delgadita con "…" y nombres "Color · …"/"Escarcha · …" porque One UI no los agrupó. PR #30 mergeado a `main` a pedido del usuario (2026-11-23). Falta probar la v0.14.4 con una story de foto nueva. Rama `claude/determined-galileo-rvli3f`. Sin cambios de servidor. Entrar sin scroll y sin barras (implementador), `/pending` (implementador), el camino `WaitPath` + media luna animada (disenador-ui), 14 widgets: tonal + Escarcha gris translúcida y el nuevo Mensaje de tu pareja (implementador). Notas en `docs/releases/v0.14.0.md`. |
 | Ajustes v0.14.5 (teclado en hojas) | 🟡 APK publicado (v0.14.6), por probar | | El teclado ya no tapa los campos de las hojas (nota del mood, respuestas a stories, listas): la hoja hace scroll y lleva el campo enfocado a la vista (D148); además renglones de listas y aire sobre el teclado en formularios. Sin cambios de servidor. Notas en `docs/releases/v0.14.5.md`. El APK v0.14.5 (2026-11-22) salió sin la v0.14.x de `main` (la rama nació antes); se mezcló `main` y se relanzó como **v0.14.6** (notas en `v0.14.6.md`; APK publicado el 2026-11-23). Pendiente de probar en el celular y de PR. |
 | Ajustes v0.15 (frutas, filtros, Lo que viene) | ✅ Desplegada y mergeada (v0.15.0) | #32 | D149–D151. PR mergeado a `main` a pedido del usuario (2026-11-23); falta probar el APK en el celular (`docs/releases/v0.15.0.md`). Servidor desplegado el 2026-11-23 (`efe79c2`, 23 migraciones). Botón flotante al cambiar de fruta, solo se bloquea la fruta elegida (migración `20261123000000_fruit_clash_same_only`), nombres centrados, Todas/Sin contestar/Contestadas en cada categoría y fuera las notas de relleno en Lo que viene. Rama `ajustes-v0.15`. |
+| v0.16 (mensaje de tu pareja) | 🟡 En curso | | D152–D153. Trabajo nombrado por versión desde aquí. Widget de mensaje solo con el mensaje, letra 15 en dos renglones a la izquierda y burbuja más alta. Sin cambios de servidor. |
 
 ### 10.1 Camino a la v1.0.0
 
