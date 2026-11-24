@@ -31,6 +31,7 @@ npm run format:check  # Prettier
 npx expo export -p android --output-dir /tmp/exp   # que el bundle compile
 npx expo prebuild -p android --clean --no-install  # si hubo cambios nativos (luego borra android/)
 npm run shots         # capturas web (claro/oscuro) en shots/ con Playwright
+npm run update-card -- vX.Y.Z  # imagen de novedades para el público (docs/releases/README.md)
 npm run db:types      # regenerar src/types/database.ts (requiere DB_URL a un Postgres con migraciones)
 ```
 

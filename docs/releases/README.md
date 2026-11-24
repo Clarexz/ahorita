@@ -27,6 +27,32 @@ Las notas viejas con `# Fase N — Nombre` siguen funcionando (título `Fase N �
 El resto es el cuerpo del release (requisitos previos, cómo instalar, qué probar).
 Si falta el archivo, el workflow falla con un mensaje claro.
 
+## Imagen de novedades (D154)
+
+Cuando el usuario la pida ("hazme la imagen de la actualización"), se genera una imagen para
+compartir con las novedades de la **última versión publicada**, pensada **para el público** (no la
+lista de "Qué probar"):
+
+1. Escribe `docs/releases/novedades/<versión>.md`: una línea `# Subtítulo` opcional (una frase) y
+   de 2 a 5 renglones `- **Título corto**: detalle`. Con la voz de la app (`docs/CONTENT.md`):
+   tuteo, frases cortas, beneficios en lugar de nombres técnicos (nada de "snapshot", "RPC", "D153"
+   ni números de dp), sin emojis (la fuente del render no los dibuja). Si la versión trae un solo
+   cambio, se parte en sus beneficios visibles; nunca se inventa una novedad.
+2. `npm run update-card -- <versión>` → `docs/releases/img/<versión>.png` (1080×1350).
+   **Varias versiones en la misma imagen** (p. ej. "la 0.15 y la 0.15.1"):
+   `npm run update-card -- v0.15.0 v0.15.1` → `docs/releases/img/v0.15.0_v0.15.1.png` en formato
+   historia (1080×1920): la más nueva va en grande, el subtítulo dice "Todo lo nuevo de la … y la …"
+   y cada versión lleva su caja "Lo nuevo en vX.Y.Z", de la más nueva a la más vieja. Cada versión
+   necesita su archivo en `novedades/`.
+3. Revisa la imagen (el script imprime la medida: si crece de 1350/1920, recorta texto; que no
+   queden palabras huérfanas en un renglón) y mándasela al usuario.
+
+La imagen la arma `scripts/gen-update-card.mjs` con el sistema de diseño (DISENO §2–§3): tema claro
+(Hueso, Arena, Tinta, Grafito), símbolo y wordmark con la "o" partida en Sandía y Mango,
+Bricolage 800 para "vX.Y.Z" y Albert Sans para el texto, la etiqueta "Actualización", la caja
+"Lo nuevo" con viñetas de media luna y el pie "Actualiza en Más → Buscar versión nueva". Si cambia
+la marca, se cambia el script, no cada imagen.
+
 ## Aviso dentro de la app (D107)
 
 Desde la v0.12.3, la app revisa GitHub Releases al abrir y avisa en Inicio cuando hay un APK más
