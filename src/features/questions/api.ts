@@ -8,7 +8,7 @@ import {
 } from '@/lib/customQuestions';
 import { parseFeedbackVote, type FeedbackVote } from '@/lib/feedback';
 import { randomUuid } from '@/lib/ids';
-import { parseNudgeStatus, type NudgeStatus } from '@/lib/nudges';
+import { parseNudgeCount } from '@/lib/nudges';
 import { parsePack, type Pack } from '@/lib/packs';
 import {
   parseCategoryQuestion,
@@ -193,10 +193,11 @@ export async function reactToComment(commentId: string, emoji: string | null): P
   return data;
 }
 
-export async function sendNudge(): Promise<Nudge> {
-  const { data, error } = await supabase.rpc('send_nudge', { p_kind: 'answer' });
+/** Toque a mi pareja para que conteste esta pregunta; devuelve cuántos llevo en ella. */
+export async function sendQuestionNudge(questionId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('nudge_question', { p_question_id: questionId });
   if (error) throw error;
-  return data;
+  return parseNudgeCount(data);
 }
 
 /** Devuelve si las picantes quedaron activas para la pareja. */
@@ -262,9 +263,9 @@ export async function retireCustomQuestion(questionId: string): Promise<void> {
   if (error) throw error;
 }
 
-/** Cuántos toques llevo hoy (día de la pareja) y cuándo fue el último. */
-export async function fetchNudgeStatus(): Promise<NudgeStatus> {
-  const { data, error } = await supabase.rpc('nudge_status');
+/** Cuántos toques le he mandado a mi pareja para esta pregunta. */
+export async function fetchQuestionNudgeCount(questionId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('question_nudge_count', { p_question_id: questionId });
   if (error) throw error;
-  return parseNudgeStatus(data);
+  return parseNudgeCount(data);
 }

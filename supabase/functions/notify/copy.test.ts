@@ -67,6 +67,7 @@ describe('copys', () => {
       within(moodCopy({ ...b, emoji: '😀', note: LONG_TEXT }));
       within(moodCopy({ ...b, emoji: '😀', note: null }));
       within(nudgeCopy(b));
+      within(nudgeCopy({ ...b, today: false, questionText: LONG_TEXT, count: 999 }));
       for (const storyKind of ['photo', 'text', 'drawing'] as const) {
         within(storyCopy({ ...b, storyKind, text: LONG_TEXT }));
         within(storyCopy({ ...b, storyKind, text: null }));

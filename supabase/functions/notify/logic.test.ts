@@ -260,6 +260,33 @@ describe('buildNotification', () => {
     expect(n?.channelId).toBe('toques');
     expect(n?.data.url).toBe('/question');
   });
+  it('toque con pregunta (v0.16): abre esa, dice cuántos van y si es de otro día', () => {
+    const old = buildNotification(
+      ev('nudge', {
+        nudge_id: 'n2',
+        question_id: 'q7',
+        today: false,
+        question_text: '¿Cuál es tu recuerdo favorito?',
+        nudge_count: 4,
+      }),
+    )!;
+    expect(old.data.url).toBe('/question?id=q7');
+    expect(old.data.question_id).toBe('q7');
+    expect(old.body).toContain('Ya van 4 toques.');
+    expect(old.body).not.toContain('hoy');
+    const today = buildNotification(
+      ev('nudge', {
+        nudge_id: 'n3',
+        question_id: 'q8',
+        today: true,
+        day: '2026-11-25',
+        nudge_count: 1,
+      }),
+    )!;
+    expect(today.data.url).toBe('/question?id=q8');
+    expect(today.body).not.toContain('toques');
+    expect(today.body).toMatch(/hoy|piensas/);
+  });
   it('comentario sin body no revela texto', () => {
     const b = buildNotification(ev('comment', { question_id: 'q1', comment_id: 'c9', body: null }));
     expect(b?.title).toBeTruthy();

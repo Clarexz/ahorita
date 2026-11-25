@@ -110,14 +110,31 @@ export function moodCopy(i: CopyBase & { emoji: string; note: string | null }): 
   );
 }
 
-export function nudgeCopy(i: CopyBase): Copy {
+// Toque (D155): desde la v0.16 va a una pregunta. `today` false = una pendiente de otro día o
+// extra; `count` = cuántos lleva quien pica en esa pregunta (a partir del 2.º se dice).
+export function nudgeCopy(
+  i: CopyBase & { today?: boolean; questionText?: string | null; count?: number },
+): Copy {
   const a = short(i.actor);
+  const count = i.count && i.count > 1 ? Math.floor(i.count) : 0;
+  const lead = count ? `Ya van ${count} toques. ` : '';
+  if (i.today === false) {
+    const q = quoted(i.questionText ?? null, 70);
+    return pick(
+      [
+        finish(a, `${lead}Te está esperando una pregunta pendiente.${q ? ` ${q}` : ''}`),
+        finish(a, `${lead}Quiere leer lo que contestas.${q ? ` ${q}` : ''}`),
+        finish(a, `${lead}Hay una pregunta que te toca a ti.${q ? ` ${q}` : ''}`),
+      ],
+      i.seed,
+    );
+  }
   return pick(
     [
-      finish(a, 'Quiere saber qué contestaste hoy. Falta tu respuesta.'),
-      finish(a, 'La pregunta de hoy te está esperando.'),
-      finish(a, 'Ya quiere leer lo que piensas. Contesta cuando puedas.'),
-      finish(a, 'Te toca contestar la pregunta de hoy.'),
+      finish(a, `${lead}Quiere saber qué contestaste hoy. Falta tu respuesta.`),
+      finish(a, `${lead}La pregunta de hoy te está esperando.`),
+      finish(a, `${lead}Ya quiere leer lo que piensas. Contesta cuando puedas.`),
+      finish(a, `${lead}Te toca contestar la pregunta de hoy.`),
     ],
     i.seed,
   );

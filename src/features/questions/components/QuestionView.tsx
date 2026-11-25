@@ -22,7 +22,7 @@ import { useToast } from '@/components/Toast';
 import { useCouple, useToday } from '@/features/couple';
 import type { AudioDraft } from '@/lib/audio';
 import { errorMessage } from '@/lib/errors';
-import { nudgeHint } from '@/lib/nudges';
+import { nudgeCountText } from '@/lib/nudges';
 import { haptic } from '@/lib/haptics';
 import { sameChoice } from '@/lib/questionCopy';
 import { answerDisplay } from '@/lib/questionsView';
@@ -38,7 +38,7 @@ import {
 import { useTheme } from '@/theme';
 
 import { useCelebrationStore } from '../celebration';
-import { useDeleteAnswer, useNudge, useStreak, useSubmitAnswer } from '../hooks';
+import { useDeleteAnswer, useQuestionNudge, useStreak, useSubmitAnswer } from '../hooks';
 import { AnswerAudio } from './AnswerAudio';
 import { AUDIO_RECORDING_SUPPORTED, AudioRecorderField } from './AudioRecorderField';
 import { CommentComposer, CommentList } from './CommentThread';
@@ -201,7 +201,6 @@ export function QuestionView({ card, pack }: { card: QuestionCard; pack?: string
   const fruits = usePairFruits();
   const submit = useSubmitAnswer();
   const remove = useDeleteAnswer();
-  const nudge = useNudge();
   const { streak } = useStreak();
   const celebrate = useCelebrationStore((s) => s.celebrate);
   const scrollRef = useRef<KeyboardAwareScrollViewRef>(null);
@@ -216,6 +215,8 @@ export function QuestionView({ card, pack }: { card: QuestionCard; pack?: string
   const partnerOpen = !!mine && card.partner_answered && !!card.partner;
   const showForm = !mine || editing;
   const long = Array.from(question.text).length > LONG_QUESTION_CHARS;
+  const nudge = useQuestionNudge(question.id);
+  const nudgeText = nudgeCountText(nudge.count, partnerName);
 
   const onSubmit = async (value: AnswerValue) => {
     try {
@@ -250,10 +251,10 @@ export function QuestionView({ card, pack }: { card: QuestionCard; pack?: string
   };
 
   const onNudge = () => {
-    if (!nudge.view.canSend || nudge.isPending) return;
+    if (nudge.isPending) return;
     haptic.light();
+    // Sin toast al salir bien: la cuenta de abajo ya dice que llegó (y se puede picar seguido).
     nudge.send(undefined, {
-      onSuccess: () => toast.show({ message: `Le avisamos a ${partnerName}.`, tone: 'success' }),
       onError: (e) => toast.show({ message: errorMessage(e), tone: 'danger' }),
     });
   };
@@ -261,7 +262,9 @@ export function QuestionView({ card, pack }: { card: QuestionCard; pack?: string
   const matched = question.type === 'choice' && partnerOpen && sameChoice(card);
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+    // `automaticOffset`: mide su lugar en la ventana. Sin él toma la `y` relativa a su padre (abajo
+    // de "Atrás") y se queda corto justo esa altura: el composer quedaba tras el teclado (D156).
+    <KeyboardAvoidingView behavior="padding" automaticOffset style={{ flex: 1 }}>
       <KeyboardAwareScrollView
         showsVerticalScrollIndicator={false}
         ref={scrollRef}
@@ -352,12 +355,13 @@ export function QuestionView({ card, pack }: { card: QuestionCard; pack?: string
                 title={`Pícale a ${partnerName}`}
                 variant="secondary"
                 loading={nudge.isPending}
-                disabled={!nudge.view.canSend}
                 onPress={onNudge}
               />
-              <Text variant="note" tone="muted" accessibilityLiveRegion="polite">
-                {nudgeHint(nudge.view)}
-              </Text>
+              {nudgeText ? (
+                <Text variant="note" tone="muted" accessibilityLiveRegion="polite">
+                  {nudgeText}
+                </Text>
+              ) : null}
             </View>
           </View>
         ) : null}

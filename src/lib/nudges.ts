@@ -1,58 +1,25 @@
-/** Toques "Recuérdale a tu pareja": hasta 10 por día de la pareja, 5 s entre uno y otro (D118). */
-export const NUDGE_DAILY_LIMIT = 10;
-export const NUDGE_COOLDOWN_SECONDS = 5;
+/**
+ * Toques "Pícale a tu pareja" (D155, v0.16): sin tope ni espera, y cada pregunta pendiente lleva
+ * su propia cuenta. El texto sube de tono conforme van más.
+ */
 
-export type NudgeStatus = {
-  /** Toques que llevo hoy (día de la pareja). */
-  sentToday: number;
-  /** Instante del último, en ms epoch; null si no hay. */
-  lastAtMs: number | null;
-};
-
-export type NudgeView = {
-  /** Cuántos me quedan hoy. */
-  remaining: number;
-  /** Segundos que faltan para poder tocar otra vez (0 = ya). */
-  cooldown: number;
-  /** El botón se puede tocar. */
-  canSend: boolean;
-  /** Ya se usaron todos los de hoy. */
-  exhausted: boolean;
-};
-
-/** Estado del botón a partir de lo que llevo hoy y de cuándo fue el último toque. */
-export function nudgeView(status: NudgeStatus, nowMs: number): NudgeView {
-  const remaining = Math.max(0, NUDGE_DAILY_LIMIT - status.sentToday);
-  const cooldown =
-    status.lastAtMs == null
-      ? 0
-      : Math.min(
-          NUDGE_COOLDOWN_SECONDS,
-          Math.max(0, Math.ceil((status.lastAtMs + NUDGE_COOLDOWN_SECONDS * 1000 - nowMs) / 1000)),
-        );
-  const exhausted = remaining === 0;
-  return { remaining, cooldown, canSend: !exhausted && cooldown === 0, exhausted };
+/** Lo que devuelve una RPC de conteo (`integer`) como número ≥ 0; tolera datos raros. */
+export function parseNudgeCount(raw: unknown): number {
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
 }
 
-/** Lo que devuelve la RPC `nudge_status` (jsonb) como estado; tolera datos raros. */
-export function parseNudgeStatus(raw: unknown): NudgeStatus {
-  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-  const sent = Number(o.sent_today);
-  const last = typeof o.last_at === 'string' ? Date.parse(o.last_at) : NaN;
-  return {
-    sentToday: Number.isFinite(sent) && sent > 0 ? Math.floor(sent) : 0,
-    lastAtMs: Number.isNaN(last) ? null : last,
-  };
-}
-
-/** Estado tras mandar un toque ahora mismo. */
-export function afterNudge(status: NudgeStatus, nowMs: number): NudgeStatus {
-  return { sentToday: status.sentToday + 1, lastAtMs: nowMs };
-}
-
-/** "Otra vez en 5…" / "Te quedan 7" / "ya fueron todos los de hoy". */
-export function nudgeHint(view: NudgeView): string {
-  if (view.exhausted) return 'Ya mandaste todos los toques de hoy. Mañana hay más.';
-  if (view.cooldown > 0) return `Otra vez en ${view.cooldown}…`;
-  return view.remaining === 1 ? 'Te queda 1' : `Te quedan ${view.remaining}`;
+/**
+ * "Ya le mandaste X toques" con una cola juguetona según cuántos van; null si todavía ninguno.
+ * `name` es como se le dice a la pareja (apodo o nombre).
+ */
+export function nudgeCountText(count: number, name: string): string | null {
+  if (count <= 0) return null;
+  const base = count === 1 ? 'Ya le mandaste 1 toque' : `Ya le mandaste ${count} toques`;
+  if (count === 1) return `${base}.`;
+  if (count < 5) return `${base}. Ahí va.`;
+  if (count < 10) return `${base}. Insistente, ¿eh?`;
+  if (count < 20) return `${base}. ${name} ya se enteró, seguro.`;
+  if (count < 50) return `${base}. Esto ya es amor del intenso.`;
+  return `${base}. Leyenda. Ni el despertador insiste tanto.`;
 }

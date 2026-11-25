@@ -44,6 +44,7 @@ const BY_CODE: Record<string, string> = {
   nudge_daily_limit: 'Ya mandaste todos los toques de hoy. Mañana hay más.',
   no_partner: 'Esto es de a dos y aún no se une tu pareja. Cuando llegue, lo hacen juntos.',
   invalid_nudge: 'No pudimos mandar el aviso. Intenta otra vez.',
+  nudge_already_answered: 'Ya contestó. Entra a leer lo que puso.',
   // RPC de stories
   invalid_story: 'No pudimos subir tu story. Revisa que tenga algo y no sea muy larga.',
   too_many_stories: 'Ya tienes muchas stories activas. Espera a que caduquen o borra alguna.',

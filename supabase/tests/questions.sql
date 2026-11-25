@@ -922,67 +922,77 @@ begin
   assert n.kind = 'answer', 'tipo answer';
   assert n.couple_id = pg_temp.cid(pg_temp.u('A')), 'pareja';
 end $$;
-select pg_temp.expect_error($q$select public.send_nudge()$q$, 'nudge_too_soon');
-select pg_temp.expect_error($q$select public.send_nudge('answer')$q$, 'nudge_too_soon');
--- El límite es por remitente: Beto sí puede.
+-- Sin tope ni espera desde la v0.16 (D155): varios seguidos pasan.
+do $$
+begin
+  perform public.send_nudge();
+  perform public.send_nudge('answer');
+  assert (public.nudge_status() ->> 'sent_today')::int = 0, 'APK viejos: nunca se acaban';
+end $$;
+-- Beto también puede.
 select pg_temp.as_user('B');
 do $$
 begin
   perform public.send_nudge();
-  assert (select count(*) from public.nudges) = 2, 'Beto ve el que recibió y el que mandó';
+  assert (select count(*) from public.nudges) = 4, 'Beto ve los que recibió y el que mandó';
 end $$;
 select pg_temp.as_user('A');
 do $$
 begin
-  assert (select count(*) from public.nudges) = 2, 'Ana ve los dos';
+  assert (select count(*) from public.nudges) = 4, 'Ana ve los cuatro';
 end $$;
 -- Terceros no ven los toques.
 select pg_temp.as_user('C');
 do $$ begin assert (select count(*) from public.nudges) = 0, 'otra pareja no ve toques'; end $$;
 select pg_temp.as_user('E');
 do $$ begin assert (select count(*) from public.nudges) = 0, 'sin pareja no ve toques'; end $$;
--- Menos de 5 segundos desde el último: todavía no.
+select pg_temp.expect_error(format('select public.nudge_question(%L)', pg_temp.qid('test-b-1')), 'no_couple');
+select pg_temp.expect_error(format('select public.question_nudge_count(%L)', pg_temp.qid('test-b-1')), 'no_couple');
+
+-- Toques por pregunta: dos preguntas activas que Beto no ha contestado.
 reset role;
-update public.nudges set created_at = now() - interval '4 seconds' where from_user = pg_temp.u('A');
-select pg_temp.as_user('A');
-select pg_temp.expect_error($q$select public.send_nudge()$q$, 'nudge_too_soon');
--- Pasaron más de 5 segundos: se puede otra vez (ráfaga).
-reset role;
-update public.nudges set created_at = now() - interval '6 seconds' where from_user = pg_temp.u('A');
+create temp table t_nq as
+select q.id, row_number() over (order by q.slug) as n
+from public.questions q
+where q.slug like 'test-%' and q.is_active and q.intensity <> 'picante'
+  and not exists (
+    select 1 from public.answers a
+    where a.question_id = q.id and a.user_id = pg_temp.u('B')
+  )
+order by q.slug
+limit 2;
+grant select on t_nq to authenticated;
+do $$ begin assert (select count(*) from t_nq) = 2, 'hay dos preguntas pendientes para Beto'; end $$;
+
 select pg_temp.as_user('A');
 do $$
 declare
-  s jsonb;
+  q1 uuid := (select id from t_nq where n = 1);
+  q2 uuid := (select id from t_nq where n = 2);
 begin
-  perform public.send_nudge();
-  assert (select count(*) from public.nudges) = 3, 'a los 6 segundos se puede otra vez';
-  s := public.nudge_status();
-  assert (s ->> 'sent_today')::int = 2 and (s ->> 'daily_limit')::int = 10, 'estado: 2 de 10';
+  assert public.question_nudge_count(q1) = 0, 'sin toques en q1';
+  assert public.nudge_question(q1) = 1, 'primer toque en q1';
+  assert public.nudge_question(q1) = 2, 'segundo enseguida, sin espera';
+  assert public.nudge_question(q1) = 3, 'tercero';
+  assert public.nudge_question(q2) = 1, 'q2 lleva su propia cuenta';
+  assert public.question_nudge_count(q1) = 3 and public.question_nudge_count(q2) = 1, 'cuentas por pregunta';
+  assert (select count(*) from public.nudges where question_id = q1 and from_user = pg_temp.u('A')
+          and to_user = pg_temp.u('B') and kind = 'answer') = 3, 'filas de Ana para Beto con pregunta';
 end $$;
--- Completo 10 en el día (Ana ya lleva 2): el 11.º se rechaza aunque hayan pasado los 5 s.
-reset role;
-insert into public.nudges (couple_id, from_user, to_user, created_at)
-select pg_temp.cid(pg_temp.u('A')), pg_temp.u('A'), pg_temp.u('B'), now() - interval '1 minute'
-from generate_series(1, 8);
-update public.nudges set created_at = now() - interval '1 minute' where from_user = pg_temp.u('A');
-select pg_temp.as_user('A');
-select pg_temp.expect_error($q$select public.send_nudge()$q$, 'nudge_daily_limit');
-do $$
-begin
-  assert (public.nudge_status() ->> 'sent_today')::int = 10, 'estado: 10 de 10';
-end $$;
--- Beto tiene su propio tope.
+select pg_temp.expect_error(format('select public.nudge_question(%L)', gen_random_uuid()), 'question_not_found');
+-- La cuenta es por remitente: la de Beto en q1 es cero.
 select pg_temp.as_user('B');
-do $$ begin assert (public.nudge_status() ->> 'sent_today')::int = 1, 'Beto lleva 1'; end $$;
--- Otro día: el contador vuelve a cero.
+do $$ begin assert public.question_nudge_count((select id from t_nq where n = 1)) = 0, 'Beto no ha picado'; end $$;
+-- Si Beto ya contestó, ya no se le pica.
 reset role;
-update public.nudges set created_at = now() - interval '3 days' where from_user = pg_temp.u('A');
+insert into public.answers (couple_id, question_id, user_id, text)
+values (pg_temp.cid(pg_temp.u('B')), (select id from t_nq where n = 2), pg_temp.u('B'), 'ya');
 select pg_temp.as_user('A');
-do $$
-begin
-  assert (public.nudge_status() ->> 'sent_today')::int = 0, 'otro día, cuenta en cero';
-  perform public.send_nudge();
-end $$;
+select pg_temp.expect_error(format('select public.nudge_question(%L)', (select id from t_nq where n = 2)), 'nudge_already_answered');
+reset role;
+delete from public.answers where user_id = pg_temp.u('B') and question_id = (select id from t_nq where n = 2);
+delete from public.nudges where question_id is not null;
+drop table t_nq;
 select pg_temp.as_user('E');
 select pg_temp.expect_error($q$select public.nudge_status()$q$, 'no_couple');
 reset role;
