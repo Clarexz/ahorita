@@ -192,7 +192,8 @@ export function ListDetail({ id }: { id: string }) {
 
   return (
     <Screen>
-      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+      {/* `automaticOffset`: posición en la ventana, no relativa al padre (D156). */}
+      <KeyboardAvoidingView behavior="padding" automaticOffset style={{ flex: 1 }}>
         {/* Al editar un renglón de en medio, el scroll lo lleva arriba del teclado. */}
         <KeyboardAwareScrollView
           showsVerticalScrollIndicator={false}

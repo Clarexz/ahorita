@@ -224,22 +224,32 @@ select public.set_mood('😴', 'cansado');
 select public.add_comment((select id from t_ids where k = 'q'), 'hola');
 select public.submit_answer((select id from t_ids where k = 'q'), 'edito mi respuesta'); -- update: no avisa
 select public.send_nudge();
+select public.nudge_question((select id from t_ids where k = 'q'));
+select public.nudge_question((select id from t_ids where k = 'q'));
 select pg_temp.as_user('A');
 select public.submit_answer((select id from t_ids where k = 'q'), 'la de Ana');
 select pg_temp.assert(public.send_test_notification(), 'prueba encolada');
 reset role;
 
 select pg_temp.assert((select array_agg(e ->> 'kind') from pg_temp.queued() e)
-  = array['mood', 'comment', 'nudge', 'answer', 'test'],
+  = array['mood', 'comment', 'nudge', 'nudge', 'nudge', 'answer', 'test'],
   'tipos encolados: ' || (select array_agg(e ->> 'kind')::text from pg_temp.queued() e));
 select pg_temp.assert((select array_agg(e -> 'recipient' ->> 'name') from pg_temp.queued() e)
-  = array['Ana', 'Ana', 'Ana', 'Betito', 'Ana'], 'destinatarios');
+  = array['Ana', 'Ana', 'Ana', 'Ana', 'Ana', 'Betito', 'Ana'], 'destinatarios');
 select pg_temp.assert((select (e -> 'data' ->> 'recipient_answered')::boolean from pg_temp.queued() e where e ->> 'kind' = 'answer'),
   'Beto ya había contestado');
-select pg_temp.assert((select e -> 'data' ->> 'day' from pg_temp.queued() e where e ->> 'kind' = 'nudge')
-  = public.couple_today((select id from t_couple))::text, 'el toque lleva el día de hoy');
+select pg_temp.assert((select e -> 'data' ->> 'day' from pg_temp.queued() e
+  where e ->> 'kind' = 'nudge' and e -> 'data' ->> 'question_id' is null)
+  = public.couple_today((select id from t_couple))::text, 'el toque viejo lleva el día de hoy');
+select pg_temp.assert((select array_agg((e -> 'data' ->> 'nudge_count')::int order by (e -> 'data' ->> 'nudge_count')::int)
+  from pg_temp.queued() e where e ->> 'kind' = 'nudge' and e -> 'data' ->> 'question_id' is not null) = array[1, 2],
+  'los toques con pregunta llevan cuántos van');
+select pg_temp.assert((select bool_and(e -> 'data' ->> 'question_id' = (select id from t_ids where k = 'q')::text
+  and e -> 'data' ->> 'question_text' is not null)
+  from pg_temp.queued() e where e ->> 'kind' = 'nudge' and e -> 'data' ->> 'question_id' is not null),
+  'el toque lleva la pregunta y su texto');
 select pg_temp.assert((select count(*) from net.http_request_queue q where q.id > (select id from t_base)
-  and q.headers ->> 'x-notify-secret' = 'secreto-de-prueba' and q.url = 'http://functions:9000/notify') = 5,
+  and q.headers ->> 'x-notify-secret' = 'secreto-de-prueba' and q.url = 'http://functions:9000/notify') = 7,
   'peticiones con URL y secreto');
 
 -- Un fallo al encolar no rompe la escritura (URL inválida para pg_net).

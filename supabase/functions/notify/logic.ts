@@ -252,8 +252,15 @@ export function buildNotification(event: NotifyEvent): BuiltNotification | null 
     case 'nudge':
       if (!event.prefs.nudges) return null;
       channelId = 'toques';
-      data.url = '/question';
-      copy = nudgeCopy({ ...base, seed: stableSeed(d.nudge_id) });
+      // Con pregunta (v0.16) abre esa; los toques viejos abren la de hoy.
+      data.url = questionId ? `/question?id=${questionId}` : '/question';
+      copy = nudgeCopy({
+        ...base,
+        seed: stableSeed(d.nudge_id),
+        today: questionId ? d.today === true : true,
+        questionText: str(d.question_text),
+        count: typeof d.nudge_count === 'number' ? d.nudge_count : 0,
+      });
       break;
     case 'story': {
       // Con el aviso apagado igual llega un push de datos que solo refresca el widget de story.

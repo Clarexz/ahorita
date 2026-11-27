@@ -23,7 +23,14 @@ export function QuestionsEvents() {
   const [shown, setShown] = useState<{ streak: number | null } | null>(null);
 
   useQuestionsRealtime(couple?.id ?? null, {
-    onNudge: () => toast.show({ message: `${name} te está esperando para la pregunta de hoy.` }),
+    onNudge: (nudge) =>
+      toast.show({
+        // Desde la v0.16 el toque puede ser de una pregunta pendiente de otro día (D155).
+        message:
+          nudge.question_id && nudge.question_id !== card?.question.id
+            ? `${name} te está esperando en una pregunta pendiente.`
+            : `${name} te está esperando para la pregunta de hoy.`,
+      }),
     onPartnerAnswered: () => toast.show({ message: `${name} ya contestó. Te toca.` }),
   });
 

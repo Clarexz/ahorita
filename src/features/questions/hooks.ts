@@ -5,14 +5,13 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { useSession } from '@/features/auth';
 import { useCouple, useToday } from '@/features/couple';
 import type { AudioDraft } from '@/lib/audio';
 import type { CustomQuestion, CustomQuestionInput } from '@/lib/customQuestions';
 import type { FeedbackVote } from '@/lib/feedback';
-import { afterNudge, nudgeView, type NudgeStatus } from '@/lib/nudges';
 import type { Pack } from '@/lib/packs';
 import {
   applyReaction,
@@ -47,8 +46,8 @@ import {
   HISTORY_PAGE_SIZE,
   reactToComment,
   retireCustomQuestion,
-  fetchNudgeStatus,
-  sendNudge,
+  fetchQuestionNudgeCount,
+  sendQuestionNudge,
   setQuestionFeedback,
   setSpicyOptIn,
   submitAnswer,
@@ -527,56 +526,25 @@ export function useRetireCustomQuestion() {
   });
 }
 
-const EMPTY_NUDGE: NudgeStatus = { sentToday: 0, lastAtMs: null };
-
 /**
- * Botón de toques: cuántos me quedan hoy, cuenta regresiva de 5 s entre uno y otro y el envío.
- * La verdad la tiene el servidor; aquí solo se lleva la cuenta local para pintar el botón.
+ * Toques de una pregunta: cuántos le llevo mandados a mi pareja y el envío (sin tope ni espera,
+ * D155). La cuenta es del servidor; al mandar se pone la que devuelve.
  */
-export function useNudge() {
+export function useQuestionNudge(questionId: string) {
   const { couple } = useCouple();
+  const qc = useQueryClient();
   const coupleId = couple?.id ?? null;
-  const statusQuery = useQuery({
-    queryKey: ['nudge-status', coupleId] as const,
-    queryFn: fetchNudgeStatus,
+  const key = ['nudge-count', coupleId, questionId] as const;
+  const countQuery = useQuery({
+    queryKey: key,
+    queryFn: () => fetchQuestionNudgeCount(questionId),
     enabled: !!coupleId,
-    staleTime: 0,
   });
-  // Cuenta local de lo que mando; solo vale mientras no llegue un estado más nuevo del servidor.
-  const [local, setLocal] = useState<{ status: NudgeStatus; base: number } | null>(null);
-  const [now, setNow] = useState(() => Date.now());
-  const serverStatus = statusQuery.data ?? EMPTY_NUDGE;
-  const status = local && local.base === statusQuery.dataUpdatedAt ? local.status : serverStatus;
-  const view = nudgeView(status, now);
-
-  // Reloj de la cuenta regresiva: solo corre mientras hay espera.
-  useEffect(() => {
-    if (view.cooldown <= 0) return;
-    const id = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(id);
-  }, [view.cooldown]);
-
   const mutation = useMutation({
-    mutationFn: () => sendNudge(),
-    onSuccess: () => {
-      const at = Date.now();
-      setNow(at);
-      const base = statusQuery.dataUpdatedAt;
-      setLocal((prev) => ({
-        status: afterNudge(
-          prev && prev.base === base ? prev.status : (statusQuery.data ?? EMPTY_NUDGE),
-          at,
-        ),
-        base,
-      }));
-    },
-    onError: () => {
-      // Pudo ser tope o espera: se vuelve a pedir el estado real.
-      void statusQuery.refetch();
-    },
+    mutationFn: () => sendQuestionNudge(questionId),
+    onSuccess: (count) => qc.setQueryData(key, count),
   });
-
-  return { view, isPending: mutation.isPending, send: mutation.mutate };
+  return { count: countQuery.data ?? 0, isPending: mutation.isPending, send: mutation.mutate };
 }
 
 /** El resultado es si las picantes quedaron activas para la pareja. */

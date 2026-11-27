@@ -1179,6 +1179,24 @@ versión nombrada por versión y no por fase (D152).
 
 ---
 
+### v0.16 — Toques sin límite y comentarios sobre el teclado
+
+Observaciones del usuario (2026-11-25, con captura: el composer de comentarios tapado por el
+teclado). Rama `claude/blissful-brahmagupta-6uqkvf`.
+
+**Tareas:**
+1. **Composer de comentarios tapado por el teclado** (D156): el `KeyboardAvoidingView` de la
+   pregunta medía su `y` relativa al padre (debajo de "Atrás") y se quedaba corto esa altura; ahora
+   usa `automaticOffset` (posición en la ventana). Igual en el detalle de una lista. ✅
+2. **Toques sin tope y por pregunta** (D155): fuera los 10 al día y los 5 s; `nudges.question_id`,
+   RPC `nudge_question` / `question_nudge_count`, "Ya le mandaste X toques" por pregunta con texto
+   que sube de tono, y el push abre esa pregunta (cita el texto si no es la de hoy y dice cuántos
+   van). `send_nudge`/`nudge_status` quedan sin tope para los APK viejos. ✅
+
+**Entregable APK:** `v0.16.0` (requiere deploy: migración `20261125000000_question_nudges` + `notify`).
+
+---
+
 ## 10. Estado del proyecto
 
 | Fase | Estado | PR | Notas |
@@ -1209,6 +1227,7 @@ versión nombrada por versión y no por fase (D152).
 | Ajustes v0.14.5 (teclado en hojas) | ✅ Mergeada (v0.14.6) | #31 | El teclado ya no tapa los campos de las hojas (nota del mood, respuestas a stories, listas): la hoja hace scroll y lleva el campo enfocado a la vista (D148); además renglones de listas y aire sobre el teclado en formularios. Sin cambios de servidor. Notas en `docs/releases/v0.14.5.md`. El APK v0.14.5 (2026-11-22) salió sin la v0.14.x de `main` (la rama nació antes); se mezcló `main` y se relanzó como **v0.14.6** (notas en `v0.14.6.md`; APK publicado el 2026-11-23). PR #31 mergeado a `main` a pedido del usuario (2026-11-23); falta probarlo en el celular. |
 | Ajustes v0.15 (frutas, filtros, Lo que viene) | ✅ Desplegada y mergeada (v0.15.0) | #32 | D149–D151. PR mergeado a `main` a pedido del usuario (2026-11-23); falta probar el APK en el celular (`docs/releases/v0.15.0.md`). Servidor desplegado el 2026-11-23 (`efe79c2`, 23 migraciones). Botón flotante al cambiar de fruta, solo se bloquea la fruta elegida (migración `20261123000000_fruit_clash_same_only`), nombres centrados, Todas/Sin contestar/Contestadas en cada categoría y fuera las notas de relleno en Lo que viene. Rama `ajustes-v0.15`. |
 | v0.15.1 (mensaje de tu pareja) | ✅ Mergeada (v0.15.1) | #33 | D152–D153. Trabajo nombrado por versión desde aquí. Widget de mensaje solo con el mensaje, letra 15 en dos renglones a la izquierda y burbuja más alta. Sin cambios de servidor. Mergeada a `main` a pedido del usuario (2026-11-23) junto con el commit suelto de docs de `ccr-5af92be8-3g2xkm` (v0.14.5 mergeada). APK **v0.15.1** publicado el 2026-11-23 desde `main` (corrida #42, 16 min; primer release con título por versión). Notas en `docs/releases/v0.15.1.md`; falta probar en el celular. |
+| v0.16 (toques sin límite, teclado) | ✅ Desplegada y mergeada (v0.16.0) | #35 | D155–D156. Composer de comentarios sobre el teclado (`automaticOffset`) y toques sin tope, contados por pregunta ("Ya le mandaste X toques"). Servidor desplegado el 2026-11-26 (`097bbf7`, migración `20261125000000_question_nudges` + `notify`, 24 registradas; respaldo previo `pre-deploy-app-parejas-20261126-000225.dump`, smoke test OK). APK **v0.16.0** publicado el 2026-11-26 (corrida #43, 23 min); PR #35 mergeado a `main` a pedido del usuario (2026-11-27); falta probar en el celular. Notas en `docs/releases/v0.16.0.md`. Rama `claude/blissful-brahmagupta-6uqkvf`. Todo lo hizo la sesión principal (sin agentes: cambio chico y acoplado). |
 
 ### 10.1 Camino a la v1.0.0
 
@@ -1225,6 +1244,8 @@ Estamos cerca de la v1.0.0, pero antes faltan:
 
 **Pruebas en el celular pendientes** (una línea por release, con su lista en `docs/releases/`):
 
+- **v0.16.0** (`v0.16.0.md`): comentarios con el teclado abierto, toques
+  seguidos con su cuenta por pregunta y el aviso que abre esa pregunta.
 - **v0.15.1** (`v0.15.1.md`): widget Mensaje de tu pareja con letra más grande y dos renglones.
 - **v0.14.6** (`v0.14.6.md`; reemplaza a la v0.14.5): nota del mood con el teclado abierto, respuestas a stories, crear y
   editar listas, editar un renglón de en medio y el último campo de los formularios.

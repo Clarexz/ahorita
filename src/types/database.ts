@@ -834,6 +834,7 @@ export type Database = {
           from_user: string;
           id: string;
           kind: string;
+          question_id: string | null;
           to_user: string;
         };
         ComputedFields: never;
@@ -843,6 +844,7 @@ export type Database = {
           from_user: string;
           id?: string;
           kind?: string;
+          question_id?: string | null;
           to_user: string;
         };
         Update: {
@@ -851,6 +853,7 @@ export type Database = {
           from_user?: string;
           id?: string;
           kind?: string;
+          question_id?: string | null;
           to_user?: string;
         };
         Relationships: [
@@ -859,6 +862,13 @@ export type Database = {
             columns: ['couple_id'];
             isOneToOne: false;
             referencedRelation: 'couples';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'nudges_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'questions';
             referencedColumns: ['id'];
           },
         ];
@@ -1534,6 +1544,7 @@ export type Database = {
       memory_path_writable: { Args: { p_name: string }; Returns: boolean };
       my_couple_id: { Args: Record<PropertyKey, never>; Returns: string };
       notify_actor_fruit: { Args: { p_user: string }; Returns: string };
+      nudge_question: { Args: { p_question_id: string }; Returns: number };
       nudge_status: { Args: Record<PropertyKey, never>; Returns: Json };
       pick_daily_question: { Args: { p_couple_id: string }; Returns: string };
       question_card: {
@@ -1549,6 +1560,7 @@ export type Database = {
         };
         Returns: Json;
       };
+      question_nudge_count: { Args: { p_question_id: string }; Returns: number };
       question_visible: {
         Args: {
           p_question: Omit<
@@ -1684,6 +1696,7 @@ export type Database = {
           from_user: string;
           id: string;
           kind: string;
+          question_id: string | null;
           to_user: string;
         };
         SetofOptions: {
